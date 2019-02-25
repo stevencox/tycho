@@ -21,8 +21,8 @@ class Container:
     def __init__(self,
                  name,
                  image,
-                 identity,
-                 limits):
+                 identity=None,
+                 limits=None):
         self.name = name
         self.image = image
         self.identity = identity
@@ -36,13 +36,13 @@ class System:
     """ Distributed system of interacting containerized software. """
     def __init__(self, name, containers):
         self.name = name
-        self.containers = list(map(lambda v : Container(**v), containers)) \
-                          if isinstance(containers, dict) else \
-                             containers
         assert self.name is not None, "System name is required."
-        containers_exist = len(self.containers) > 0
-        none_are_null = not any([ c for c in self.containers if c == None ])
+        containers_exist = len(containers) > 0
+        none_are_null = not any([ c for c in containers if c == None ])
         assert containers_exist and none_are_null, "System container elements may not be null."
+        self.containers = list(map(lambda v : Container(**v), containers)) \
+                          if isinstance(containers[0], dict) else \
+                             containers
     def project (self, template):
         template_path = os.path.join (os.path.dirname (__file__), "template", template)
         self.template = None
@@ -60,29 +60,5 @@ class SystemIdentifier:
     """ Opaque unique handle to a system. """
     def __init__(self, identifier):
         self.identifier
-        
-def main ():
-    """ Process arguments. """
-    arg_parser = argparse.ArgumentParser(
-        description='StageCluster',
-        formatter_class=lambda prog: argparse.ArgumentDefaultsHelpFormatter(prog,
-                                                                            max_help_position=180))
-    arg_parser.add_argument('-v', '--verbose', help="Verbose mode.", action="store_true")
-    arg_parser.add_argument('-b', '--xyz', help="...", default="...")
-    System (**{
-        "name" : "test",
-        "containers" : [
-            {
-                "image" : "nginx",
-                "name"  : "nginx-container",
-                "limits" : {
-                    "cpus" : "0.1",
-                    "memory" : "512M"
-                }
-            }
-        ]
-    })
-    
-if __name__ == '__main__':
-    main ()
+
     

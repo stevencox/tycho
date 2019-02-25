@@ -88,24 +88,3 @@ class KubernetesCompute(Compute):
             namespace="default")
         print(f"Deployment created. status={api_response.status}")
         return deployment
-        
-def test ():
-    system = System (**{
-        "name" : "test",
-        "containers" : [
-            {
-                "name"  : "nginx-container",
-                "image" : "nginx:1.9.1",
-                "limits" : {
-                    "cpus" : "0.5",
-                    "memory" : "512M"
-                }
-            }
-        ]
-    })
-    compute = KubernetesCompute ()
-    system_id = compute.start (system)
-
-if __name__ == '__main__':
-    test ()
-    
