@@ -2,11 +2,15 @@
 
 This is a bare bones, end-to-end alpha architecture test for a dynamic stack launching software ecosystem.
 
-## bin/stage
+It has two basic parts:
+* Development Environment
+* Tycho API
 
-### Development Environment
+## Development Environment
 
-To do anything with this repo, you'll need to set up Minkube:
+### bin/stage
+
+To use this repo, you'll need to set up Minkube:
 
 **Minikube** If you're on OS X, see the dev_env() function. `source bin/stage dev_env` should install virtualbox, the kubernetes CLI, and the minikube desktop version of Kubernetes. Being able to do it on your desktop repeatedly, and make mistakes quietly, makes a lot of difference in understanding container orchestrated development.
 
