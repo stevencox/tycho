@@ -98,6 +98,7 @@ So, for the foregoing reasons, under the tycho subdirectory, you can find:
 * **template** a directory containing environment specifi templates for projecting a model object (like System) into a Kubernetes Pod configuration.
 * **compute.py** provides an abstraction for our environment's interface to K8s. For example, when the UI launches a container, it needs to call something to do that, get appropriate status information, and be able to monitor, update, and stop that job.
 * **api.py** is a Swagger API to the compute module.
+* **test** provides pytests for the model. Looking into options for testing the Kube portions.
 
 This all works with minikube.
 
