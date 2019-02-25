@@ -1,0 +1,44 @@
+install-cli () {
+    curl -L https://github.com/kubeless/kubeless/releases/download/0.0.20/kubeless_darwin-amd64.zip > kubeless.zip
+    unzip kubeless.zip
+    sudo cp bundles/kubeless_darwin-amd64/kubeless /usr/local/bin/
+    rm -rf bundles kubeless.zip
+}
+
+install () {
+    export RELEASE=$(curl -s https://api.github.com/repos/kubeless/kubeless/releases/latest | grep tag_name | cut -d '"' -f 4)
+    kubectl create ns kubeless
+    kubectl create -f https://github.com/kubeless/kubeless/releases/download/$RELEASE/kubeless-$RELEASE.yaml
+    kubectl get pods -n kubeless
+    kubectl get deployment -n kubeless
+    kubectl get customresourcedefinition
+}
+
+add () {
+    local name=$1
+    local demo_function=$2
+    if [ -z $demo_function -o -z $name ]; then
+        echo usage $0 name app.py
+        return 1
+    fi
+    set -x
+    echo kubeless function deploy $name \
+             --trigger-http \
+             --runtime python2.7 \
+             --handler $name \
+             --from-file $demo_function
+    set +x
+}
+add () {
+    kubeless function deploy hello \
+             --runtime python2.7 \
+             --from-file app2.py \
+             --handler test.hello
+}
+
+delete () {
+    kubectl delete -f https://github.com/kubeless/kubeless/releases/download/$RELEASE/kubeless-$RELEASE.yaml
+    kubectl delete namespace kubeless
+}
+
+$*

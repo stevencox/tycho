@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ name }}
+  labels:
+    name: {{ name }}
+spec:
+  containers:
+{% for container in containers %}    
+  - name: {{ container.name }}
+    image: {{ container.image }}
+    {% if container.limits %}
+    resources:
+      requests:
+        cpu: "{{ container.limits[0].cpus }}"
+        memory: "{{ container.limits[0].memory }}"
+    {% endif %}
+{% endfor %}

@@ -1,0 +1,94 @@
+openapi: 3.0.1
+info:
+  description: Exploratory bioinformatic datascience via software defined distributed systems.
+  version: 0.0.1
+  title: 
+  contact:
+    email: scox@renci.org
+  license:
+    name: Apache 2.0
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+externalDocs:
+  description: Exploratory bioinformatic datascience via software defined distributed systems.
+  url: 'https://github.com/stevencox/tycho'
+tags:
+  - name: message
+    description: Request compute services.
+    externalDocs:
+      description: Documentation for the compute request.
+      url: 'https://github.com/stevencox/tycho#request'
+paths:
+  /system/start:
+    post:
+      summary: Compute service request.
+      description: ''
+      operationId: start
+      requestBody:
+        description: Compute service request.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/System'
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '400':
+          description: Invalid status value
+      x-swagger-router-controller: swagger_server.controllers.query_controller
+      
+components:
+  schemas:
+    Limits:
+      type: object
+      properties:
+        cpus:
+          type: string
+          example: "0.3"
+          description: Number of CPUs requested. May be a fractional value.
+        memory:
+          type: string
+          example: "512M"
+          description: Amount of memory to request for this container.
+    Container:
+      type: object
+      properties:
+        name:
+          type: string
+          example: web-server
+          description: Name of the container to execute.
+        image:
+          type: string
+          example: nginx:1.9.1
+          description: Name and version of a docker image to execute.
+        limits:
+          type: array
+          items:
+            $ref: '#/components/schemas/Limits'
+    System:
+      type: object
+      properties:
+        name:
+          type: string
+          example: some-stack
+          description: Description of the system provided and defined by this set of components.
+        containers:
+          type: array
+          items:
+            $ref: '#/components/schemas/Container'            
+    Response:
+      # Clearly, this will need further elaboration.
+      type: object
+      properties:
+        status:
+          type: string
+          example: ... TODO - develop status codes.
+          description: Status code denoting the outcome of the activity.
+        message:
+          type: string
+          example: Job succeeded.
+          description: Description of the result.
