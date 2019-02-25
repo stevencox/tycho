@@ -104,5 +104,10 @@ This all works with minikube.
 If you bring up the Swagger interface, you can try the example with your minikube instance.
 ![image](https://user-images.githubusercontent.com/306971/53313133-f1337d00-3885-11e9-8aea-83ab4a92807e.png)
 
+## Next Steps
+
+* **Logging** add logging
+* **Spec the API** with a view the UI and Security use cases.
+* **Sphinx** Add doc strings 
 
 
