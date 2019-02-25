@@ -12,6 +12,7 @@ spec:
     {% if container.limits %}
     resources:
       requests:
+        # it's a bug that limits is an array.
         cpu: "{{ container.limits[0].cpus }}"
         memory: "{{ container.limits[0].memory }}"
     {% endif %}

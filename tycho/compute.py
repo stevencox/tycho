@@ -46,18 +46,21 @@ class KubernetesCompute(Compute):
         """ Create a deployment for the pod. """
         deployment = self.pod_to_deployment (
             name=system.name,
-            template=pod_spec)
+            template=pod_spec) 
         
         service_manifest = {'apiVersion': 'v1',
                             'kind': 'Service',
-                            'metadata': {'labels': {'name': system.name},
-                                         'name': system.name,
-                                         'resourceversion': 'v1'},
-                            'spec': {'ports': [{'name': 'port',
-                                                'port': 80, # more params.
-                                                'protocol': 'TCP',
-                                                'targetPort': 80}],
-                                     'selector': {'name': system.name}}}
+                            'metadata': {
+                                'labels': {'name': system.name},
+                                'name': system.name,
+                                'resourceversion': 'v1'},
+                            'spec': {
+                                'type' : 'NodePort',
+                                'ports': [{'name': 'port',
+                                           'port': 80, # more params.
+                                           'protocol': 'TCP',
+                                           'targetPort': 80}],
+                                'selector': {'name': system.name}}}
         print (f"{json.dumps(service_manifest, indent=2)}")
         api_response = self.api.create_namespaced_service(
             body=service_manifest,
