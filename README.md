@@ -12,22 +12,24 @@ It has two basic parts:
 
 ### bin/stage
 
-To use this repo, you'll need to set up Minkube:
+To use this repo, set up Minkube, a desktop version of Kubernetes:
 
-**Minikube** If you're on OS X, see the dev_env() function. `source bin/stage dev_env` should install virtualbox, the kubernetes CLI, and the minikube desktop version of Kubernetes. Being able to do it on your desktop repeatedly, and make mistakes quietly, makes a lot of difference in understanding container orchestrated development.
+**Minikube** If you're on OS X, see the dev_env() function. `source bin/stage dev_env` should install virtualbox, the kubernetes CLI, and minikube. Being able to do it on your desktop repeatedly, and make mistakes quietly, makes a lot of difference in understanding container orchestrated development.
 
-To do Python development, 
+For Python, 
 
 **Python 3.7.x** 
 * Install Python 3.7.x
-* Set up a virtual environmnent as described in dev_env()
-* Install requirements from requirements.txt
+* python -m venv venv/stage
+* pip install -r requirements.txt
 
 ### Tool Tests
 
 The goal here is to get familiar with Minikube and how kube interacts with Docker in the comfort of your own desktop.
 
 To test **R Studio Server**, run the script as follows. This brings up the R Studio Server Docker image inside Kubernetes (Minikube) on your desktop. You can inspect the running service with the kubectl command below. Note the `rstudio` line and the expression in the PORT column. The second port number is the port on the host machine the service is bound to.
+
+Now we want to connect to our new service. This is a bit of a process...
 ```
 $ source bin/stage rstudio run
 $ kubectl get svc
@@ -35,6 +37,8 @@ NAME            TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)          AGE
 kubernetes      ClusterIP   10.96.0.1        <none>        443/TCP          29h
 rstudio         NodePort    10.108.119.157   <none>        8787:31557/TCP   33m
 ```
+Other important kubectl commands can be seen in action `bin/stage`.
+
 To find the IP address Minkube is bound to:
 ```
 $ minikube ip
