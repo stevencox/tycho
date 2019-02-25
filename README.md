@@ -1,5 +1,7 @@
 # Tycho
 
+[![Build Status](https://travis-ci.org/stevencox/tycho.svg?branch=master)](https://travis-ci.org/stevencox/tycho)
+
 This is a bare bones, end-to-end alpha architecture test for a dynamic stack launching software ecosystem.
 
 It has two basic parts:
