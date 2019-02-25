@@ -106,8 +106,8 @@ If you bring up the Swagger interface, you can try the example with your minikub
 
 ## Next Steps
 
-* **Logging** add logging
+* **Logging** add logging and appropriate configuration hooks.
 * **Spec the API** with a view the UI and Security use cases.
-* **Sphinx** Add doc strings 
+* **Sphinx** Add documentation patterns.
 
 
