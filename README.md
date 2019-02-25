@@ -92,19 +92,19 @@ Also, it's generally straightforward to find a mapping of the kubectl command li
 
 That said, the API is also large and complex. We need a design that tailors its surface area to our use cases.
 
-Finally, a pod is one or more containers. So with a single facility that uses the K8s API to launch a pod, we can likely do most of the Stage use cases.
+Finally, a pod is one or more containers. So launching, deploying, and networking pods as K8s services gives us a lot of needed flexibility and control.
 
 ### Tycho
 
-So, for the foregoing reasons, under the tycho subdirectory, you can find:
+So, for those reasons, under the tycho subdirectory, you can find:
 
-* **model.py** containing System, Container, and Limits classes. These provide minimal high level abstractions of services we will launch on a compute fabric.
-* **template** a directory containing environment specifi templates for projecting a model object (like System) into a Kubernetes Pod configuration.
-* **compute.py** provides an abstraction for our environment's interface to K8s. For example, when the UI launches a container, it needs to call something to do that, get appropriate status information, and be able to monitor, update, and stop that job.
+* **model.py** containing System, Container, and Limits classes. These provide a minimalist high level abstractions of services we will launch on a compute infrastructure.
+* **template** a directory containing environment specific templates for projecting a model object (like System) into a Kubernetes Pod configuration.
+* **compute.py** provides an abstraction for our environment's interface to K8s. For example, when the UI launches a container, it needs to call something to do that, get appropriate status information, and be able to monitor, update, and stop that job. Tycho will grow up to be that interface.
 * **api.py** is a Swagger API to the compute module.
 * **test** provides pytests for the model. Looking into options for testing the Kube portions.
 
-This all works with minikube.
+This all works with minikube on your machine.
 
 If you bring up the Swagger interface, you can try the example with your minikube instance.
 ![image](https://user-images.githubusercontent.com/306971/53313133-f1337d00-3885-11e9-8aea-83ab4a92807e.png)
