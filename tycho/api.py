@@ -55,7 +55,7 @@ class StartSystemResource(TychoResource):
     """ System initiation. """
     def post(self):
         """
-        query
+        Start a system based on a specification on the compute fabric.
         ---
         tag: start
         description: Start a system on the compute fabric.
