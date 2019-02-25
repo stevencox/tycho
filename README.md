@@ -109,6 +109,24 @@ This all works with minikube on your machine.
 If you bring up the Swagger interface, you can try the example with your minikube instance.
 ![image](https://user-images.githubusercontent.com/306971/53313133-f1337d00-3885-11e9-8aea-83ab4a92807e.png)
 
+You can test the newly deployed service with:
+```
+$ wget -O- -q http://$(minikube ip):$(kubectl get svc some-stack -o json | jq .spec.ports[0].nodePort) | head -30 | grep -i welcome
+<title>Welcome to nginx!</title>
+<h1>Welcome to nginx!</h1>
+```
+And go to the minikube UI to see what it did.
+```
+minikube dashboard
+```
+Finally, you can clean up the pod, deployment, and service created by running the example with this:
+```
+$ source bin/stage del_pod_dep_svc some-stack
+deployment.extensions "some-stack" deleted
+pod "some-stack" deleted
+service "some-stack" deleted
+```
+
 ## Next Steps
 
 * **Logging** add logging and appropriate configuration hooks.
