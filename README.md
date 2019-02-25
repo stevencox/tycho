@@ -59,7 +59,7 @@ bin/stage jupyter run scipy lab
 ```
 The expression after the `run`, `scipy`, in this case, is substituted to pick the docker image from the page at the link provided.
 
-The last parameter, `lab`, is optional. If supplied, the new UI is presented.
+The last parameter, `lab`, is optional. If supplied, the new UI (pictured below) is presented.
 
 In any event, you will be promted for a token at the UI. In this trivial scenario, the token is printed in the logs. How do we get the logs. Try
 ```
