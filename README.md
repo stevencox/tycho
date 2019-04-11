@@ -90,7 +90,7 @@ The [K8s Python API](https://github.com/kubernetes-client/python) is extensive a
 
 Also, it's generally straightforward to find a mapping of the kubectl command line to the API.
 
-That said, the API is also large and complex. We need a design that tailors its surface area to our use cases.
+That said, the API is also large and complex. We may want a design that tailors its surface area to our use cases. Also, it may be useful to implement contact with the container orchestrator via an API so that clients an switch between alternatives. This also decouples system requirements like Python versions.
 
 Finally, a pod is one or more containers. So launching, deploying, and networking pods as K8s services gives us a lot of needed flexibility and control.
 
