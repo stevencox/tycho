@@ -106,6 +106,20 @@ So, for those reasons, under the tycho subdirectory, you can find:
 
 This all works with minikube on your machine.
 
+#### Setup
+
+* Install python 3.7.x or greater.
+* Create a virtual environment.
+* Install the requirements.
+* Start the server.
+
+```
+python3 -m venv environmentName
+source environmentName/bin/activate
+pip install -r requirements.txt
+python api.py
+```
+
 If you bring up the Swagger interface, you can try the example with your minikube instance.
 ![image](https://user-images.githubusercontent.com/306971/53313133-f1337d00-3885-11e9-8aea-83ab4a92807e.png)
 
