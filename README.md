@@ -120,7 +120,10 @@ pip install -r requirements.txt
 python api.py
 ```
 
-If you bring up the Swagger interface, you can try the example with your minikube instance.
+#### Usage
+
+
+At this point you can launch the Swagger interface and try the example with your minikube instance.
 ![image](https://user-images.githubusercontent.com/306971/53313133-f1337d00-3885-11e9-8aea-83ab4a92807e.png)
 
 You can test the newly deployed service with:
