@@ -4,7 +4,7 @@ import logging
 import os
 import yaml
 from kubernetes import client as k8s_client, config as k8s_config
-from model import System
+from tycho.model import System
 
 logger = logging.getLogger (__name__)
 
