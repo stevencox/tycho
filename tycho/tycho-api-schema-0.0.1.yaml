@@ -54,6 +54,13 @@ components:
           type: string
           example: "512M"
           description: Amount of memory to request for this container.
+    Port:
+      type: object
+      properties:
+        containerPort:
+          type: integer
+          example: 80
+          description: Container port to expose
     Container:
       type: object
       properties:
@@ -69,6 +76,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Limits'
+        ports:
+          type: array
+          items:
+            $ref: '#/components/schemas/Port'
     System:
       type: object
       properties:
@@ -92,3 +103,14 @@ components:
           type: string
           example: Job succeeded.
           description: Description of the result.
+        result:
+          type: object
+          
+    DeleteRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: test-app
+          description: Identifier of system to delete
+    

@@ -22,13 +22,15 @@ class Container:
                  name,
                  image,
                  identity=None,
-                 limits=None):
+                 limits=None,
+                 ports=[]):
         self.name = name
         self.image = image
         self.identity = identity
         self.limits = Limits(**limits) if isinstance(limits, dict) else limits
         if isinstance(self.limits, list):
             self.limits = self.limits[0] # TODO - not sure why this is a list.
+        self.ports = ports
     def __repr__(self):
         return f"name:{self.name} image:{self.image} id:{self.identity} limits:{self.limits}"
 

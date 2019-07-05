@@ -87,14 +87,59 @@ class StartSystemResource(TychoResource):
         print (f"{json.dumps(request.json, indent=2)}")
         system = System (**request.json)
         print (f"system: {system}")
-        compute.start (System (**request.json))
-
+        result = compute.start (System (**request.json))
+        print (f"{json.dumps(result, indent=2)}")
         return {
             "status" : "success",
-            "message" : "..."
+            "message" : f"Started system {system.name}",
+            "result"  : result
+        }
+
+class DeleteSystemResource(TychoResource):
+    """ System termination. """
+    def post(self):
+        """
+        Delete a system based on a name.
+        ---
+        tag: start
+        description: Delete a system on the compute fabric.
+        requestBody:
+            description: System start message.
+            required: true
+            content:
+                application/json:
+                    schema:
+                        $ref: '#/components/schemas/DeleteRequest'
+        responses:
+            '200':
+                description: Success
+                content:
+                    application/json:
+                        schema:
+                            type: string
+                            example: "Successfully validated"
+            '400':
+                description: Malformed message
+                content:
+                    text/plain:
+                        schema:
+                            type: string
+
+        """
+        self.validate (request) 
+        compute = get_compute ()
+        print (f"{json.dumps(request.json, indent=2)}")
+        system_name = request.json['name']
+        result = compute.delete (system_name)
+        print (f"{json.dumps(result, indent=2)}")
+        return {
+            "status" : "success",
+            "message" : f"Deleted system {system_name}",
+            "result"  : result
         }
 
 api.add_resource(StartSystemResource, '/system/start')
+api.add_resource(DeleteSystemResource, '/system/delete')
 
 if __name__ == "__main__":
    parser = argparse.ArgumentParser(description='Tycho Distributed Compute API')
