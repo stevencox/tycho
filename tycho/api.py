@@ -85,8 +85,7 @@ class StartSystemResource(TychoResource):
 
         """
         response = {
-            "status" : "success",
-            "result" : {}
+            "status" : "success"
         }
         try:
             self.validate (request)        
@@ -136,15 +135,14 @@ class DeleteSystemResource(TychoResource):
 
         """
         response = {
-            "status" : "success",
-            "result" : {}
+            "status" : "success"
         }
         try:
             self.validate (request) 
             compute = get_compute ()
             print (f"Delete request: {json.dumps(request.json, indent=2)}")
             system_name = request.json['name']
-            result = compute.delete (system_name)
+            response['result'] = compute.delete (system_name)
             response['message'] = f"Deleted system {system_name}"
         except Exception as e:
             response['status'] = "error"
