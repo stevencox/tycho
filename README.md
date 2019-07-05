@@ -6,7 +6,7 @@ Tycho is an API and abstraction layer for the lifecycle management of Kubernetes
 
 While the Kubernetes API is extensive and well documented, it's also large and complex. We've chosen not to extend the full weight of that complexity to clients that need to instantiate applications in a cluster.
 
-### Install
+## Install
 
 * Install python 3.7.x or greater.
 * Create a virtual environment.
@@ -20,7 +20,7 @@ pip install -r requirements.txt
 python api.py
 ```
 
-#### Usage - Development Environment Next to Minikube
+### Usage - Development Environment Next to Minikube
 
 This mode uses a local minikube instance with Tycho running outside of Minikube. This is the easiest way to add and test new features quickly.
 
@@ -80,7 +80,7 @@ Verify the service is no longer running.
 (tycho) [scox@mac~/dev/tycho/tycho]$ ```
 ```
 
-#### Usage - Within Minikube
+### Usage - Within Minikube
 
 When we deploy Tycho into Minikube it is now able to get its Kubernetes API configuration from within the cluster.
 
@@ -133,7 +133,7 @@ And finally, we test the service againt to show it's no longer running:
 Error from server (NotFound): services "jupyter-data-science-3425" not found
 ```
 
-#### Usage - Within Google Kubernetes Engine from the Google Cloud Shell
+### Usage - Within Google Kubernetes Engine from the Google Cloud Shell
 
 Install Python 3.7
 Create a virtual environment
