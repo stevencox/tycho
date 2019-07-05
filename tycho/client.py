@@ -59,7 +59,7 @@ class TychoClient:
         else:
             print (json.dumps (response, indent=2))
 
-        service_port = response.get('result',{}).get('container_map',{}).get(container_name,{}).get('port',None)
+        service_port = response.get('result',{}).get('containers',{}).get(container_name,{}).get('port',None)
         if service_port:
             service_url = f"http://192.168.99.111:{service_port}"
             print (f"service port: {service_port}")

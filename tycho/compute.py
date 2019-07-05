@@ -5,6 +5,7 @@ import os
 import yaml
 from kubernetes import client as k8s_client, config as k8s_config
 from tycho.model import System
+from tycho.tycho_utils import TemplateUtils
 
 logger = logging.getLogger (__name__)
 
@@ -61,7 +62,7 @@ class KubernetesCompute(Compute):
                 continue
             container_port = container.ports[0]['containerPort']
             logger.debug (f"Creating service exposing container {container.name}")
-            
+            '''
             service_manifest = {
                 'apiVersion': 'v1',
                 'kind': 'Service',
@@ -76,7 +77,14 @@ class KubernetesCompute(Compute):
                                'protocol': 'TCP',
                                'targetPort': container_port }],
                     'selector': {'name': system.name}}}
-
+            '''
+            utils = TemplateUtils ()
+            service_manifest=utils.render (
+                template="service.yaml",
+                context={
+                    "system" : system,
+                    "container_port" : container_port
+                })
             print (f"{json.dumps(service_manifest, indent=2)}")
             api_response = self.api.create_namespaced_service(
                 body=service_manifest,
@@ -86,8 +94,7 @@ class KubernetesCompute(Compute):
             }
             print(f"Service created. status={api_response.status}")
         return {
-            #'pod_spec' : pod_spec,
-            'container_map' : container_map
+            'containers' : container_map
         }
 
     def pod_to_deployment (self, name, template, namespace="default"):

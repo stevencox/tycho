@@ -1,9 +1,10 @@
 import argparse
-import datetime
+#import datetime
 import json
 import os
-import yaml
-from jinja2 import Template
+#import yaml
+#from jinja2 import Template
+from tycho.tycho_utils import TemplateUtils
 
 class Limits:
     """ Abstraction of resource limits on a container in a system. """
@@ -50,6 +51,7 @@ class System:
         self.containers = list(map(lambda v : Container(**v), containers)) \
                           if isinstance(containers[0], dict) else \
                              containers
+    '''
     def project (self, template):
         template_path = os.path.join (os.path.dirname (__file__), "template", template)
         self.template = None
@@ -61,6 +63,13 @@ class System:
             "containers" : self.containers
         })        
         return yaml.load (pod_text)
+    '''
+    def project (self, template):
+        utils = TemplateUtils ()
+        return utils.render (template, context={
+            "name" : self.name,
+            "containers" : self.containers
+        })
     def __repr__(self):
         return f"name:{self.name} containers:{self.containers}"
     
