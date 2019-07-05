@@ -62,22 +62,8 @@ class KubernetesCompute(Compute):
                 continue
             container_port = container.ports[0]['containerPort']
             logger.debug (f"Creating service exposing container {container.name}")
-            '''
-            service_manifest = {
-                'apiVersion': 'v1',
-                'kind': 'Service',
-                'metadata': {
-                    'labels': {'name': system.name},
-                    'name': system.name,
-                    'resourceversion': 'v1'},
-                'spec': {
-                    'type' : 'NodePort',
-                    'ports': [{'name': 'port',
-                               'port': container_port,
-                               'protocol': 'TCP',
-                               'targetPort': container_port }],
-                    'selector': {'name': system.name}}}
-            '''
+
+            ''' render the service template. '''
             utils = TemplateUtils ()
             service_manifest=utils.render (
                 template="service.yaml",
@@ -85,6 +71,7 @@ class KubernetesCompute(Compute):
                     "system" : system,
                     "container_port" : container_port
                 })
+            
             print (f"{json.dumps(service_manifest, indent=2)}")
             api_response = self.api.create_namespaced_service(
                 body=service_manifest,
@@ -133,7 +120,6 @@ class KubernetesCompute(Compute):
             logger.info (f"Deleting deployment {name} in namespace {namespace}")
             api_response = self.extensions_api.delete_collection_namespaced_replica_set(
                 label_selector=f"name={name}",
-#                body=k8s_client.V1DeleteOptions(),
                 namespace=namespace)
         except Exception as e:
             print (e)

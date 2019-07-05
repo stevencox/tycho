@@ -1,9 +1,6 @@
 import argparse
-#import datetime
 import json
 import os
-#import yaml
-#from jinja2 import Template
 from tycho.tycho_utils import TemplateUtils
 
 class Limits:
@@ -51,19 +48,6 @@ class System:
         self.containers = list(map(lambda v : Container(**v), containers)) \
                           if isinstance(containers[0], dict) else \
                              containers
-    '''
-    def project (self, template):
-        template_path = os.path.join (os.path.dirname (__file__), "template", template)
-        self.template = None
-        with open(template_path, "r") as stream:
-            self.template = Template (stream.read ())
-        self.template.globals['now'] = datetime.datetime.utcnow
-        pod_text = self.template.render (**{
-            "name" : self.name,
-            "containers" : self.containers
-        })        
-        return yaml.load (pod_text)
-    '''
     def project (self, template):
         utils = TemplateUtils ()
         return utils.render (template, context={
