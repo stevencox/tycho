@@ -95,3 +95,39 @@ http://192.168.99.111:32188
 (tycho) [scox@mac~/dev/tycho/tycho]$ wget --quiet -O- http://192.168.99.111:32188 | grep -i /title
 (tycho) [scox@mac~/dev/tycho/tycho]$ 
 '''
+
+'''
+With Tycho in-cluster configuration:
+(tycho) [scox@mac~/dev/tycho/tycho]$ kubectl create -f ../kubernetes/
+deployment.extensions/tycho-api created
+pod/tycho-api created
+clusterrole.rbac.authorization.k8s.io/tycho-api-access created
+clusterrolebinding.rbac.authorization.k8s.io/tycho-api-access created
+service/tycho-api created
+(tycho) [scox@mac~/dev/tycho/tycho]$ PYTHONPATH=$PWD/.. python client.py --up -n jupyter-data-science-3425 -c jupyter/datascience-notebook -p 8888 -s http://192.168.99.111:$(kubectl get svc tycho-api -o json | jq .spec.ports[0].nodePort)
+200
+{
+  "status": "success",
+  "result": {
+    "container_map": {
+      "jupyter-data-science-3425-c": {
+        "port": 31646
+      }
+    }
+  },
+  "message": "Started system jupyter-data-science-3425"
+}
+http://192.168.99.111:31646
+(tycho) [scox@mac~/dev/tycho/tycho]$ wget --quiet -O- http://192.168.99.111:$(kubectl get svc jupyter-data-science-3425 -o json | jq .spec.ports[0].nodePort) | grep -i /title
+    <title>Jupyter Notebook</title>
+(tycho) [scox@mac~/dev/tycho/tycho]$ PYTHONPATH=$PWD/.. python client.py --down -n jupyter-data-science-3425
+200
+{
+  "status": "success",
+  "result": null,
+  "message": "Deleted system jupyter-data-science-3425"
+}
+(tycho) [scox@mac~/dev/tycho/tycho]$ wget --quiet -O- http://192.168.99.111:$(kubectl get svc jupyter-data-science-3425 -o json | jq .spec.ports[0].nodePort) | grep -i /title
+Error from server (NotFound): services "jupyter-data-science-3425" not found
+
+'''
