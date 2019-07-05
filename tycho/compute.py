@@ -20,7 +20,10 @@ class KubernetesCompute(Compute):
         """ Initialize connection to Kubernetes. """
         """ TODO: Authentication. """
         super(KubernetesCompute, self).__init__()
-        k8s_config.load_kube_config()
+        if os.getenv('KUBERNETES_SERVICE_HOST'):
+            k8s_config.load_incluster_config()
+        else:
+            k8s_config.load_kube_config()
         api_client = k8s_client.ApiClient()
         self.api = k8s_client.CoreV1Api(api_client)
         self.extensions_api = k8s_client.ExtensionsV1beta1Api(api_client)
