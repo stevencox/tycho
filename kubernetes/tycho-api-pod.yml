@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    service: tycho-api
+    app: tycho-api
+  name: tycho-api
+spec:
+  containers:
+  - command:
+    - /usr/local/bin/gunicorn
+    - --workers=2
+    - --name=tycho
+    - --timeout=600
+    - tycho.api:app
+    image: greentranslator/tycho-api:latest
+    name: tycho-api
+    ports:
+    - containerPort: 8099
+      protocol: TCP
+    resources:
+      requests:
+        cpu: 100m
+  restartPolicy: Always
