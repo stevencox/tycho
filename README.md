@@ -138,3 +138,7 @@ $ wget --quiet -O- http://$external_ip:$(kubectl get svc jupyter-data-science-34
 $ PYTHONPATH=$PWD/.. python client.py --down -n jupyter-data-science-3425 -s http://$external_ip:$node_port
 ```
 
+To launch Jupyter Lab to open without prompting for a token:
+```
+PYTHONPATH=$PWD/.. python client.py --up -n jupyter-data-science-3425 -c jupyter/datascience-notebook -p 8888 --command "start.sh jupyter lab --LabApp.token=''"
+```
