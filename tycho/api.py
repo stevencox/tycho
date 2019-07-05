@@ -3,6 +3,8 @@ import json
 import jsonschema
 import os
 import requests
+import sys
+import traceback
 import yaml
 from flasgger import Swagger
 from flask import Flask, jsonify, g, Response, request
@@ -82,18 +84,25 @@ class StartSystemResource(TychoResource):
                             type: string
 
         """
-        self.validate (request) 
-        compute = get_compute ()
-        print (f"{json.dumps(request.json, indent=2)}")
-        system = System (**request.json)
-        print (f"system: {system}")
-        result = compute.start (System (**request.json))
-        print (f"{json.dumps(result, indent=2)}")
-        return {
+        response = {
             "status" : "success",
-            "message" : f"Started system {system.name}",
-            "result"  : result
+            "result" : {}
         }
+        try:
+            self.validate (request)        
+            compute = get_compute ()
+            print (f"Start system request: {json.dumps(request.json, indent=2)}")
+            system = System (**request.json)
+            response['result'] = compute.start (System (**request.json))
+            response['message'] = f"Started system {system.name}"
+        except Exception as e:
+            response['status'] = "error"
+            response['message'] = f"Failed to start system {system.name}"
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            text = repr(traceback.format_exception(
+                exc_type, exc_value, exc_traceback))
+            response['result'] = { "error" : text }
+        return response
 
 class DeleteSystemResource(TychoResource):
     """ System termination. """
@@ -126,17 +135,25 @@ class DeleteSystemResource(TychoResource):
                             type: string
 
         """
-        self.validate (request) 
-        compute = get_compute ()
-        print (f"{json.dumps(request.json, indent=2)}")
-        system_name = request.json['name']
-        result = compute.delete (system_name)
-        print (f"{json.dumps(result, indent=2)}")
-        return {
+        response = {
             "status" : "success",
-            "message" : f"Deleted system {system_name}",
-            "result"  : result
+            "result" : {}
         }
+        try:
+            self.validate (request) 
+            compute = get_compute ()
+            print (f"Delete request: {json.dumps(request.json, indent=2)}")
+            system_name = request.json['name']
+            result = compute.delete (system_name)
+            response['message'] = f"Deleted system {system_name}"
+        except Exception as e:
+            response['status'] = "error"
+            response['message'] = f"Failed to delete system {system_name}"
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            text = repr(traceback.format_exception(
+                exc_type, exc_value, exc_traceback))
+            response['result'] = { "error" : text }
+        return response
 
 api.add_resource(StartSystemResource, '/system/start')
 api.add_resource(DeleteSystemResource, '/system/delete')
