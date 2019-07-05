@@ -87,20 +87,24 @@ class StartSystemResource(TychoResource):
         response = {
             "status" : "success"
         }
+        system = None
         try:
+            print (f"Start system request: {json.dumps(request.json, indent=2)}")
             self.validate (request)        
             compute = get_compute ()
-            print (f"Start system request: {json.dumps(request.json, indent=2)}")
             system = System (**request.json)
             response['result'] = compute.start (System (**request.json))
             response['message'] = f"Started system {system.name}"
         except Exception as e:
             response['status'] = "error"
-            response['message'] = f"Failed to start system {system.name}"
+            response['message'] = f"Failed to start system {system.name if system else 'system'}"
             exc_type, exc_value, exc_traceback = sys.exc_info()
-            text = repr(traceback.format_exception(
-                exc_type, exc_value, exc_traceback))
-            response['result'] = { "error" : text }
+            text = traceback.format_exception(
+                exc_type, exc_value, exc_traceback)
+            print (type(text))
+            error_text = ''.join (text)
+            print (f"{error_text}")
+            response['result'] = { "error" : error_text }
         return response
 
 class DeleteSystemResource(TychoResource):

@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import json
 import os
 import yaml
@@ -21,6 +22,8 @@ class Container:
     def __init__(self,
                  name,
                  image,
+                 command=None,
+                 env=None,
                  identity=None,
                  limits=None,
                  ports=[]):
@@ -31,6 +34,8 @@ class Container:
         if isinstance(self.limits, list):
             self.limits = self.limits[0] # TODO - not sure why this is a list.
         self.ports = ports
+        self.command = command
+        self.env = env
     def __repr__(self):
         return f"name:{self.name} image:{self.image} id:{self.identity} limits:{self.limits}"
 
@@ -50,6 +55,7 @@ class System:
         self.template = None
         with open(template_path, "r") as stream:
             self.template = Template (stream.read ())
+        self.template.globals['now'] = datetime.datetime.utcnow
         pod_text = self.template.render (**{
             "name" : self.name,
             "containers" : self.containers

@@ -10,13 +10,13 @@ info:
     url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
 externalDocs:
   description: Exploratory bioinformatic datascience via software defined distributed systems.
-  url: 'https://github.com/stevencox/tycho'
+  url: 'https://github.com/heliumplusdatastage/tycho'
 tags:
   - name: message
     description: Request compute services.
     externalDocs:
       description: Documentation for the compute request.
-      url: 'https://github.com/stevencox/tycho#request'
+      url: 'https://github.com/heliumplusdatastage/tycho#request'
 paths:
   /system/start:
     post:
@@ -61,6 +61,17 @@ components:
           type: integer
           example: 80
           description: Container port to expose
+    EnvironmentVariable:
+      type: object
+      properties:
+        name:
+          type: string
+          example: X
+          description: Name of an environment variable
+        value:
+          type: string
+          example: http://example.org
+          description: A string value.
     Container:
       type: object
       properties:
@@ -76,6 +87,18 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Limits'
+          example:
+            - cpus: "0.3"
+              memory: "512M"
+        command:
+          type: array
+          required: false
+          items:
+            type: string
+        env:
+          type: array
+          items:
+            $ref: '#/components/schemas/EnvironmentVariable'
         ports:
           type: array
           items:
@@ -92,12 +115,11 @@ components:
           items:
             $ref: '#/components/schemas/Container'            
     Response:
-      # Clearly, this will need further elaboration.
       type: object
       properties:
         status:
           type: string
-          example: ... TODO - develop status codes.
+          example: success | error
           description: Status code denoting the outcome of the activity.
         message:
           type: string
@@ -105,7 +127,6 @@ components:
           description: Description of the result.
         result:
           type: object
-          
     DeleteRequest:
       type: object
       properties:
