@@ -22,6 +22,8 @@ python api.py
 
 #### Usage - Development Environment Next to Minikube
 
+This mode uses a local minikube instance with Tycho running outside of Minikube. This is the easiest way to add and test new features quickly.
+
 Run minikube:
 ```
 minikbue start
@@ -80,7 +82,11 @@ Verify the service is no longer running.
 
 #### Usage - Within Minikube
 
-Moving Tycho into Minikube lets it get its configuration from within the cluster. In the repo's kubernetes directory, we define deployment, pod, service, clusterrole, and clusterrolebinding models for Tycho. The following interaction shows deploying Tycho into Minikube and interacting with the API:
+When we deploy Tycho into Minikube it is now able to get its Kubernetes API configuration from within the cluster.
+
+In the repo's kubernetes directory, we define deployment, pod, service, clusterrole, and clusterrolebinding models for Tycho. The following interaction shows deploying Tycho into Minikube and interacting with the API.
+
+We first deploy all Kubernetes Tycho-api artifacts into Minkube:
 ```
 (tycho) [scox@mac~/dev/tycho/tycho]$ kubectl create -f ../kubernetes/
 deployment.extensions/tycho-api created
@@ -88,6 +94,9 @@ pod/tycho-api created
 clusterrole.rbac.authorization.k8s.io/tycho-api-access created
 clusterrolebinding.rbac.authorization.k8s.io/tycho-api-access created
 service/tycho-api created
+```
+Then we use the client to launch a notebook.
+```
 (tycho) [scox@mac~/dev/tycho/tycho]$ PYTHONPATH=$PWD/.. python client.py --up -n jupyter-data-science-3425 -c jupyter/datascience-notebook -p 8888 -s http://192.168.99.111:$(kubectl get svc tycho-api -o json | jq .spec.ports[0].nodePort)
 200
 {
@@ -102,8 +111,14 @@ service/tycho-api created
   "message": "Started system jupyter-data-science-3425"
 }
 http://192.168.99.111:31646
+```
+We connect to the service to demonstrate it's running:
+```
 (tycho) [scox@mac~/dev/tycho/tycho]$ wget --quiet -O- http://192.168.99.111:$(kubectl get svc jupyter-data-science-3425 -o json | jq .spec.ports[0].nodePort) | grep -i /title
     <title>Jupyter Notebook</title>
+```
+Then we delete the service from the cluster:
+```
 (tycho) [scox@mac~/dev/tycho/tycho]$ PYTHONPATH=$PWD/.. python client.py --down -n jupyter-data-science-3425
 200
 {
@@ -111,6 +126,9 @@ http://192.168.99.111:31646
   "result": null,
   "message": "Deleted system jupyter-data-science-3425"
 }
+```
+And finally, we test the service againt to show it's no longer running:
+```
 (tycho) [scox@mac~/dev/tycho/tycho]$ wget --quiet -O- http://192.168.99.111:$(kubectl get svc jupyter-data-science-3425 -o json | jq .spec.ports[0].nodePort) | grep -i /title
 Error from server (NotFound): services "jupyter-data-science-3425" not found
 ```
