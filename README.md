@@ -115,3 +115,26 @@ http://192.168.99.111:31646
 Error from server (NotFound): services "jupyter-data-science-3425" not found
 ```
 
+#### Usage - Within Google Kubernetes Engine from the Google Cloud Shell
+
+Install Python 3.7
+Create a virtual environment
+
+```
+$ python3.7 -m venv venv/tycho
+$ cd tycho/
+$ . ../venv/tycho/bin/activate
+$ pip install -r requirements.txt
+```
+Configure the cluster ip address and the Tycho service's node port. The tycho service's node port was exposed via the gcloud firewall in an earlier step.
+```
+$ external_ip=$(kubectl get nodes --output wide | grep -vi external | awk '{ print $7 }')
+$ node_port=$(kubectl get svc tycho-api -o json | jq .spec.ports[0].nodePort)
+$ cd tycho/
+$ PYTHONPATH=$PWD/.. python client.py --up -n jupyter-data-science-3425 -c jupyter/datascience-notebook -p 8888 -s http://$external_ip:$node_port
+$ gcloud compute firewall-rules update test-node-port-a --allow tcp:30991
+$ wget --quiet -O- http://$external_ip:$(kubectl get svc jupyter-data-science-3425 -o json | jq .spec.ports[0].nodePort) | grep -i /title
+      <title>Jupyter Notebook</title>
+$ PYTHONPATH=$PWD/.. python client.py --down -n jupyter-data-science-3425 -s http://$external_ip:$node_port
+```
+
