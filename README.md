@@ -213,7 +213,15 @@ $ PYTHONPATH=$PWD/.. python client.py --down -n jupyter-data-science-3425 -s htt
 ```
 This removes the deployment, pod, service, and replicasets created by the launcher.
 
-### Usage - Environment Variables and the Command Line Client
+### Note 1: Autodiscovery
+
+Using the command lines above without the `-s` flag for server will work on GKE. That is, the client is created by first using the K8s API to locate the Tycho-API endpoint and port. It builds the URL automatically and creates a TychoAPI object ready to use.
+```
+client_factory = TychoClientFactory ()
+client = client_factory.get_client ()
+```
+
+### Note 2: Usage - Environment Variables and the Command Line Client
 
 To launch Jupyter Lab to open without prompting for a token:
 ```
