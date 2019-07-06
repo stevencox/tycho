@@ -25,7 +25,7 @@ pip install -r requirements.txt
 python api.py
 ```
 
-### Usage - Development Environment Next to Minikube
+### Usage - A. Development Environment Next to Minikube
 
 This mode uses a local minikube instance with Tycho running outside of Minikube. This is the easiest way to add and test new features quickly.
 
@@ -85,7 +85,7 @@ Verify the service is no longer running.
 (tycho) [scox@mac~/dev/tycho/tycho]$ ```
 ```
 
-### Usage - Within Minikube
+### Usage - B. Development Environment Within Minikube
 
 When we deploy Tycho into Minikube it is now able to get its Kubernetes API configuration from within the cluster.
 
@@ -138,7 +138,7 @@ And finally, we test the service againt to show it's no longer running:
 Error from server (NotFound): services "jupyter-data-science-3425" not found
 ```
 
-### Usage - Within Google Kubernetes Engine from the Google Cloud Shell
+### Usage - C. Within Google Kubernetes Engine from the Google Cloud Shell
 
 Install Python 3.7
 Create a virtual environment
@@ -213,7 +213,7 @@ $ PYTHONPATH=$PWD/.. python client.py --down -n jupyter-data-science-3425 -s htt
 ```
 This removes the deployment, pod, service, and replicasets created by the launcher.
 
-### Note 1: Autodiscovery
+### Note 1: Client Endpoint Autodiscovery
 
 Using the command lines above without the `-s` flag for server will work on GKE. That is, the client is created by first using the K8s API to locate the Tycho-API endpoint and port. It builds the URL automatically and creates a TychoAPI object ready to use.
 ```
