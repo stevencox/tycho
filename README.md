@@ -179,12 +179,9 @@ $ PYTHONPATH=$PWD/.. python client.py --up -n jupyter-data-science-3425 -c jupyt
   },
   "message": "Started system jupyter-data-science-3425"
 }
-service port: 30983
-minikube service url: http://192.168.99.111:30983
 ```
 Refreshing the GKE cluster monitoring UI will now show the service:
 ![image](https://user-images.githubusercontent.com/306971/60749074-e8a13080-9f62-11e9-81d2-37f6cdbfc9dc.png)
-
 
 Get the job's load balancer ip and make a request to test the service.
 ```
