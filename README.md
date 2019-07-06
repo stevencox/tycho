@@ -206,17 +206,7 @@ $ PYTHONPATH=$PWD/.. python client.py --down -n jupyter-data-science-3425 -s htt
 Note, due to a bug, shutdown does not yet work correctly on GKE. Until this is fixed, use the UI to stop the service.
 
 
-
-
-
-
-
-
-
-
-
-
-
+### Usage - Environment Variables and the Command Line Client
 
 To launch Jupyter Lab to open without prompting for a token:
 ```
@@ -233,5 +223,6 @@ PYTHONPATH=$PWD/.. python client.py --up -n jupyter-data-science-3425 -c jupyter
   },
   "message": "Started system jupyter-data-science-3425"
 }
-
 ```
+
+For a higher degree of control, control the client from Python.
