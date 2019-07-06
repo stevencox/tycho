@@ -144,6 +144,9 @@ $ cd tycho/
 $ . ../venv/tycho/bin/activate
 $ pip install -r requirements.txt
 ```
+Starting out, Tycho's not running on the cluster:
+![image](https://user-images.githubusercontent.com/306971/60748530-eb992280-9f5c-11e9-94f6-8a51e0b9d16f.png)
+
 Configure the cluster ip address and the Tycho service's node port. The tycho service's node port was exposed via the gcloud firewall in an earlier step.
 ```
 $ external_ip=$(kubectl get nodes --output wide | grep -vi external | awk '{ print $7 }')
