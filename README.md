@@ -180,7 +180,10 @@ $ PYTHONPATH=$PWD/.. python client.py --up -n jupyter-data-science-3425 -c jupyt
   "message": "Started system jupyter-data-science-3425"
 }
 ```
-Refreshing the GKE cluster monitoring UI will now show the service:
+Refreshing the GKE cluster monitoring UI will now show the service starting:
+![image](https://user-images.githubusercontent.com/306971/60749371-15574700-9f67-11e9-81cf-77ccb6724a08.png)
+
+Then running
 ![image](https://user-images.githubusercontent.com/306971/60749074-e8a13080-9f62-11e9-81d2-37f6cdbfc9dc.png)
 
 Get the job's load balancer ip and make a request to test the service.
@@ -200,8 +203,7 @@ $ PYTHONPATH=$PWD/.. python client.py --down -n jupyter-data-science-3425 -s htt
   "message": "Deleted system jupyter-data-science-3425"
 }
 ```
-Note, due to a bug, shutdown does not yet work correctly on GKE. Until this is fixed, use the UI to stop the service.
-
+This removes the deployment, pod, service, and replicasets created by the launcher.
 
 ### Usage - Environment Variables and the Command Line Client
 
