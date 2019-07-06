@@ -3,6 +3,7 @@ import json
 import os
 import traceback
 import argparse
+from kubernetes import client as k8s_client, config as k8s_config
 
 class TychoClient:
     """ Client to Tycho Kubernetes dynamic application deployment API. """
@@ -66,7 +67,29 @@ class TychoClient:
             print (f"minikube service url: {service_url}")
         else:
             print ("Error, unable to get service port.")
-            
+
+class TychoClientFactory:
+    def __init__(self):
+        """ Initialize connection to Kubernetes. """
+        """ TODO: Authentication. """
+        if os.getenv('KUBERNETES_SERVICE_HOST'):
+            k8s_config.load_incluster_config()
+        else:
+            k8s_config.load_kube_config()
+        api_client = k8s_client.ApiClient()
+        self.api = k8s_client.CoreV1Api(api_client)
+    def get_client (name="tycho-api", namespace="default"):
+        service = self.api.api_instance.read_namespaced_service(
+            name=name,
+            namespace=namespace)
+        try:
+            ip_address = service.status.load_balancer.ingress.ip
+            port = service.spec.ports[0].port
+            url = f"http://{ip_address}:{port}"
+        except Exception as e:
+            traceback.print_exc (e)
+        return TychoClient (url=url)
+        
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Tycho Client')
     parser.add_argument('-u', '--up', help="Launch service.", action='store_true')
