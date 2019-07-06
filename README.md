@@ -2,9 +2,11 @@
 
 [![Build Status](https://travis-ci.org/stevencox/tycho.svg?branch=master)](https://travis-ci.org/stevencox/tycho)
 
-Tycho is an REST interface for the opinionated lifecycle management of Kubernetes applications.
+Tycho is an REST interface for the opinionated lifecycle management of container orchestrated applications.
 
-While the Kubernetes API is extensive and well documented, it's also large and complex. We've chosen not to extend the full weight of that complexity to clients that need to instantiate applications in a cluster.
+The first supported orchestrator is Kubernetes.
+
+While the Kubernetes API is extensive and well documented, it's also large and complex. Tycho encapsulates a few commonly used capabilities to make simple things simple.
 
 ## Install
 
