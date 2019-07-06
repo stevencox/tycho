@@ -9,7 +9,7 @@ The first supported orchestrator is Kubernetes.
 While the Kubernetes API is extensive and well documented, it's also large and complex. Tycho encapsulates a few commonly used capabilities to make simple things simple.
 
 ### Architecture
-![image](https://user-images.githubusercontent.com/306971/60749588-1dfd4c80-9f6a-11e9-955c-fb5e742ec3f1.png)
+![image](https://user-images.githubusercontent.com/306971/60749878-ada4fa00-9f6e-11e9-9fb8-d720cf78c41d.png)
 
 ## Install
 
