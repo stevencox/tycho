@@ -156,6 +156,9 @@ clusterrole.rbac.authorization.k8s.io/tycho-api-access created
 clusterrolebinding.rbac.authorization.k8s.io/tycho-api-access created
 service/tycho-api created
 ```
+
+Note, here we've edited the Tycho service def to create the service as type:LoadBalancer for the purposes of a command line demo. In general, we'll access the service from within the cluster rather than exposing it externally.
+
 That runs Tycho:
 ![image](https://user-images.githubusercontent.com/306971/60748922-c73f4500-9f60-11e9-8d48-fb49902dc836.png)
 
