@@ -2,9 +2,14 @@
 
 [![Build Status](https://travis-ci.org/stevencox/tycho.svg?branch=master)](https://travis-ci.org/stevencox/tycho)
 
-Tycho is an API and abstraction layer for the lifecycle management of Kubernetes applications.
+Tycho is an REST interface for the opinionated lifecycle management of container orchestrated applications.
 
-While the Kubernetes API is extensive and well documented, it's also large and complex. We've chosen not to extend the full weight of that complexity to clients that need to instantiate applications in a cluster.
+The first supported orchestrator is Kubernetes.
+
+While the Kubernetes API is extensive and well documented, it's also large and complex. Tycho encapsulates a few commonly used capabilities to make simple things simple.
+
+### Architecture
+![image](https://user-images.githubusercontent.com/306971/60749588-1dfd4c80-9f6a-11e9-955c-fb5e742ec3f1.png)
 
 ## Install
 
@@ -145,19 +150,70 @@ $ . ../venv/tycho/bin/activate
 $ pip install -r requirements.txt
 ```
 Starting out, Tycho's not running on the cluster:
-![image](https://user-images.githubusercontent.com/306971/60748530-eb992280-9f5c-11e9-94f6-8a51e0b9d16f.png)
+![image](https://user-images.githubusercontent.com/306971/60748993-b511d680-9f61-11e9-8851-ff75ca74d079.png)
 
-Configure the cluster ip address and the Tycho service's node port. The tycho service's node port was exposed via the gcloud firewall in an earlier step.
+First deploy the Tycho API 
 ```
-$ external_ip=$(kubectl get nodes --output wide | grep -vi external | awk '{ print $7 }')
-$ node_port=$(kubectl get svc tycho-api -o json | jq .spec.ports[0].nodePort)
-$ cd tycho/
-$ PYTHONPATH=$PWD/.. python client.py --up -n jupyter-data-science-3425 -c jupyter/datascience-notebook -p 8888 -s http://$external_ip:$node_port
-$ gcloud compute firewall-rules update test-node-port-a --allow tcp:30991
-$ wget --quiet -O- http://$external_ip:$(kubectl get svc jupyter-data-science-3425 -o json | jq .spec.ports[0].nodePort) | grep -i /title
-      <title>Jupyter Notebook</title>
-$ PYTHONPATH=$PWD/.. python client.py --down -n jupyter-data-science-3425 -s http://$external_ip:$node_port
+$ kubectl create -f ../kubernetes/
+deployment.extensions/tycho-api created
+pod/tycho-api created
+clusterrole.rbac.authorization.k8s.io/tycho-api-access created
+clusterrolebinding.rbac.authorization.k8s.io/tycho-api-access created
+service/tycho-api created
 ```
+
+Note, here we've edited the Tycho service def to create the service as type:LoadBalancer for the purposes of a command line demo. In general, we'll access the service from within the cluster rather than exposing it externally.
+
+That runs Tycho:
+![image](https://user-images.githubusercontent.com/306971/60748922-c73f4500-9f60-11e9-8d48-fb49902dc836.png)
+
+Initialize the Tycho API's load balancer IP and node port. 
+```
+$ lb_ip=$(kubectl get svc tycho-api -o json | jq .status.loadBalancer.ingress[0].ip | sed -e s,\",,g)
+$ tycho_port=$(kubectl get service tycho-api --output json | jq .spec.ports[0].port)
+```
+Launch an application (deployment, pod, service)
+```
+$ PYTHONPATH=$PWD/.. python client.py --up -n jupyter-data-science-3425 -c jupyter/datascience-notebook -p 8888 -s http://$lb_ip:$tycho_port
+200
+{
+  "status": "success",
+  "result": {
+    "containers": {
+      "jupyter-data-science-3425-c": {
+        "port": 30983
+      }
+    }
+  },
+  "message": "Started system jupyter-data-science-3425"
+}
+```
+Refreshing the GKE cluster monitoring UI will now show the service starting:
+![image](https://user-images.githubusercontent.com/306971/60749371-15574700-9f67-11e9-81cf-77ccb6724a08.png)
+
+Then running
+![image](https://user-images.githubusercontent.com/306971/60749074-e8a13080-9f62-11e9-81d2-37f6cdbfc9dc.png)
+
+Get the job's load balancer ip and make a request to test the service.
+```
+$ job_lb_ip=$(kubectl get svc jupyter-data-science-3425 -o json | jq .status.loadBalancer.ingress[0].ip | sed -e s,\",,g)
+$ wget --quiet -O- http://$job_lb_ip:8888 | grep -i /title
+    <title>Jupyter Notebook</title>
+```
+
+And shut the service down:
+```
+$ PYTHONPATH=$PWD/.. python client.py --down -n jupyter-data-science-3425 -s http://$lb_ip:$tycho_port
+200
+{
+  "status": "success",
+  "result": null,
+  "message": "Deleted system jupyter-data-science-3425"
+}
+```
+This removes the deployment, pod, service, and replicasets created by the launcher.
+
+### Usage - Environment Variables and the Command Line Client
 
 To launch Jupyter Lab to open without prompting for a token:
 ```
@@ -174,5 +230,6 @@ PYTHONPATH=$PWD/.. python client.py --up -n jupyter-data-science-3425 -c jupyter
   },
   "message": "Started system jupyter-data-science-3425"
 }
-
 ```
+
+For a higher degree of control, control the client from Python.
