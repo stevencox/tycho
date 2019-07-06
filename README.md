@@ -226,4 +226,4 @@ client = client_factory.get_client ()
 
 ### Next
 
-[ ] Support Docker Compose as the input format.
+[ ] Support (a useful subset of) Docker Compose as the input format.
