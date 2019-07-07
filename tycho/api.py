@@ -92,8 +92,10 @@ class StartSystemResource(TychoResource):
             print (f"Start system request: {json.dumps(request.json, indent=2)}")
             self.validate (request)        
             compute = get_compute ()
-            system = System (**request.json)
-            response['result'] = compute.start (System (**request.json))
+            #system = System (**request.json)
+            #response['result'] = compute.start (System (**request.json))
+            system = self.get_system (request.json)
+            response['result'] = compute.start (system)
             response['message'] = f"Started system {system.name}"
         except Exception as e:
             response['status'] = "error"
@@ -106,7 +108,36 @@ class StartSystemResource(TychoResource):
             print (f"{error_text}")
             response['result'] = { "error" : error_text }
         return response
-
+    def get_system (self, request):
+        result = None
+        name = request['name']
+        if 'system' in request:
+            result = self.process_docker_compose (name, request['system'])
+            print (f"result {result}")
+            result = System(**result)
+        else:
+            result = System(**request)
+        return result
+    def process_docker_compose (self, name, compose):
+        containers = []
+        print (f"compose {compose}")
+        for cname, spec in compose.get('services', {}).items ():
+            containers.append ({
+                "name"    : cname,
+                "image"   : spec['image'],
+                "command" : spec.get ('entrypoint', '').split(),
+                "env"     : spec.get ('environment', '').split (),
+                "ports"   : [
+                    { "containerPort" : p.split(':')[0] if ':' in p else p
+                      for p in spec.get ("ports", [])
+                    }
+                ]
+            })
+        return {
+            "name" : name,
+            "containers" : containers
+        }
+    
 class DeleteSystemResource(TychoResource):
     """ System termination. """
     def post(self):
