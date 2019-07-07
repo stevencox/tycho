@@ -270,4 +270,5 @@ client = client_factory.get_client ()
 
 ### Next
 
-[ ] Support (a useful subset of) Docker Compose as the input format.
+[ ] Support persistent volumes.
+
