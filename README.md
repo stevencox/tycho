@@ -7,9 +7,9 @@ Tycho is an REST interface for the opinionated lifecycle management of container
 * Docker-compose subset as system specification syntax.
 * Kubernetes is the first supported orchestrator.
 
-## Why?
+## Goals
 
-* **Simplity**:
+* **Application Simplity**:
   * The Kubernetes API is extensive and extremely well documented. It is also large, complex, supports an range of possibilities far greater than many applications need, and requires the creation and control of many objects even to accomplish simple scenarios. Running a Jupyter notebook might create deployments, replica_sets, srevices, and pods to run a  container.
   * Tycho brings the comparative simplicity and familiarity of Docker-compose to Kubernetes.
 * **Microservice**: We really like Kompose but wanted an end to end Python 12-factory style OpenAPI microservice.
