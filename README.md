@@ -16,8 +16,6 @@ Tycho is an REST interface for the opinionated lifecycle management of container
 * **Lifecycle Management**: Tycho treats distributed systems as programs whose entire lifecycle can be programmatically managed via an API.
 * **Pluggable Orchestrators**: Tycho abstracts clients from the orchestrator. When we plug in a docker-compose orchestrator, teams will be able to start with compose and migrate to Kubernetes or other orchestrators.
 
-Kubernetes is the first supported orchestrator plugin.
-
 ## Quick Start
 samples/jupyter-datascience.yml:
 ```
