@@ -53,17 +53,23 @@ class TychoClientFactory:
             k8s_config.load_kube_config()
         api_client = k8s_client.ApiClient()
         self.api = k8s_client.CoreV1Api(api_client)
-    def get_client (name="tycho-api", namespace="default"):
-        service = self.api.api_instance.read_namespaced_service(
+    def get_client (self, name="tycho-api", namespace="default"):
+        url = None
+        client = None
+        service = self.api.read_namespaced_service(
             name=name,
             namespace=namespace)
         try:
-            ip_address = service.status.load_balancer.ingress.ip
+            ip_address = service.status.load_balancer.ingress[0].ip
             port = service.spec.ports[0].port
             url = f"http://{ip_address}:{port}"
         except Exception as e:
             traceback.print_exc (e)
-        return TychoClient (url=url)
+        if url:
+            client = TychoClient (url=url) 
+        else:
+            raise ValueError ("Unable to locate Tycho API endpoint.")
+        return client
         
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Tycho Client')
@@ -104,6 +110,17 @@ if __name__ == "__main__":
         system = template_utils.render_text(
             template,
             context={ "args" : args })
+
+    client = None
+    if args.service.startswith ('http://localhost'):
+        """ if the default value is set, try to discover the endpoint in kube. """
+        client_factory = TychoClientFactory ()
+        client = client_factory.get_client ()
+        if not client:
+            """ that didn't work. use the default value. """
+            client = TychoClient (url=args.service)
+    else:
+        client = TychoClient (url=args.service)
 
     if args.up:
         client.up (name=name, system=system)

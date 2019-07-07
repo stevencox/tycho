@@ -6,10 +6,10 @@ Tycho is an REST interface for the opinionated lifecycle management of container
 
 The first supported orchestrator is Kubernetes.
 
-While the Kubernetes API is extensive and well documented, it's also large and complex. Tycho encapsulates a few commonly used capabilities to make simple things simple.
+While the Kubernetes API is extensive and well documented, it's also large and complex. Tycho encapsulates commonly used capabilities to make simple things simple. We also envision Tycho eventually providing a docker-compose over REST interface to Kubernetes.
 
 ### Architecture
-![image](https://user-images.githubusercontent.com/306971/60749588-1dfd4c80-9f6a-11e9-955c-fb5e742ec3f1.png)
+![image](https://user-images.githubusercontent.com/306971/60749878-ada4fa00-9f6e-11e9-9fb8-d720cf78c41d.png)
 
 ## Install
 
@@ -25,7 +25,7 @@ pip install -r requirements.txt
 python api.py
 ```
 
-### Usage - Development Environment Next to Minikube
+### Usage - A. Development Environment Next to Minikube
 
 This mode uses a local minikube instance with Tycho running outside of Minikube. This is the easiest way to add and test new features quickly.
 
@@ -85,7 +85,7 @@ Verify the service is no longer running.
 (tycho) [scox@mac~/dev/tycho/tycho]$ ```
 ```
 
-### Usage - Within Minikube
+### Usage - B. Development Environment Within Minikube
 
 When we deploy Tycho into Minikube it is now able to get its Kubernetes API configuration from within the cluster.
 
@@ -138,7 +138,7 @@ And finally, we test the service againt to show it's no longer running:
 Error from server (NotFound): services "jupyter-data-science-3425" not found
 ```
 
-### Usage - Within Google Kubernetes Engine from the Google Cloud Shell
+### Usage - C. Within Google Kubernetes Engine from the Google Cloud Shell
 
 Install Python 3.7
 Create a virtual environment
@@ -172,16 +172,17 @@ Initialize the Tycho API's load balancer IP and node port.
 $ lb_ip=$(kubectl get svc tycho-api -o json | jq .status.loadBalancer.ingress[0].ip | sed -e s,\",,g)
 $ tycho_port=$(kubectl get service tycho-api --output json | jq .spec.ports[0].port)
 ```
-Launch an application (deployment, pod, service)
+Launch an application (deployment, pod, service). Note the `--command` flag is used to specify the command to run in the container. We use this to specify a flag that will cause the notebook to start without prompting for authentication credentials.
 ```
-$ PYTHONPATH=$PWD/.. python client.py --up -n jupyter-data-science-3425 -c jupyter/datascience-notebook -p 8888 -s http://$lb_ip:$tycho_port
+$ PYTHONPATH=$PWD/.. python client.py --up -n jupyter-data-science-3425 -c jupyter/datascience-notebook -p 8888 --command "start.sh jupyter lab --LabApp.token='
+'"
 200
 {
   "status": "success",
   "result": {
     "containers": {
       "jupyter-data-science-3425-c": {
-        "port": 30983
+        "port": 32414
       }
     }
   },
@@ -200,6 +201,8 @@ $ job_lb_ip=$(kubectl get svc jupyter-data-science-3425 -o json | jq .status.loa
 $ wget --quiet -O- http://$job_lb_ip:8888 | grep -i /title
     <title>Jupyter Notebook</title>
 ```
+From a browser, that URL takes us directly to the Jupyter Lab IDE:
+![image](https://user-images.githubusercontent.com/306971/60755934-dfe14680-9fc4-11e9-9d3b-d3f32539621d.png)
 
 And shut the service down:
 ```
@@ -213,23 +216,14 @@ $ PYTHONPATH=$PWD/.. python client.py --down -n jupyter-data-science-3425 -s htt
 ```
 This removes the deployment, pod, service, and replicasets created by the launcher.
 
-### Usage - Environment Variables and the Command Line Client
+### Client Endpoint Autodiscovery
 
-To launch Jupyter Lab to open without prompting for a token:
+Using the command lines above without the `-s` flag for server will work on GKE. That is, the client is created by first using the K8s API to locate the Tycho-API endpoint and port. It builds the URL automatically and creates a TychoAPI object ready to use.
 ```
-PYTHONPATH=$PWD/.. python client.py --up -n jupyter-data-science-3425 -c jupyter/datascience-notebook -p 8888 --command "start.sh jupyter lab --LabApp.token=''"
-200
-{
-  "status": "success",
-  "result": {
-    "container_map": {
-      "jupyter-data-science-3425-c": {
-        "port": 30756
-      }
-    }
-  },
-  "message": "Started system jupyter-data-science-3425"
-}
+client_factory = TychoClientFactory ()
+client = client_factory.get_client ()
 ```
 
-For a higher degree of control, control the client from Python.
+### Next
+
+[ ] Support (a useful subset of) Docker Compose as the input format.
