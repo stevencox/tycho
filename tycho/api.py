@@ -1,6 +1,7 @@
 import argparse
 import json
 import jsonschema
+import logging
 import os
 import requests
 import sys
@@ -12,6 +13,8 @@ from flask_restful import Api, Resource
 from flask_cors import CORS
 from tycho.compute import KubernetesCompute
 from tycho.model import System
+
+logger = logging.getLogger (__name__)
 
 app = Flask(__name__)
 
@@ -50,7 +53,7 @@ class TychoResource(Resource):
         try:
             jsonschema.validate(request.json, to_validate)
         except jsonschema.exceptions.ValidationError as error:
-            print (f"ERROR: {str(error)}")
+            app.logger.error (f"ERROR: {str(error)}")
             abort(Response(str(error), 400))
 
 class StartSystemResource(TychoResource):
@@ -89,13 +92,10 @@ class StartSystemResource(TychoResource):
         }
         system = None
         try:
-            print (f"Start system request: {json.dumps(request.json, indent=2)}")
-            self.validate (request)        
-            compute = get_compute ()
-            #system = System (**request.json)
-            #response['result'] = compute.start (System (**request.json))
+            app.logger.info (f"Start system request: {json.dumps(request.json, indent=2)}")
+            self.validate (request)     
             system = self.get_system (request.json)
-            response['result'] = compute.start (system)
+            response['result'] = get_compute().start (system)
             response['message'] = f"Started system {system.name}"
         except Exception as e:
             response['status'] = "error"
@@ -103,24 +103,24 @@ class StartSystemResource(TychoResource):
             exc_type, exc_value, exc_traceback = sys.exc_info()
             text = traceback.format_exception(
                 exc_type, exc_value, exc_traceback)
-            print (type(text))
             error_text = ''.join (text)
-            print (f"{error_text}")
             response['result'] = { "error" : error_text }
         return response
     def get_system (self, request):
+        """ Construct a system model based on the input request. """
         result = None
         name = request['name']
         if 'system' in request:
             result = self.process_docker_compose (name, request['system'])
-            print (f"result {result}")
+            app.logger.debug (f"result {result}")
             result = System(**result)
         else:
             result = System(**request)
         return result
     def process_docker_compose (self, name, compose):
+        """ Parse a docker-compose spec into a system spec. """
         containers = []
-        print (f"compose {compose}")
+        app.logger.debug (f"compose {compose}")
         for cname, spec in compose.get('services', {}).items ():
             containers.append ({
                 "name"    : cname,
@@ -174,10 +174,9 @@ class DeleteSystemResource(TychoResource):
         }
         try:
             self.validate (request) 
-            compute = get_compute ()
-            print (f"Delete request: {json.dumps(request.json, indent=2)}")
+            logging.debug (f"Delete request: {json.dumps(request.json, indent=2)}")
             system_name = request.json['name']
-            response['result'] = compute.delete (system_name)
+            response['result'] = get_compute().delete (system_name)
             response['message'] = f"Deleted system {system_name}"
         except Exception as e:
             response['status'] = "error"
@@ -188,12 +187,14 @@ class DeleteSystemResource(TychoResource):
             response['result'] = { "error" : text }
         return response
 
+""" Register endpoints. """
 api.add_resource(StartSystemResource, '/system/start')
 api.add_resource(DeleteSystemResource, '/system/delete')
 
 if __name__ == "__main__":
    parser = argparse.ArgumentParser(description='Tycho Distributed Compute API')
    parser.add_argument('-p', '--port',  type=int, help='Port to run service on.', default=5000)
-   parser.add_argument('-d', '--debug', help="Debug log level.", default=False)
+   parser.add_argument('-d', '--debug', help="Debug log level.", default=False, action='store_true')
    args = parser.parse_args ()
+   app.run(debug=args.debug)
    app.run(host='0.0.0.0', port=args.port, debug=True, threaded=True)

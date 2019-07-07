@@ -38,13 +38,13 @@ class KubernetesCompute(Compute):
         
         """ Turn an abstract system model into a cluster specific representation. """
         pod_manifest = system.project ("kubernetes-pod.yaml")
-        print (f"pod --------=> {json.dumps(pod_manifest, indent=2)}")
+        #print (f"pod --------=> {json.dumps(pod_manifest, indent=2)}")
 
         """ Create the generated pod in kube. """
         pod_spec = self.api.create_namespaced_pod(
             body=pod_manifest,
             namespace='default')
-        print(f"Pod created. status={pod_spec}") #api_response.status}")
+        #print(f"Pod created. status={pod_spec}") #api_response.status}")
         
         """ Create a deployment for the pod. """
         try:
@@ -72,14 +72,14 @@ class KubernetesCompute(Compute):
                     "container_port" : container_port
                 })
             
-            print (f"{json.dumps(service_manifest, indent=2)}")
+            #print (f"{json.dumps(service_manifest, indent=2)}")
             api_response = self.api.create_namespaced_service(
                 body=service_manifest,
                 namespace='default')
             container_map[container.name] = {
                 port.name : port.node_port for port in api_response.spec.ports
             }
-            print(f"Service created. status={api_response.status}")
+            #print(f"Service created. status={api_response.status}")
         return {
             'containers' : container_map
         }
@@ -102,7 +102,7 @@ class KubernetesCompute(Compute):
         api_response = self.extensions_api.create_namespaced_deployment(
             body=deployment,
             namespace=namespace)
-        print(f"Deployment created. status={api_response.status}")
+        #print(f"Deployment created. status={api_response.status}")
         return deployment
 
     def delete (self, name, namespace="default"):

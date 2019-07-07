@@ -1,5 +1,6 @@
 import requests
 import json
+import logging
 import os
 import traceback
 import argparse
@@ -7,28 +8,39 @@ import yaml
 from tycho.tycho_utils import TemplateUtils
 from kubernetes import client as k8s_client, config as k8s_config
 
+logger = logging.getLogger (__name__)
+
 class TychoClient:
-    """ Client to Tycho Kubernetes dynamic application deployment API. """
+    """ Client to Tycho dynamic application deployment API. """
 
     def __init__(self, url):
         self.url = f"{url}/system"
     def request (self, service, request):
+        """ Send a request to the server. Generic underlayer to all requests. """
         response = requests.post (f"{self.url}/{service}", json=request)
-        print (response.status_code)
+        result_text = f"HTTP status {response.status_code} received from service: {service}"
+        logger.debug (result_text)
+        if not response.status_code == 200:
+            raise Exception (f"Error: {result_text}")    
         return response.json ()
+    def format_name (self, name):
+        """ Format a service name to be a valid DNS label. """
+        return name.replace (os.sep, '-')
     def start (self, request):
+        """ Start a service. """
         return self.request ("start", request)
     def delete (self, request):
+        """ Delete a service. """
         return self.request ("delete", request)
     def down (self, name):
+        """ Bring down a service. """
         try:
             response = self.delete ({ "name" : self.format_name(name) })
             print (json.dumps (response, indent=2))
         except Exception as e:
             traceback.print_exc (e)
-    def format_name (self, name):
-        return name.replace (os.sep, '-')
     def up (self, name, system):
+        """ Bring a service up starting with a docker-compose spec. """
         request = {
             "name" : self.format_name (name),
             "system" : system
@@ -41,9 +53,10 @@ class TychoClient:
             print (json.dumps (response, indent=2))
             for process, spec in response.get('result',{}).get('containers',{}).items ():
                 port = spec['port']
-                print (f"http://192.168.99.111:{port}")
+                print (f"(minikube)=> http://192.168.99.111:{port}")
             
 class TychoClientFactory:
+    """ Locate Tycho. This is written to work in-cluster or standalone. """
     def __init__(self):
         """ Initialize connection to Kubernetes. """
         """ TODO: Authentication. """
@@ -54,21 +67,22 @@ class TychoClientFactory:
         api_client = k8s_client.ApiClient()
         self.api = k8s_client.CoreV1Api(api_client)
     def get_client (self, name="tycho-api", namespace="default"):
+        """ Locate the client endpoint using the K8s API. """
         url = None
         client = None
-        service = self.api.read_namespaced_service(
-            name=name,
-            namespace=namespace)
         try:
+            service = self.api.read_namespaced_service(
+                name=name,
+                namespace=namespace)
             ip_address = service.status.load_balancer.ingress[0].ip
             port = service.spec.ports[0].port
             url = f"http://{ip_address}:{port}"
         except Exception as e:
-            traceback.print_exc (e)
+            pass
+            #traceback.print_exc (e)
+            #logger.error (e)
         if url:
             client = TychoClient (url=url) 
-        else:
-            raise ValueError ("Unable to locate Tycho API endpoint.")
         return client
         
 if __name__ == "__main__":
@@ -82,17 +96,24 @@ if __name__ == "__main__":
     parser.add_argument('--env', help="Env variable", default=None)
     parser.add_argument('--command', help="Container command", default=None)
     parser.add_argument('-f', '--file', help="A docker compose (subset) formatted system spec.")
+    parser.add_argument('-t', '--trace', help="Trace (debug) logging", action='store_true', default=False)
     args = parser.parse_args ()
 
+    if args.trace:
+        #logger.setLevel (logging.DEBUG)
+        logging.basicConfig(level=logging.DEBUG)
+    
     client = TychoClient (url=args.service)
 
     name=None
     system=None
     if args.file:
+        """ Load the docker-compose spec. """
         name = args.file.split('.')[0]
         with open(args.file, "r") as stream:
             system = yaml.load (stream.read ())
     else:
+        """ Generate a docker-compose spec based on the CLI args. """
         name = args.name
         template_utils = TemplateUtils ()
         template = """
@@ -112,16 +133,18 @@ if __name__ == "__main__":
             context={ "args" : args })
 
     client = None
-    if args.service.startswith ('http://localhost'):
-        """ if the default value is set, try to discover the endpoint in kube. """
+    """ Locate the Tycho API endpoint. """
+    if args.service == parser.get_default ("service"):
+        """ If the endpoint is the default value, try to discover the endpoint in kube. """
         client_factory = TychoClientFactory ()
         client = client_factory.get_client ()
         if not client:
-            """ that didn't work. use the default value. """
+            """ That didn't work so use the default value. """
             client = TychoClient (url=args.service)
-    else:
+    if not client:
+        logger.info (f"creating client directly {args.service}")
         client = TychoClient (url=args.service)
-
+        
     if args.up:
         client.up (name=name, system=system)
     elif args.down:
