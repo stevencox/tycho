@@ -4,7 +4,7 @@
 
 Tycho is an REST interface for the opinionated lifecycle management of container orchestrated applications.
 
-* Docker-compose subset as system specification syntax.
+* A subset of docker-compose is the system specification syntax.
 * Kubernetes is the first supported orchestrator.
 
 ## Goals
