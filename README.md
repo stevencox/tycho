@@ -2,10 +2,10 @@
 
 [![Build Status](https://travis-ci.org/stevencox/tycho.svg?branch=master)](https://travis-ci.org/stevencox/tycho)
 
-Tycho is an REST interface for the opinionated lifecycle management of container orchestrated applications.
+Tycho is an API, compiler, and executor for cloud native distributed systems.
 
-* A subset of docker-compose is the system specification syntax.
-* Kubernetes is the first supported orchestrator.
+* A subset of [docker-compose](https://docs.docker.com/compose/) is the system specification syntax.
+* [Kubernetes](https://kubernetes.io/) is the first supported orchestrator.
 
 ## Goals
 
@@ -15,6 +15,17 @@ Tycho is an REST interface for the opinionated lifecycle management of container
 * **Microservice**: We really like Kompose but wanted an end to end Python 12-factory style OpenAPI microservice.
 * **Lifecycle Management**: Tycho treats distributed systems as programs whose entire lifecycle can be programmatically managed via an API.
 * **Pluggable Orchestrators**: Tycho abstracts clients from the orchestrator. When we plug in a docker-compose orchestrator, teams will be able to start with compose and migrate to Kubernetes or other orchestrators.
+* **Policy**: Tycho anticipates incorporating a policy definition and enforcement layer to allow roles, network policy, and other concerns to be woven into a deployment.
+
+## Prior Art
+
+This work relies on or is motivated by these foundations:
+* **Kubernetes**: Widely deployed, highly programmable, horizontally scalable container orchestration platform. 
+* **Kompose**: Automates conversion of Docker Compose to Kubernetes. Written in Go, does not provide an API. Supports Docker Compose to Kubernetes only.
+* **Docker**: Pervasive Linux containerization tool chain enabling programmable infrastructure and portability.
+* **Docker-compose**: Syntax and tool chain for executing distributed systems of containers.
+* **Docker Swarm**: Docker only container orchestration platform with minimal adoption.
+
 
 ## Quick Start
 samples/jupyter-datascience.yml:
