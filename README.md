@@ -10,11 +10,11 @@ Tycho is an API, compiler, and executor for cloud native distributed systems.
 ## Goals
 
 * **Application Simplity**:
-  * The Kubernetes API is extensive and extremely well documented. It is also large, complex, supports an range of possibilities far greater than many applications need, and requires the creation and control of many objects even to accomplish simple scenarios. Running a Jupyter notebook might create deployments, replica_sets, srevices, and pods to run a  container.
+  * The Kubernetes API is extensive and extremely well documented. It is also large, complex, supports an range of possibilities far greater than many applications need, and often requires the creation and control of many objects to execute comparatively simple scenarios. Running a Jupyter notebook might create deployments, replica_sets, srevices, and persistent volume claims to run a  container. Tycho bridges the simplicity of Compose to the richness of Kubernetes' architecture.
   * Tycho brings the comparative simplicity and familiarity of Docker-compose to Kubernetes.
-* **Microservice**: We really like Kompose but wanted an end to end Python 12-factory style OpenAPI microservice.
+* **Microservice**: We wanted an end to end Python 12-factory style OpenAPI microservice that fits seamlessly into a Python ecosystem (which is why we did not use the excellent Kompose tool as a starting point).
 * **Lifecycle Management**: Tycho treats distributed systems as programs whose entire lifecycle can be programmatically managed via an API.
-* **Pluggable Orchestrators**: Tycho abstracts clients from the orchestrator. When we plug in a docker-compose orchestrator, teams will be able to start with compose and migrate to Kubernetes or other orchestrators.
+* **Pluggable Orchestrators**: The Tycho compiler abstracts clients from the orchestrator. It creates an abstract syntax tree to model input systems and generates orchestrator specific artifacts.
 * **Policy**: Tycho anticipates incorporating a policy definition and enforcement layer to allow roles, network policy, and other concerns to be woven into a deployment.
 
 ## Prior Art
