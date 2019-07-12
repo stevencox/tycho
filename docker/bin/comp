@@ -5,14 +5,14 @@ build () {
     if [ -z "$mod" ]; then
         echo module name required
     fi
-    docker build --no-cache $mod -t greentranslator/$mod
+    docker build --no-cache $mod -t heliumdatastage/$mod
 }
 push () {
     local mod=$1
     if [ -z "$mod" ]; then
         echo module name required
     fi
-    docker push greentranslator/$mod
+    docker push heliumdatastage/$mod
 }
 clean () {
     images () {

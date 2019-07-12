@@ -7,3 +7,5 @@ services:
     entrypoint: start.sh jupyter lab --LabApp.token=
     ports:
       - 8888:8888
+    volumes:
+      - .:/samples

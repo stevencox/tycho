@@ -13,7 +13,7 @@ spec:
     - --name=tycho
     - --timeout=600
     - tycho.api:app
-    image: greentranslator/tycho-api:latest
+    image: heliumdatastage/tycho-api:latest
     name: tycho-api
     ports:
     - containerPort: 8099
