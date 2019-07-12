@@ -93,6 +93,18 @@ class KubernetesCompute(Compute):
                 print(api_response_pvc)
             except ApiException as e:
                 print("Exception when calling CoreV1Api->create_namespaced_persistent_volume_claim: %s\n" % e)
+
+            pv_manifest = =utils.render (
+                template="pv.yaml",
+                context={
+                    "system" : system,
+                })
+
+            try: 
+                api_response_pv = self.api.create_persistent_volume(body=pv_manifest)
+                print(api_response_pv)
+            except ApiException as e:
+                print("Exception when calling CoreV1Api->create_persistent_volume: %s\n" % e)
             #print(f"Service created. status={api_response.status}")
         return {
             'containers' : container_map
