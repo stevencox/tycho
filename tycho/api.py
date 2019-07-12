@@ -131,7 +131,8 @@ class StartSystemResource(TychoResource):
                     { "containerPort" : p.split(':')[0] if ':' in p else p
                       for p in spec.get ("ports", [])
                     }
-                ]
+                ],
+                "volumes"  : spec.get('volumes', '')[0].split(":")[1]
             })
         return {
             "name" : name,

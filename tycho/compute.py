@@ -79,6 +79,20 @@ class KubernetesCompute(Compute):
             container_map[container.name] = {
                 port.name : port.node_port for port in api_response.spec.ports
             }
+
+            pvc_manifest=utils.render (
+                template="pvc.yaml",
+                context={
+                    "system" : system,
+                })
+
+            try:
+                api_response_pvc = self.api.create_namespaced_persistent_volume_claim(
+                    namespace ='default',
+                    body=pvc_manifest)
+                print(api_response_pvc)
+            except ApiException as e:
+                print("Exception when calling CoreV1Api->create_namespaced_persistent_volume_claim: %s\n" % e)
             #print(f"Service created. status={api_response.status}")
         return {
             'containers' : container_map

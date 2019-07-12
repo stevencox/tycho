@@ -24,7 +24,8 @@ class Container:
                  env=None,
                  identity=None,
                  limits=None,
-                 ports=[]):
+                 ports=[],
+                 volumes=None):
         self.name = name
         self.image = image
         self.identity = identity
@@ -34,6 +35,7 @@ class Container:
         self.ports = ports
         self.command = command
         self.env = env
+        self.volumes = volumes
     def __repr__(self):
         return f"name:{self.name} image:{self.image} id:{self.identity} limits:{self.limits}"
 

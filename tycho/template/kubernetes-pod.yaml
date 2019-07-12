@@ -17,10 +17,25 @@ spec:
 {% if container.env %}
     env: {{ container.env }}
 {% endif %}
+{% if container.ports %}     
+    ports:
+       - containerPort: {{ container.ports[0]['containerPort'] }}
+         protocol: TCP
+   {% endif %}
 {% if container.limits %}
     resources:
       requests:
         cpu: "{{ container.limits.cpus }}"  
         memory: "{{ container.limits.memory }}"
     {% endif %}
+{% if container.volumes %}
+    volumeMounts:
+      - name: {{ name }}
+        mountPath: {{ container.volumes }}
+        readOnly: false
+  volumes:
+    - name: {{ name }}
+      persistentVolumeClaim:
+        claimName: pvc-for-{{ name }}
+     {% endif %}
 {% endfor %}
