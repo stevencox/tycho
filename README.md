@@ -2,19 +2,28 @@
 
 [![Build Status](https://travis-ci.org/stevencox/tycho.svg?branch=master)](https://travis-ci.org/stevencox/tycho)
 
-Tycho is an REST interface for the opinionated lifecycle management of container orchestrated applications.
+Tycho is an API, compiler, and executor for cloud native distributed systems.
 
-* Docker-compose subset as system specification syntax.
-* Kubernetes is the first supported orchestrator.
+* A subset of [docker-compose](https://docs.docker.com/compose/) is the system specification syntax.
+* [Kubernetes](https://kubernetes.io/) is the first supported orchestrator.
 
-## Why?
+## Goals
 
-* **Simplity**:
-  * The Kubernetes API is extensive and extremely well documented. It is also large, complex, supports an range of possibilities far greater than many applications need, and requires the creation and control of many objects even to accomplish simple scenarios. Running a Jupyter notebook might create deployments, replica_sets, srevices, and pods to run a  container.
-  * Tycho brings the comparative simplicity and familiarity of Docker-compose to Kubernetes.
-* **Microservice**: We really like Kompose but wanted an end to end Python 12-factory style OpenAPI microservice.
+* **Application Simplity**: The Kubernetes API is reliable, extensive, and well documented. It is also large, complex, supports an range of possibilities greater than many applications need, and often requires the creation and control of many objects to execute comparatively simple scenarios. Tycho bridges the simplicity of Compose to the richness of the Kubernetes' architecture.
+* **Microservice**: We wanted an end to end Python 12-factory style OpenAPI microservice that fits seamlessly into a Python ecosystem (which is why we did not use the excellent Kompose tool as a starting point).
 * **Lifecycle Management**: Tycho treats distributed systems as programs whose entire lifecycle can be programmatically managed via an API.
-* **Pluggable Orchestrators**: Tycho abstracts clients from the orchestrator. When we plug in a docker-compose orchestrator, teams will be able to start with compose and migrate to Kubernetes or other orchestrators.
+* **Pluggable Orchestrators**: The Tycho compiler abstracts clients from the orchestrator. It creates an abstract syntax tree to model input systems and generates orchestrator specific artifacts.
+* **Policy**: Tycho anticipates incorporating a policy definition and enforcement layer to allow roles, network policy, and other concerns to be woven into a deployment.
+
+## Prior Art
+
+This work relies on or is motivated by these foundations:
+* **[Kubernetes](https://kubernetes.io/)**: Widely deployed, highly programmable, horizontally scalable container orchestration platform. 
+* **[Kompose](https://docs.docker.com/compose/)**: Automates conversion of Docker Compose to Kubernetes. Written in Go, does not provide an API. Supports Docker Compose to Kubernetes only.
+* **[Docker](https://www.docker.com/)**: Pervasive Linux containerization tool chain enabling programmable infrastructure and portability.
+* **[Docker-compose](https://docs.docker.com/compose/)**: Syntax and tool chain for executing distributed systems of containers.
+* **Docker Swarm**: Docker only container orchestration platform with minimal adoption.
+
 
 ## Quick Start
 samples/jupyter-datascience.yml:
