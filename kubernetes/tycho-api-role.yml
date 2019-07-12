@@ -5,6 +5,7 @@ metadata:
 rules:
 - apiGroups:
   - ""
+  # added pvc resource
   resources:
   - pods
   - services
