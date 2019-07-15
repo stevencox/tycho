@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import yaml
+import uuid
 from kubernetes import client as k8s_client, config as k8s_config
 from tycho.model import System
 from tycho.tycho_utils import TemplateUtils
@@ -35,10 +36,12 @@ class KubernetesCompute(Compute):
         - The deployment
         - The service
         """
+
+        """ Generate a globally unique identifier for the application. All associated objects will share this identifier. """
+        system.name = f"{system.name}-{uuid.uuid4().hex}"
         
         """ Turn an abstract system model into a cluster specific representation. """
         pod_manifest = system.project ("kubernetes-pod.yaml")
-        #print (f"pod --------=> {json.dumps(pod_manifest, indent=2)}")
 
         utils = TemplateUtils ()
 
@@ -58,9 +61,9 @@ class KubernetesCompute(Compute):
 
         pv_manifest = utils.render(
             template="pv.yaml",
-        context={
-            "system": system,
-        })
+            context={
+                "system": system,
+            })
 
         try:
             api_response_pv = self.api.create_persistent_volume(body=pv_manifest)
@@ -107,9 +110,8 @@ class KubernetesCompute(Compute):
             container_map[container.name] = {
                 port.name : port.node_port for port in api_response.spec.ports
             }
-
-            #print(f"Service created. status={api_response.status}")
         return {
+            'sid' : system.name,
             'containers' : container_map
         }
 
