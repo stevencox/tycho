@@ -5,9 +5,11 @@ metadata:
 rules:
 - apiGroups:
   - ""
+  # added pvc resource
   resources:
   - pods
   - services
+  - persistentvolumeclaims
   verbs:
   - '*'
 - apiGroups:
