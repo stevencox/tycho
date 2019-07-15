@@ -180,7 +180,7 @@ class KubernetesCompute(Compute):
 
         try: 
             name = "pvc-for-" + name
-            api_response = api_instance.delete_namespaced_persistent_volume_claim(
+            api_response = self.api.delete_namespaced_persistent_volume_claim(
                 name=name, 
                 namespace=namespace)
             print(api_response)
@@ -189,7 +189,7 @@ class KubernetesCompute(Compute):
 
         try: 
             name = "pv-for-" + name
-            api_response = api_instance.delete_persistent_volume(
+            api_response = self.api.delete_persistent_volume(
                 name=name)
             print(api_response)
         except ApiException as e:
