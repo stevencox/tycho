@@ -178,3 +178,19 @@ class KubernetesCompute(Compute):
         except Exception as e:
             print (e)
 
+        try: 
+            name = "pvc-for-" + name
+            api_response = api_instance.delete_namespaced_persistent_volume_claim(
+                name=name, 
+                namespace=namespace)
+                print(api_response)
+        except ApiException as e:
+            print("Exception when calling CoreV1Api->delete_namespaced_persistent_volume_claim: %s\n" % e)
+
+        try: 
+            name = "pv-for-" + name
+            api_response = api_instance.delete_persistent_volume(
+                name=name)
+            print(api_response)
+        except ApiException as e:
+            print("Exception when calling CoreV1Api->delete_persistent_volume: %s\n" % e)
