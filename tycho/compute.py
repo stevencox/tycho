@@ -94,7 +94,7 @@ class KubernetesCompute(Compute):
             except ApiException as e:
                 print("Exception when calling CoreV1Api->create_namespaced_persistent_volume_claim: %s\n" % e)
 
-            pv_manifest = =utils.render (
+            pv_manifest = utils.render (
                 template="pv.yaml",
                 context={
                     "system" : system,
