@@ -109,10 +109,19 @@ class KubernetesCompute(Compute):
         except ApiException as e:
             print("Exception when calling CoreV1Api->create_namespaced_persistent_volume_claim: %s\n" % e)
 
+        try:
+            pv_raw = system.name.split("-")
+            pv_raw.pop(len(pv_raw)-1)
+            pv_name = "-".join(pv_raw)
+            print("PV NAME", pv_name)
+        except Exception as e:
+            print(e)
+
         pv_manifest = utils.render(
             template="pv.yaml",
             context={
-                "system": system
+                "system": system,
+                "pv_name": pv_name
             })
 
         try:
@@ -231,7 +240,7 @@ class KubernetesCompute(Compute):
             print (e)
 
         try: 
-            name = "pvc-for-" + name
+            pvc_name = "pvc-for-" + name
             api_response = self.api.delete_namespaced_persistent_volume_claim(
                 name=name,
                 body=k8s_client.V1DeleteOptions(), 
@@ -241,7 +250,7 @@ class KubernetesCompute(Compute):
             print("Exception when calling CoreV1Api->delete_namespaced_persistent_volume_claim: %s\n" % e)
 
         try: 
-            name = "pv-for-" + name
+            pv_name = "pv-for-" + name
             api_response = self.api.delete_persistent_volume(
                 name=name,
                 body=k8s_client.V1DeleteOptions())
