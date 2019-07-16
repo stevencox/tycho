@@ -29,14 +29,14 @@ spec:
         cpu: "{{ container.limits.cpus }}"  
         memory: "{{ container.limits.memory }}"
     {% endif %}
-#{% if container.volumes %}
-#    volumeMounts:
-#      - name: {{ name }}
-#        mountPath: {{ container.volumes }}
-#        readOnly: false
-#  volumes:
-#    - name: {{ name }}
-#      persistentVolumeClaim:
-#        claimName: pvc-for-{{ name }}
-#     {% endif %}
+{% if container.volumes %}
+    volumeMounts:
+      - name: {{ name }}
+        mountPath: {{ container.volumes }}
+        readOnly: false
+  volumes:
+    - name: {{ name }}
+      persistentVolumeClaim:
+        claimName: pvc-for-{{ name }}
+     {% endif %}
 {% endfor %}
