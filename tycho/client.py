@@ -117,6 +117,7 @@ if __name__ == "__main__":
     parser.add_argument('--settings', help="Environment settings", default=None)
     parser.add_argument('-f', '--file', help="A docker compose (subset) formatted system spec.")
     parser.add_argument('-t', '--trace', help="Trace (debug) logging", action='store_true', default=False)
+    parser.add_argument('-v', '--volumes', help="Mounts a volume", default=None)
     args = parser.parse_args ()
 
     """ Honor debug and trace settings. """
@@ -155,6 +156,10 @@ if __name__ == "__main__":
               {% if args.port %}
               ports:
                 - "{{args.port}}"
+              {% endif %}
+              {% if args.volumes %}
+              volumes:
+                - "{{args.volumes}}"
               {% endif %}"""
         system = template_utils.render_text(
             TychoClientUtils.apply_environment (settings, template),

@@ -7,6 +7,8 @@ import uuid
 from kubernetes import client as k8s_client, config as k8s_config
 from tycho.model import System
 from tycho.tycho_utils import TemplateUtils
+import kubernetes.client
+from kubernetes.client.rest import ApiException
 
 logger = logging.getLogger (__name__)
 
@@ -111,7 +113,11 @@ class KubernetesCompute(Compute):
             template="pv.yaml",
             context={
                 "system": system,
+<<<<<<< HEAD
             })
+=======
+           })
+>>>>>>> 04be7876f1a9fc4015b2afc826c4afe37ae4b874
 
         try:
             api_response_pv = self.api.create_persistent_volume(body=pv_manifest)
@@ -231,7 +237,8 @@ class KubernetesCompute(Compute):
         try: 
             name = "pvc-for-" + name
             api_response = self.api.delete_namespaced_persistent_volume_claim(
-                name=name, 
+                name=name,
+                body=k8s_client.V1DeleteOptions(), 
                 namespace=namespace)
             print(api_response)
         except ApiException as e:
@@ -240,7 +247,8 @@ class KubernetesCompute(Compute):
         try: 
             name = "pv-for-" + name
             api_response = self.api.delete_persistent_volume(
-                name=name)
+                name=name,
+                body=k8s_client.V1DeleteOptions())
             print(api_response)
         except ApiException as e:
             print("Exception when calling CoreV1Api->delete_persistent_volume: %s\n" % e)

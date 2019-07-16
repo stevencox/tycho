@@ -7,6 +7,6 @@ spec:
     - ReadWriteOnce
   capacity:
     storage: 100Mi
-  persistentVolumeReclaimPolicy: Retain
+  persistentVolumeReclaimPolicy: Recycle
   gcePersistentDisk:
     pdName: {{ system.name }}-disk
