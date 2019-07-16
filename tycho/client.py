@@ -16,19 +16,14 @@ class TychoClient:
     """ Client to Tycho dynamic application deployment API. """
 
     def __init__(self, url):
-        #self.url = f"{url}/system"
-        self.url = "{0}/system".format (url)
+        self.url = f"{url}/system"
     def request (self, service, request):
         """ Send a request to the server. Generic underlayer to all requests. """
-        #response = requests.post (f"{self.url}/{service}", json=request)
-        response = requests.post ("{0}/{1}".format (self.url, service), json=request)
-        #result_text = f"HTTP status {response.status_code} received from service: {service}"
-        result_text = "HTTP status {0} received from service: {1}".format (response.status_code,
-                                                                           service)
+        response = requests.post (f"{self.url}/{service}", json=request)
+        result_text = f"HTTP status {response.status_code} received from service: {service}"
         logger.debug (result_text)
         if not response.status_code == 200:
-            #raise Exception (f"Error: {result_text}")    
-            raise Exception ("Error: {0}".format (result_text))    
+            raise Exception (f"Error: {result_text}")    
         return response.json ()
     def format_name (self, name):
         """ Format a service name to be a valid DNS label. """
@@ -60,8 +55,7 @@ class TychoClient:
             print (json.dumps (response, indent=2))
             for process, spec in response.get('result',{}).get('containers',{}).items ():
                 port = spec['port']
-                #print (f"(minikube)=> http://192.168.99.111:{port}")
-                print ("(minikube)=> http://192.168.99.111:{0}".format (port))
+                print (f"(minikube)=> http://192.168.99.111:{port}")
             
 class TychoClientFactory:
     """ Locate Tycho. This is written to work in-cluster or standalone. """
@@ -84,8 +78,7 @@ class TychoClientFactory:
                 namespace=namespace)
             ip_address = service.status.load_balancer.ingress[0].ip
             port = service.spec.ports[0].port
-            #url = f"http://{ip_address}:{port}"
-            url = "http://{0}:{1}".format (ip_address, port)
+            url = f"http://{ip_address}:{port}"
         except Exception as e:
             pass
             #traceback.print_exc (e)
@@ -106,8 +99,7 @@ class TychoClientUtils:
                 line.split("=", maxsplit=1)[0] : line.split("=", maxsplit=1)[1]
                 for line in environment.split ("\n") if '=' in line
             }
-            #print (f"{json.dumps (mapping, indent=2)}")
-            print (json.dumps (mapping, indent=2))
+            print (f"{json.dumps (mapping, indent=2)}")
             resolved = Template(text).safe_substitute (**mapping)
             print (resolved)
         return resolved
@@ -178,8 +170,7 @@ if __name__ == "__main__":
             """ That didn't work so use the default value. """
             client = TychoClient (url=args.service)
     if not client:
-        #logger.info (f"creating client directly {args.service}")
-        logger.info ("creating client directly {0}".format (args.service))
+        logger.info (f"creating client directly {args.service}")
         client = TychoClient (url=args.service)
         
     if args.up:
