@@ -58,9 +58,9 @@ class KubernetesCompute(Compute):
 
         pv_manifest = utils.render(
             template="pv.yaml",
-        context={
-            "system": system,
-        })
+            context={
+                "system": system,
+            })
 
         try:
             api_response_pv = self.api.create_persistent_volume(body=pv_manifest)
