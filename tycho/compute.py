@@ -6,8 +6,8 @@ import yaml
 from kubernetes import client as k8s_client, config as k8s_config
 from tycho.model import System
 from tycho.tycho_utils import TemplateUtils
-#import kubernetes.client
-#from kubernetes.client.rest import ApiException
+import kubernetes.client
+from kubernetes.client.rest import ApiException
 
 logger = logging.getLogger (__name__)
 
@@ -42,33 +42,33 @@ class KubernetesCompute(Compute):
         pod_manifest = system.project ("kubernetes-pod.yaml")
         #print (f"pod --------=> {json.dumps(pod_manifest, indent=2)}")
 
-        #utils = TemplateUtils ()
+        utils = TemplateUtils ()
 
-        #pvc_manifest = utils.render(
-        #    template="pvc.yaml",
-        #    context={
-        #        "system": system,
-        #    })
+        pvc_manifest = utils.render(
+            template="pvc.yaml",
+            context={
+                "system": system,
+            })
 
-        #try:
-        #    api_response_pvc = self.api.create_namespaced_persistent_volume_claim(
-        #        namespace='default',
-        #        body=pvc_manifest)
-        #    print(api_response_pvc)
-        #except ApiException as e:
-        #    print("Exception when calling CoreV1Api->create_namespaced_persistent_volume_claim: %s\n" % e)
+        try:
+            api_response_pvc = self.api.create_namespaced_persistent_volume_claim(
+                namespace='default',
+                body=pvc_manifest)
+            print(api_response_pvc)
+        except ApiException as e:
+            print("Exception when calling CoreV1Api->create_namespaced_persistent_volume_claim: %s\n" % e)
 
-        #pv_manifest = utils.render(
-        #    template="pv.yaml",
-        #    context={
-        #        "system": system,
-        #   })
+        pv_manifest = utils.render(
+            template="pv.yaml",
+            context={
+                "system": system,
+           })
 
-        #try:
-        #    api_response_pv = self.api.create_persistent_volume(body=pv_manifest)
-        #    print(api_response_pv)
-        #except ApiException as e:
-        #    print("Exception when calling CoreV1Api->create_persistent_volume: %s\n" % e)
+        try:
+            api_response_pv = self.api.create_persistent_volume(body=pv_manifest)
+            print(api_response_pv)
+        except ApiException as e:
+            print("Exception when calling CoreV1Api->create_persistent_volume: %s\n" % e)
 
         """ Create the generated pod in kube. """
         pod_spec = self.api.create_namespaced_pod(
@@ -180,21 +180,21 @@ class KubernetesCompute(Compute):
         except Exception as e:
             print (e)
 
-        #try: 
-        #    name = "pvc-for-" + name
-        #    api_response = self.api.delete_namespaced_persistent_volume_claim(
-        #        name=name,
-        #        body=k8s_client.V1DeleteOptions(), 
-        #        namespace=namespace)
-        #    print(api_response)
-        #except ApiException as e:
-        #    print("Exception when calling CoreV1Api->delete_namespaced_persistent_volume_claim: %s\n" % e)
+        try: 
+            name = "pvc-for-" + name
+            api_response = self.api.delete_namespaced_persistent_volume_claim(
+                name=name,
+                body=k8s_client.V1DeleteOptions(), 
+                namespace=namespace)
+            print(api_response)
+        except ApiException as e:
+            print("Exception when calling CoreV1Api->delete_namespaced_persistent_volume_claim: %s\n" % e)
 
-        #try: 
-        #    name = "pv-for-" + name
-        #    api_response = self.api.delete_persistent_volume(
-        #        name=name,
-        #        body=k8s_client.V1DeleteOptions())
-        #    print(api_response)
-        #except ApiException as e:
-        #    print("Exception when calling CoreV1Api->delete_persistent_volume: %s\n" % e)
+        try: 
+            name = "pv-for-" + name
+            api_response = self.api.delete_persistent_volume(
+                name=name,
+                body=k8s_client.V1DeleteOptions())
+            print(api_response)
+        except ApiException as e:
+            print("Exception when calling CoreV1Api->delete_persistent_volume: %s\n" % e)
