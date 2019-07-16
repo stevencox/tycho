@@ -14,6 +14,54 @@ class Compute:
     """ Abstraction of a compute cluster. """
     def start (self, system):
         pass
+class DockerComposeCompute(Compute):
+    def start (self, system, namespace="default"):        
+        """ Generate a globally unique identifier for the application. All associated objects will share this identifier. """
+        system.name = f"{system.name}-{uuid.uuid4().hex}"
+        docker_compose = f"{system.name}-docker-compose.yaml"
+
+        with open (docker_compose, 'w') as stream:
+            import yaml
+            from compose.cli.main import TopLevelCommand, project_from_options
+            yaml.dump (compose, stream)
+
+        options = {
+            "--no-deps": False,
+            "--abort-on-container-exit": False,
+            "SERVICE": "",
+            "--remove-orphans": False,
+            "--no-recreate": True,
+            "--force-recreate": False,
+            "--build": False,
+            '--no-build': False,
+            '--no-color': False,
+            "--rmi": "none",
+            "--volumes": "",
+            "--follow": False,
+            "--timestamps": False,
+            "--always-recreate-deps": False,
+            "--tail": "all",
+            "-d": True,
+        }
+        print (__file__)
+        #project = project_from_options(os.path.dirname(__file__), options)
+        project = project_from_options(os.getcwd(), options)
+        cmd = TopLevelCommand(project)
+        def oh_my ():
+            cmd.up(options)
+            def fin():
+                cmd.logs(options)
+                cmd.down(options)
+            request.addfinalizer(fin)
+        from_worker ([ oh_my ])
+        return {}
+
+    '''
+        with open(docker_compose, "w") as stream:
+            os.system 
+    '''
+    def delete (self, name, namespace="default"):
+        pass
     
 class KubernetesCompute(Compute):
     """ A Kubernetes specific implementation. """
