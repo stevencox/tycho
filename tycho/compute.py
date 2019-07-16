@@ -6,6 +6,8 @@ import yaml
 from kubernetes import client as k8s_client, config as k8s_config
 from tycho.model import System
 from tycho.tycho_utils import TemplateUtils
+import kubernetes.client
+from kubernetes.client.rest import ApiException
 
 logger = logging.getLogger (__name__)
 
