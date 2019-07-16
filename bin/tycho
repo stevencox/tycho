@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -x
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+export PYTHONPATH=$( dirname $DIR )
+
+up () {
+   python client.py --up $*
+}
+down () {
+   python client.py --down $*
+}
+
+$*
