@@ -6,7 +6,7 @@ metadata:
     service: tycho-api
   name: tycho-api
 spec:
-  type: NodePort
+  type: LoadBalancer
   selector:
     app: tycho-api
   ports:
