@@ -40,25 +40,26 @@ services:
 ```
 run:
 ```
-$ PYTHONPATH=$PWD/.. python client.py --up -f sample/jupyter-datascience.yml
-{
-  "status": "success",
-  "result": {
-    "containers": {
-      "jupyter-datascience": {
-        "port": 30907
-      }
-    }
-  },
-  "message": "Started system sample-jupyter-datascience"
-}
-(minikube)=> http://192.168.99.111:30907
-(tycho) [scox@mac~/dev/tycho/tycho]$ PYTHONPATH=$PWD/.. python client.py --down -f sample/jupyter-datascience.yml
-{
-  "status": "success",
-  "result": null,
-  "message": "Deleted system sample-jupyter-datascience"
-}
+$ tycho up -f sample/jupyter-datascience.yml
+SYSTEM                                                             GUID                                     PORT           
+sample-jupyter-datascience-4868096f8cdc400197b4d2f58b076b92        4868096f8cdc400197b4d2f58b076b92         32641          
+$ tycho up -f sample/jupyter-datascience.yml
+SYSTEM                                                             GUID                                     PORT           
+sample-jupyter-datascience-4d76d198246d4e8192060d218401864c        4d76d198246d4e8192060d218401864c         32081          
+$ wget --quiet -O- http://192.168.99.111:32641 | grep -i /title
+  <title>JupyterLab</title>
+$ wget --quiet -O- http://192.168.99.111:32081 | grep -i /title
+  <title>JupyterLab</title>
+$ tycho status
+SYSTEM                                                       GUID            
+sample-jupyter-datascience-4868096f8cdc400197b4d2f58b076b92  4868096f8cdc400197b4d2f58b076b92
+sample-jupyter-datascience-4d76d198246d4e8192060d218401864c  4d76d198246d4e8192060d218401864c
+$ for i in $(tycho status | grep -v SYSTEM | awk '{ print $2 }'); do tycho down $i; done
+deleted
+deleted
+$ wget --quiet -O- http://192.168.99.111:32081 | grep -i /title
+$ wget --quiet -O- http://192.168.99.111:32641 | grep -i /title
+$
 ```
 
 ### Architecture
