@@ -48,11 +48,11 @@ class TychoClient:
         if error:
             print (''.join (error))
         else:
-            print ('{:<35}  {:<40} {:<15}'.format("SYSTEM", "GUID", "PORT"))
+            print ('{:<65}  {:<40} {:<15}'.format("SYSTEM", "GUID", "PORT"))
             result = response.get('result',{})            
             for process, spec in result.get('containers',{}).items ():
                 port = spec['port']
-            print ('{:<35}  {:<40} {:<15}'.format (
+            print ('{:<65}  {:<40} {:<15}'.format (
                 result.get('name', ''),
                 result.get('sid', '-'),
                 port))
@@ -64,9 +64,9 @@ class TychoClient:
             status = response.get('status', None)
             if status  == 'success':
                 items = response.get('result', [])
-                print ('{:<35}  {:<16}'.format("SYSTEM", "GUID"))
+                print ('{:<65}  {:<16}'.format("SYSTEM", "GUID"))
                 for item in items:
-                    print ("{:<35}  {:<16}".format (
+                    print ("{:<65}  {:<16}".format (
                         item.get('name', None),
                         item.get ('sid', None)
                     ))
