@@ -96,13 +96,12 @@ class KubernetesCompute(Compute):
             
             """ Turn an abstract system model into a cluster specific representation. """
             pod_manifest = system.project ("kubernetes-pod.yaml")
-
+            """ Create a persistent volume claim """
             utils = TemplateUtils ()            
             pvc_manifest = utils.render(template="pvc.yaml",
                                         context={
                                             "system": system,
                                         })
-
             response = self.api.create_namespaced_persistent_volume_claim(
                 namespace='default',
                 body=pvc_manifest)
@@ -119,14 +118,14 @@ class KubernetesCompute(Compute):
             response = self.api.create_persistent_volume(body=pv_manifest)
 
             """ Create the generated pod in kube. """
-            pod_spec = self.api.create_namespaced_pod(
-                body=pod_manifest,
-                namespace='default')
+            #pod_spec = self.api.create_namespaced_pod(
+            #    body=pod_manifest,
+            #    namespace='default')
         
             """ Create a deployment for the pod. """
             deployment = self.pod_to_deployment (
                 name=system.name,
-                template=pod_spec,
+                template=pod_manifest,
                 namespace=namespace) 
         except Exception as e:
             self.delete (system.name)
