@@ -198,7 +198,4 @@ client_factory = TychoClientFactory ()
 client = client_factory.get_client ()
 ```
 
-### Next
-
-[ ] Support persistent volumes.
 
