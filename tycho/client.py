@@ -48,14 +48,18 @@ class TychoClient:
         if error:
             print (''.join (error))
         else:
-            print (json.dumps (response, indent=2))
-            for process, spec in response.get('result',{}).get('containers',{}).items ():
+            print ('{:<35}  {:<40} {:<15}'.format("SYSTEM", "GUID", "PORT"))
+            result = response.get('result',{})            
+            for process, spec in result.get('containers',{}).items ():
                 port = spec['port']
-                print (f"(minikube)=> http://192.168.99.111:{port}")
+            print ('{:<35}  {:<40} {:<15}'.format (
+                result.get('name', ''),
+                result.get('sid', '-'),
+                port))
+                #print (f"(minikube)=> http://192.168.99.111:{port}")
     def list (self, name):
         try:
             request = { "name" : self.format_name (name) } if name else {}
-            #response = self.status ({ "name" : self.format_name (name) if name else name })
             response = self.status (request)
             status = response.get('status', None)
             if status  == 'success':
@@ -74,7 +78,10 @@ class TychoClient:
         """ Bring down a service. """
         try:
             response = self.delete ({ "name" : self.format_name(name) })
-            print (json.dumps (response, indent=2))
+            if response.get('status',None) == 'success':
+                print ("deleted")
+            else:
+                print (json.dumps (response, indent=2))
         except Exception as e:
             traceback.print_exc (e)
             
@@ -152,8 +159,6 @@ if __name__ == "__main__":
     if args.settings:
         with open(args.settings, "r") as stream:
             settings = stream.read ()
-
-    #client = TychoClient (url=args.service)
 
     name=None
     system=None

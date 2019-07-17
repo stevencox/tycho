@@ -2,6 +2,8 @@ import argparse
 import json
 import logging
 import os
+import sys
+import traceback
 import yaml
 import uuid
 from kubernetes import client as k8s_client, config as k8s_config
@@ -9,6 +11,7 @@ from tycho.model import System
 from tycho.tycho_utils import TemplateUtils
 import kubernetes.client
 from kubernetes.client.rest import ApiException
+from tycho.exceptions import DeleteException
 
 logger = logging.getLogger (__name__)
 
@@ -87,89 +90,78 @@ class KubernetesCompute(Compute):
         - The service
         """
 
-        """ Generate a globally unique identifier for the application. All associated objects will share this identifier. """
-        #system.name = f"{system.name}-{uuid.uuid4().hex}"
-        
-        """ Turn an abstract system model into a cluster specific representation. """
-        pod_manifest = system.project ("kubernetes-pod.yaml")
-
-        utils = TemplateUtils ()
-
-        pvc_manifest = utils.render(
-            template="pvc.yaml",
-            context={
-                "system": system,
-            })
-
         try:
-            api_response_pvc = self.api.create_namespaced_persistent_volume_claim(
+
+            system.name = f"{system.name}-{system.identifier}"
+            
+            """ Turn an abstract system model into a cluster specific representation. """
+            pod_manifest = system.project ("kubernetes-pod.yaml")
+
+            utils = TemplateUtils ()            
+            pvc_manifest = utils.render(template="pvc.yaml",
+                                        context={
+                                            "system": system,
+                                        })
+
+            response = self.api.create_namespaced_persistent_volume_claim(
                 namespace='default',
                 body=pvc_manifest)
-            print(api_response_pvc)
-        except ApiException as e:
-            print("Exception when calling CoreV1Api->create_namespaced_persistent_volume_claim: %s\n" % e)
 
-        try:
             pv_raw = system.name.split("-")
             pv_raw.pop(len(pv_raw)-1)
             pv_name = "-".join(pv_raw)
-            print("PV NAME", pv_name)
-        except Exception as e:
-            print(e)
+            logger.debug (f"PV NAME {pv_name}", pv_name)
+            pv_manifest = utils.render(template="pv.yaml",
+                                       context={
+                                           "system": system,
+                                           "pv_name": pv_name
+                                       })
+            response = self.api.create_persistent_volume(body=pv_manifest)
 
-        pv_manifest = utils.render(
-            template="pv.yaml",
-            context={
-                "system": system,
-                "pv_name": pv_name
-            })
-
-        try:
-            api_response_pv = self.api.create_persistent_volume(body=pv_manifest)
-            print(api_response_pv)
-        except ApiException as e:
-            print("Exception when calling CoreV1Api->create_persistent_volume: %s\n" % e)
-
-        """ Create the generated pod in kube. """
-        pod_spec = self.api.create_namespaced_pod(
-            body=pod_manifest,
-            namespace='default')
-        #print(f"Pod created. status={pod_spec}") #api_response.status}")
+            """ Create the generated pod in kube. """
+            pod_spec = self.api.create_namespaced_pod(
+                body=pod_manifest,
+                namespace='default')
         
-        """ Create a deployment for the pod. """
-        try:
+            """ Create a deployment for the pod. """
             deployment = self.pod_to_deployment (
                 name=system.name,
                 template=pod_spec,
                 namespace=namespace) 
         except Exception as e:
             self.delete (system.name)
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            text = traceback.format_exception(
+                exc_type, exc_value, exc_traceback)
+            raise StartException (
+                message=f"Unable to start system: {system.name}",
+                details=text)
         
-        ''' one port mappable per container for now. '''
+        """ one port mappable per container for now. """
         container_map = {}
         for container in system.containers:
             if len(container.ports) != 1:
                 continue
-            container_port = container.ports[0]['containerPort']
-            logger.debug (f"Creating service exposing container {container.name}")
 
-            ''' render the service template. '''
+            container_port = container.ports[0]['containerPort']
+            logger.debug (f"Creating service exposing container {container.name} on port {container_port}")
+
+            """ render the service template. """
             utils = TemplateUtils ()
-            service_manifest=utils.render (
-                template="service.yaml",
-                context={
-                    "system" : system,
-                    "container_port" : container_port
-                })
-            
-            #print (f"{json.dumps(service_manifest, indent=2)}")
-            api_response = self.api.create_namespaced_service(
+            service_manifest=utils.render (template="service.yaml",
+                                           context={
+                                               "system" : system,
+                                               "container_port" : container_port
+                                           })
+
+            response = self.api.create_namespaced_service(
                 body=service_manifest,
                 namespace='default')
             container_map[container.name] = {
-                port.name : port.node_port for port in api_response.spec.ports
+                port.name : port.node_port for port in response.spec.ports
             }
         return {
+            'name' : system.name,
             'sid' : system.identifier,
             'containers' : container_map
         }
@@ -195,68 +187,71 @@ class KubernetesCompute(Compute):
         #print(f"Deployment created. status={api_response.status}")
         return deployment
 
+    def log_status (self, response):
+        if not response.status or response.status == 'Success':
+            logger.debug ("--succeeded")
+        elif response.status == 'Failure':
+            logger.error (f"--failed: {response}")
     def delete (self, name, namespace="default"):
         """ Delete the deployment. """
         try:
-            logger.info (f"Deleting deployment {name} in namespace {namespace}")
-            api_response = self.extensions_api.delete_namespaced_deployment(
-                name=name,
-                body=k8s_client.V1DeleteOptions(),
-                namespace=namespace)
-
-            response = self.extensions_api.delete_namespaced_deployment(
+            logger.info (f" --deleting deployment {name} in namespace {namespace}")
+            response = self.extensions_api.delete_collection_namespaced_deployment(
                 label_selector=f"tycho-guid={name}",
                 namespace=namespace)
-        except Exception as e:
-            print (e)
-
-        try:
-            logger.info (f"Deleting deployment {name} in namespace {namespace}")
+            self.log_status (response)
+            
+            logger.info (f" --deleting replica_set {name} in namespace {namespace}")
             response = self.extensions_api.delete_collection_namespaced_replica_set(
-                label_selector=f"name={name}",
+                label_selector=f"tycho-guid={name}",
                 namespace=namespace)
-        except Exception as e:
-            print (e)
+            self.log_status (response)
+        
+            """ Delete the service. No obvious collection based api for service deletion. """
+            service_list = self.api.list_namespaced_service(
+            label_selector=f"tycho-guid={name}", namespace=namespace)
+            for service in service_list.items:
+                if service.metadata.labels.get ("tycho-guid", None) == name:
+                    logger.info (f" --deleting service {name} in namespace {namespace}")
+                    response = self.api.delete_namespaced_service(
+                        name=service.metadata.name,
+                        body={},
+                        namespace=namespace)
+                    self.log_status (response)
+                
+            logger.info (f" --deleting pod {name} in namespace {namespace}")
+            response = self.api.delete_collection_namespaced_pod(
+                label_selector=f"tycho-guid={name}",
+                namespace=namespace)
+            self.log_status (response)
 
-        """ Delete the service """
-        try:
-            logger.info (f"Deleting service {name} in namespace {namespace}")
-            api_response = self.api.delete_namespaced_service(
-                name=name,
-                body=k8s_client.V1DeleteOptions(),
+            logger.info (f" --deleting persistent volume {name} in namespace {namespace}")
+            response = self.api.delete_collection_persistent_volume(
+                label_selector=f"tycho-guid={name}")
+            self.log_status (response)
+            
+            logger.info (f" --deleting persistent volume claim {name} in namespace {namespace}")
+            response = self.api.delete_collection_namespaced_persistent_volume_claim(
+                label_selector=f"tycho-guid={name}",
                 namespace=namespace)
-        except Exception as e:
-            print (e)
-
-        """ Delete the pod """
-        try:
-            logger.info (f"Deleting pod {name} in namespace {namespace}")
-            api_response = self.api.delete_collection_namespaced_pod(
-                label_selector=f"name={name}",
-                namespace=namespace)
-        except Exception as e:
-            print (e)
-
-        try: 
-            pvc_name = "pvc-for-" + name
-            api_response = self.api.delete_namespaced_persistent_volume_claim(
-                name=pvc_name,
-                body=k8s_client.V1DeleteOptions(), 
-                namespace=namespace)
-            print(f"api reponse => {api_response}")
+            self.log_status (response)
+        
         except ApiException as e:
-            print("Exception when calling CoreV1Api->delete_namespaced_persistent_volume_claim: %s\n" % e)
-
-        try: 
-            pv_name = "pv-for-" + name
-            api_response = self.api.delete_persistent_volume(
-                name=pv_name,
-                body=k8s_client.V1DeleteOptions())
-            print(f"api response => {api_response}")
-        except ApiException as e:
-            print("Exception when calling CoreV1Api->delete_persistent_volume: %s\n" % e)
-
+            traceback.print_exc (e)
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            text = traceback.format_exception(
+                exc_type, exc_value, exc_traceback)
+            raise DeleteException (
+                message=f"Failed to delete system: {name}",
+                details=text)
+        return {
+        }
+    
     def status (self, name=None, namespace="default"):
+        """ Get status.
+        Without a name, this will get status for all running systems.
+        With a name, it will get status for the specified system.
+        """
         result = []
         response = self.extensions_api.list_namespaced_deployment (
             namespace,

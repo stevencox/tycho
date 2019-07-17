@@ -4,6 +4,7 @@ metadata:
   labels:
     name: {{ system.name }}
     executor: tycho
+    tycho-guid: {{ system.identifier }}
   name: pvc-for-{{ system.name }}
 spec:
   accessModes:

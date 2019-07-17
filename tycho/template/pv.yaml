@@ -4,6 +4,7 @@ metadata:
   name: pv-for-{{ system.name }}
   labels:
     executor: tycho
+    tycho-guid: {{ system.identifier }}
 spec:
   accessModes:
     - ReadWriteOnce

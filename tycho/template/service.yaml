@@ -6,6 +6,7 @@ metadata:
   labels:
     name: {{ system.name }}
     executor: tycho
+    tycho-guid: {{ system.identifier }}
   name: {{ system.name }}
 resourceversion: v1
 spec:
