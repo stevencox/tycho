@@ -18,6 +18,7 @@ Tycho is an API, compiler, and executor for cloud native distributed systems.
 ## Prior Art
 
 This work relies on or is motivated by these foundations:
+* **[PIVOT](https://renci.org/wp-content/uploads/2019/02/Cloud_19.pdf)**: A cloud agnostic scheduler with an API for executing distributed systems.
 * **[Kubernetes](https://kubernetes.io/)**: Widely deployed, highly programmable, horizontally scalable container orchestration platform. 
 * **[Kompose](https://docs.docker.com/compose/)**: Automates conversion of Docker Compose to Kubernetes. Written in Go, does not provide an API. Supports Docker Compose to Kubernetes only.
 * **[Docker](https://www.docker.com/)**: Pervasive Linux containerization tool chain enabling programmable infrastructure and portability.
@@ -40,6 +41,7 @@ services:
 ```
 run:
 ```
+$ export PATH=~/dev/tycho/bin:$PATH
 $ tycho up -f sample/jupyter-datascience.yml
 SYSTEM                                                             GUID                                     PORT           
 sample-jupyter-datascience-4868096f8cdc400197b4d2f58b076b92        4868096f8cdc400197b4d2f58b076b92         32641          
@@ -100,44 +102,7 @@ PYTHONPATH=$PWD/.. python api.py
 Launch the Swagger interface `http://localhost:5000/apidocs/`.
 ![image](https://user-images.githubusercontent.com/306971/53313133-f1337d00-3885-11e9-8aea-83ab4a92807e.png)
 
-Use the Tycho client to launch the Jupyter data-science notebook. It is given the name jupyter-data-science-3425 and exposes port 8888.
-```
-(tycho) [scox@mac~/dev/tycho/tycho]$ PYTHONPATH=$PWD/.. python client.py --up -n jupyter-data-science-3425 -c jupyter/datascience-notebook -p 8888
-200
-{
-  "status": "success",
-  "result": {
-    "container_map": {
-      "jupyter-data-science-3425-c": {
-        "port": 32188
-      }
-    }
-  },
-  "message": "Started system jupyter-data-science-3425"
-}
-http://192.168.99.111:32188
-```
-
-Request data from the newly created service.
-```
-(tycho) [scox@mac~/dev/tycho/tycho]$ wget --quiet -O- http://192.168.99.111:32188 | grep -i /title
-    <title>Jupyter Notebook</title>
-```
-Shut down the service. This will delete all created artifacts (deployment, replica_sets, pods, services).
-```
-(tycho) [scox@mac~/dev/tycho/tycho]$ PYTHONPATH=$PWD/.. python client.py --down -n jupyter-data-science-3425
-200
-{
-  "status": "success",
-  "result": null,
-  "message": "Deleted system jupyter-data-science-3425"
-}
-```
-Verify the service is no longer running.
-```
-(tycho) [scox@mac~/dev/tycho/tycho]$ wget --quiet -O- http://192.168.99.111:32188 | grep -i /title
-(tycho) [scox@mac~/dev/tycho/tycho]$ ```
-```
+Use the Tycho CLI client as shown above or invoke the API.
 
 ### Usage - B. Development Environment Within Minikube
 
@@ -154,55 +119,10 @@ clusterrole.rbac.authorization.k8s.io/tycho-api-access created
 clusterrolebinding.rbac.authorization.k8s.io/tycho-api-access created
 service/tycho-api created
 ```
-Then we use the client to launch a notebook.
-```
-(tycho) [scox@mac~/dev/tycho/tycho]$ PYTHONPATH=$PWD/.. python client.py --up -n jupyter-data-science-3425 -c jupyter/datascience-notebook -p 8888 -s http://192.168.99.111:$(kubectl get svc tycho-api -o json | jq .spec.ports[0].nodePort)
-200
-{
-  "status": "success",
-  "result": {
-    "container_map": {
-      "jupyter-data-science-3425-c": {
-        "port": 31646
-      }
-    }
-  },
-  "message": "Started system jupyter-data-science-3425"
-}
-http://192.168.99.111:31646
-```
-We connect to the service to demonstrate it's running:
-```
-(tycho) [scox@mac~/dev/tycho/tycho]$ wget --quiet -O- http://192.168.99.111:$(kubectl get svc jupyter-data-science-3425 -o json | jq .spec.ports[0].nodePort) | grep -i /title
-    <title>Jupyter Notebook</title>
-```
-Then we delete the service from the cluster:
-```
-(tycho) [scox@mac~/dev/tycho/tycho]$ PYTHONPATH=$PWD/.. python client.py --down -n jupyter-data-science-3425
-200
-{
-  "status": "success",
-  "result": null,
-  "message": "Deleted system jupyter-data-science-3425"
-}
-```
-And finally, we test the service againt to show it's no longer running:
-```
-(tycho) [scox@mac~/dev/tycho/tycho]$ wget --quiet -O- http://192.168.99.111:$(kubectl get svc jupyter-data-science-3425 -o json | jq .spec.ports[0].nodePort) | grep -i /title
-Error from server (NotFound): services "jupyter-data-science-3425" not found
-```
+Then we use the client as usual.
 
 ### Usage - C. Within Google Kubernetes Engine from the Google Cloud Shell
 
-Install Python 3.7
-Create a virtual environment
-
-```
-$ python3.7 -m venv venv/tycho
-$ cd tycho/
-$ . ../venv/tycho/bin/activate
-$ pip install -r requirements.txt
-```
 Starting out, Tycho's not running on the cluster:
 ![image](https://user-images.githubusercontent.com/306971/60748993-b511d680-9f61-11e9-8851-ff75ca74d079.png)
 
