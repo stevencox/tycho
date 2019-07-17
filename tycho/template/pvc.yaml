@@ -3,6 +3,7 @@ kind: PersistentVolumeClaim
 metadata:
   labels:
     name: {{ system.name }}
+    executor: tycho
   name: pvc-for-{{ system.name }}
 spec:
   accessModes:

@@ -34,13 +34,9 @@ class TychoClient:
     def delete (self, request):
         """ Delete a service. """
         return self.request ("delete", request)
-    def down (self, name):
-        """ Bring down a service. """
-        try:
-            response = self.delete ({ "name" : self.format_name(name) })
-            print (json.dumps (response, indent=2))
-        except Exception as e:
-            traceback.print_exc (e)
+    def status (self, request):
+        """ Get status of running systems. """
+        return self.request ("status", request)
     def up (self, name, system):
         """ Bring a service up starting with a docker-compose spec. """
         request = {
@@ -56,6 +52,31 @@ class TychoClient:
             for process, spec in response.get('result',{}).get('containers',{}).items ():
                 port = spec['port']
                 print (f"(minikube)=> http://192.168.99.111:{port}")
+    def list (self, name):
+        try:
+            request = { "name" : self.format_name (name) } if name else {}
+            #response = self.status ({ "name" : self.format_name (name) if name else name })
+            response = self.status (request)
+            status = response.get('status', None)
+            if status  == 'success':
+                items = response.get('result', [])
+                print ('{:<35}  {:<16}'.format("SYSTEM", "GUID"))
+                for item in items:
+                    print ("{:<35}  {:<16}".format (
+                        item.get('name', None),
+                        item.get ('sid', None)
+                    ))
+            elif status == 'error':
+                print (json.dumps(response, indent=2))
+        except Exception as e:
+            traceback.print_exc (e)
+    def down (self, name):
+        """ Bring down a service. """
+        try:
+            response = self.delete ({ "name" : self.format_name(name) })
+            print (json.dumps (response, indent=2))
+        except Exception as e:
+            traceback.print_exc (e)
             
 class TychoClientFactory:
     """ Locate Tycho. This is written to work in-cluster or standalone. """
@@ -105,13 +126,15 @@ class TychoClientUtils:
         return resolved
     
 if __name__ == "__main__":
+    status_command="@status_command"
     parser = argparse.ArgumentParser(description='Tycho Client')
     parser.add_argument('-u', '--up', help="Launch service.", action='store_true')
+    parser.add_argument('-s', '--status', help="Get status of running systems.", nargs='?', const=status_command, default=None)
     parser.add_argument('-d', '--down', help="Delete a running system. Requires a system id.")
     parser.add_argument('-p', '--port', type=int, help="Port to expose.")
     parser.add_argument('-c', '--container', help="Container to run.")
     parser.add_argument('-n', '--name', help="Service name.")
-    parser.add_argument('-s', '--service', help="Tycho API URL.", default="http://localhost:5000")
+    parser.add_argument('--service', help="Tycho API URL.", default="http://localhost:5000")
     parser.add_argument('--env', help="Env variable", default=None)
     parser.add_argument('--command', help="Container command", default=None)
     parser.add_argument('--settings', help="Environment settings", default=None)
@@ -182,3 +205,8 @@ if __name__ == "__main__":
         client.up (name=name, system=system)
     elif args.down:
         client.down (name=args.down)
+    elif args.status:
+        if args.status == status_command: # non arg
+            client.list (name=None)
+        else:
+            client.list (name=args.status)

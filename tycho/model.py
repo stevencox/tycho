@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import uuid
 from tycho.tycho_utils import TemplateUtils
 
 class Limits:
@@ -43,6 +44,7 @@ class System:
     """ Distributed system of interacting containerized software. """
     def __init__(self, name, containers):
         self.name = name
+        self.identifier = uuid.uuid4().hex
         assert self.name is not None, "System name is required."
         containers_exist = len(containers) > 0
         none_are_null = not any([ c for c in containers if c == None ])
@@ -54,6 +56,7 @@ class System:
         utils = TemplateUtils ()
         return utils.render (template, context={
             "name" : self.name,
+            "system_id" : self.identifier,
             "containers" : self.containers
         })
     def __repr__(self):

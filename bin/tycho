@@ -1,15 +1,28 @@
 #!/bin/bash
 
-set -x
+set -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
-export PYTHONPATH=$( dirname $DIR )
+TYCHO_ROOT=$( dirname $DIR )
+export PYTHONPATH=$TYCHO_ROOT
+export TYCHO=$TYCHO_ROOT/tycho
 
+api () {
+#    export FLASK_APP=$TYCHO/api.py
+#    export FLASK_ENV=development
+#    flask run
+    python $TYCHO/api.py $*
+}
 up () {
-   python client.py --up $*
+    python $TYCHO/client.py --up $*
 }
 down () {
-   python client.py --down $*
+    python $TYCHO/client.py --down $*
+}
+status () {
+    python $TYCHO/client.py --status $*
 }
 
 $*
+
+exit 0

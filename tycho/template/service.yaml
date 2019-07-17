@@ -5,6 +5,7 @@ kind: Service
 metadata:
   labels:
     name: {{ system.name }}
+    executor: tycho
   name: {{ system.name }}
 resourceversion: v1
 spec:

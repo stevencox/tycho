@@ -134,4 +134,11 @@ components:
           type: string
           example: test-app
           description: Identifier of system to delete
-    
+    StatusRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: test-app
+          nullable: true
+          description: Identifier of system to list

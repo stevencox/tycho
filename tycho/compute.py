@@ -88,7 +88,7 @@ class KubernetesCompute(Compute):
         """
 
         """ Generate a globally unique identifier for the application. All associated objects will share this identifier. """
-        system.name = f"{system.name}-{uuid.uuid4().hex}"
+        #system.name = f"{system.name}-{uuid.uuid4().hex}"
         
         """ Turn an abstract system model into a cluster specific representation. """
         pod_manifest = system.project ("kubernetes-pod.yaml")
@@ -161,7 +161,7 @@ class KubernetesCompute(Compute):
                 port.name : port.node_port for port in api_response.spec.ports
             }
         return {
-            'sid' : system.name,
+            'sid' : system.identifier,
             'containers' : container_map
         }
 
@@ -194,12 +194,16 @@ class KubernetesCompute(Compute):
                 name=name,
                 body=k8s_client.V1DeleteOptions(),
                 namespace=namespace)
+
+            response = self.extensions_api.delete_namespaced_deployment(
+                label_selector=f"tycho-guid={name}",
+                namespace=namespace)
         except Exception as e:
             print (e)
 
         try:
             logger.info (f"Deleting deployment {name} in namespace {namespace}")
-            api_response = self.extensions_api.delete_collection_namespaced_replica_set(
+            response = self.extensions_api.delete_collection_namespaced_replica_set(
                 label_selector=f"name={name}",
                 namespace=namespace)
         except Exception as e:
@@ -218,12 +222,6 @@ class KubernetesCompute(Compute):
         """ Delete the pod """
         try:
             logger.info (f"Deleting pod {name} in namespace {namespace}")
-            '''
-            api_response = self.api.delete_namespaced_pod(
-                name=name,
-                body=k8s_client.V1DeleteOptions(),
-                namespace=namespace)
-            '''
             api_response = self.api.delete_collection_namespaced_pod(
                 label_selector=f"name={name}",
                 namespace=namespace)
@@ -248,3 +246,17 @@ class KubernetesCompute(Compute):
             print(f"api response => {api_response}")
         except ApiException as e:
             print("Exception when calling CoreV1Api->delete_persistent_volume: %s\n" % e)
+
+    def status (self, name=None, namespace="default"):
+        result = []
+        response = self.extensions_api.list_namespaced_deployment (
+            namespace,
+            label_selector=f"executor=tycho")
+        if response:
+            #print(f"** response: {response}")
+            for item in response.items:
+                result.append ({
+                    "name" : item.metadata.name,
+                    "sid"  : item.metadata.labels.get ("tycho-guid", None)
+                })
+        return result
