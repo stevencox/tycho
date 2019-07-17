@@ -131,16 +131,16 @@ class KubernetesCompute(Compute):
             print("Exception when calling CoreV1Api->create_persistent_volume: %s\n" % e)
 
         """ Create the generated pod in kube. """
-        pod_spec = self.api.create_namespaced_pod(
-            body=pod_manifest,
-            namespace='default')
+        #pod_spec = self.api.create_namespaced_pod(
+        #    body=pod_manifest,
+        #    namespace='default')
         #print(f"Pod created. status={pod_spec}") #api_response.status}")
         
         """ Create a deployment for the pod. """
         try:
             deployment = self.pod_to_deployment (
                 name=system.name,
-                template=pod_spec,
+                template=pod_manifest,
                 namespace=namespace) 
         except Exception as e:
             self.delete (system.name)
