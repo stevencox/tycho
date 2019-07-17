@@ -95,6 +95,7 @@ class KubernetesCompute(Compute):
 
         utils = TemplateUtils ()
 
+        """ Create a persistent volume claim """
         pvc_manifest = utils.render(
             template="pvc.yaml",
             context={
@@ -108,7 +109,8 @@ class KubernetesCompute(Compute):
             print(api_response_pvc)
         except ApiException as e:
             print("Exception when calling CoreV1Api->create_namespaced_persistent_volume_claim: %s\n" % e)
-
+        
+        """ Create a persistent volume object """
         try:
             pv_raw = system.name.split("-")
             pv_raw.pop(len(pv_raw)-1)
