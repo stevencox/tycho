@@ -11,4 +11,4 @@ spec:
     storage: 100Mi
   persistentVolumeReclaimPolicy: Recycle
   gcePersistentDisk:
-    pdName: {{ system.name }}-disk
+    pdName: {{ pv_name }}-disk
