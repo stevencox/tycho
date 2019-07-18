@@ -2,10 +2,10 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   labels:
-    name: {{ system.name }}
+    name: {{ volume_name }}
     executor: tycho
     tycho-guid: {{ system.identifier }}
-  name: pvc-for-{{ system.name }}
+  name: {{ claim_name }}
 spec:
   accessModes:
   - ReadWriteOnce
