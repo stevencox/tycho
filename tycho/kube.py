@@ -112,11 +112,13 @@ class KubernetesCompute(Compute):
     def pod_to_deployment (self, name, template, namespace="default"):
         
         """ Create a deployment specification. """
+        logger.debug (template)
         deployment_spec = k8s_client.ExtensionsV1beta1DeploymentSpec(
             replicas=1,
             template=template)
         
         """ Instantiate the deployment object """
+        logger.debug (deployment_spec)
         deployment = k8s_client.ExtensionsV1beta1Deployment(
             api_version="extensions/v1beta1",
             kind="Deployment",
