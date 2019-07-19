@@ -17,6 +17,7 @@ env:
     
 script:
 - tycho api &
+- sleep 10
 - PID=$!
 - echo $PID
 - wget -O- http://localhost:5000/
