@@ -109,26 +109,32 @@ class KubernetesCompute(Compute):
 
             """ Turn an abstract system model into a cluster specific representation. """
             pod_manifest = system.project ("kubernetes-pod.yaml")
-            """ Create a persistent volume claim """
-            utils = TemplateUtils ()            
-            pvc_manifest = utils.render(template="pvc.yaml",
-                                        context={
-                                            "system": system,
-                                        })
-            response = self.api.create_namespaced_persistent_volume_claim(
-                namespace='default',
-                body=pvc_manifest)
-
-            pv_raw = system.name.split("-")
-            pv_raw.pop(len(pv_raw)-1)
-            pv_name = "-".join(pv_raw)
-            logger.debug (f"PV NAME {pv_name}", pv_name)
-            pv_manifest = utils.render(template="pv.yaml",
-                                       context={
-                                           "system": system,
-                                           "pv_name": pv_name
-                                       })
-            response = self.api.create_persistent_volume(body=pv_manifest)
+            volumes = pod_manifest['spec']['volumes']
+            counter = 0
+            for volume in volumes:
+                """ Create a persistent volume claim """
+                utils = TemplateUtils ()
+                pvc_manifest = utils.render(template="pvc.yaml",
+                                            context={
+                                                "system": system,
+                                                "volume_name": volume['name'],
+                                                "claim_name": volume['persistentVolumeClaim']['claimName']
+                                            })
+                response = self.api.create_namespaced_persistent_volume_claim(
+                    namespace='default',
+                    body=pvc_manifest)
+                pv_raw = system.name.split("-")
+                pv_raw.pop(len(pv_raw)-1)
+                pv_name = "-".join(pv_raw) + "-" + str(counter)
+                counter += 1
+                logger.debug (f"PV NAME {pv_name}", pv_name)
+                pv_manifest = utils.render(template="pv.yaml",
+                                           context={
+                                               "system": system,
+                                               "pv_name": pv_name,
+                                               "volume_name": volume['name']
+                                           })
+                response = self.api.create_persistent_volume(body=pv_manifest)
 
             """ Create the generated pod in kube. """
             #pod_spec = self.api.create_namespaced_pod(
@@ -145,9 +151,9 @@ class KubernetesCompute(Compute):
             exc_type, exc_value, exc_traceback = sys.exc_info()
             text = traceback.format_exception(
                 exc_type, exc_value, exc_traceback)
-            raise StartException (
-                message=f"Unable to start system: {system.name}",
-                details=text)
+            #raise StartException (
+            #    message=f"Unable to start system: {system.name}",
+            #    details=text)
         
         """ one port mappable per container for now. """
         container_map = {}

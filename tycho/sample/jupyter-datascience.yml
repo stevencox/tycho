@@ -9,4 +9,6 @@ services:
       - 8888:$HOST_PORT
     volumes:
       - $LOCAL_STORE:/mydata
+      - ./:/mydata1
+      - ./home:/mydata2
 

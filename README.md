@@ -39,7 +39,12 @@ services:
     ports:
       - 8888:8888
 ```
-run:
+In one shell, run the API:
+```
+$ export PATH=~/dev/tycho/bin:$PATH
+$ tycho api
+```
+In another, manage applications.
 ```
 $ export PATH=~/dev/tycho/bin:$PATH
 $ tycho up -f sample/jupyter-datascience.yml

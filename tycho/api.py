@@ -138,7 +138,7 @@ class StartSystemResource(TychoResource):
                       for p in spec.get ("ports", [])
                     }
                 ],
-                "volumes"  : spec.get('volumes', '')[0].split(":")[1]
+                "volumes"  : [ v.split(":")[1] for v in spec.get("volumes", []) ]
             })
         return {
             "name" : name,
@@ -254,7 +254,6 @@ if __name__ == "__main__":
    parser.add_argument('-p', '--port',  type=int, help='Port to run service on.', default=5000)
    parser.add_argument('-d', '--debug', help="Debug log level.", default=False, action='store_true')
 
-   
    args = parser.parse_args ()
    if args.debug:
        logging.basicConfig(level=logging.DEBUG)

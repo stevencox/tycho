@@ -22,7 +22,8 @@ spec:
         - --name=tycho
         - --timeout=600
         - tycho.api:app
-        image: heliumdatastage/tycho-api:latest
+        image: heliumdatastage/tycho-api:dev
+        imagePullPolicy: "Always"
         name: tycho-api
         ports:
         - containerPort: 8099

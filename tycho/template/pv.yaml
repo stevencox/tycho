@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: pv-for-{{ system.name }}
+  name: pv-for-{{ volume_name }}
   labels:
     executor: tycho
     tycho-guid: {{ system.identifier }}
