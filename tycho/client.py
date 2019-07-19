@@ -167,13 +167,14 @@ if __name__ == "__main__":
         """ Load the docker-compose spec, applying environment settings. """
         name = args.file.split('.')[0]
         name = name.split (os.sep)[-2]
-        '''
+
+        """ Apply settings. """
         env_file = os.path.join (os.path.dirname (args.file), ".env")
         if os.path.exists (env_file):
             with open (env_file, 'r') as stream:
                 settings = stream.read ()
                 print (f"-----...---> {settings}")
-        '''
+
         with open(args.file, "r") as stream:
             text = stream.read ()
             text = TemplateUtils.apply_environment (settings, text)
