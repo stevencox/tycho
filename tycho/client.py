@@ -57,19 +57,23 @@ class TychoClient:
                 result.get('sid', '-'),
                 port))
                 #print (f"(minikube)=> http://192.168.99.111:{port}")
-    def list (self, name):
+    def list (self, name, terse=False):
         try:
             request = { "name" : self.format_name (name) } if name else {}
             response = self.status (request)
             status = response.get('status', None)
             if status  == 'success':
                 items = response.get('result', [])
-                print ('{:<65}  {:<16}'.format("SYSTEM", "GUID"))
-                for item in items:
-                    print ("{:<65}  {:<16}".format (
-                        item.get('name', None),
-                        item.get ('sid', None)
-                    ))
+                if terse:
+                    for item in items:
+                        print (item.get ('sid', None))
+                else:
+                    print ('{:<65}  {:<16}'.format("SYSTEM", "GUID"))
+                    for item in items:
+                        print ("{:<65}  {:<16}".format (
+                            item.get('name', None),
+                            item.get ('sid', None)
+                        ))
             elif status == 'error':
                 print (json.dumps(response, indent=2))
         except Exception as e:
@@ -79,7 +83,7 @@ class TychoClient:
         try:
             response = self.delete ({ "name" : self.format_name(name) })
             if response.get('status',None) == 'success':
-                print ("deleted")
+                print (f"{name}")
             else:
                 print (json.dumps (response, indent=2))
         except Exception as e:
@@ -147,6 +151,7 @@ if __name__ == "__main__":
     parser.add_argument('--settings', help="Environment settings", default=None)
     parser.add_argument('-f', '--file', help="A docker compose (subset) formatted system spec.")
     parser.add_argument('-t', '--trace', help="Trace (debug) logging", action='store_true', default=False)
+    parser.add_argument('--terse', help="Keep status short", action='store_true', default=True)
     parser.add_argument('-v', '--volumes', help="Mounts a volume", default=None)
     args = parser.parse_args ()
 
@@ -212,6 +217,6 @@ if __name__ == "__main__":
         client.down (name=args.down)
     elif args.status:
         if args.status == status_command: # non arg
-            client.list (name=None)
+            client.list (name=None, terse=args.terse)
         else:
-            client.list (name=args.status)
+            client.list (name=args.status, terse=args.terse)

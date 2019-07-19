@@ -6,7 +6,7 @@ services:
     image: jupyter/datascience-notebook
     entrypoint: start.sh jupyter lab --LabApp.token=
     ports:
-      - 8888:8888
+      - 8888:$HOST_PORT
     volumes:
       - $LOCAL_STORE:/mydata
 

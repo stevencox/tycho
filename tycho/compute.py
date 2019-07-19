@@ -13,22 +13,29 @@ import kubernetes.client
 from kubernetes.client.rest import ApiException
 from tycho.exceptions import DeleteException
 
-logger = logging.getLogger (__name__)
+from compose.cli.main import TopLevelCommand, project_from_options
 
+logger = logging.getLogger (__name__)
+    
 class Compute:
     """ Abstraction of a compute cluster. """
-    def start (self, system):
+    def start (self, system, namespace="default"):
         pass
+    def delete (self, name, namespace="default"):
+        pass
+    def status (self, name=None, namespace="default"):
+        pass
+    
 class DockerComposeCompute(Compute):
     def start (self, system, namespace="default"):        
-        """ Generate a globally unique identifier for the application. All associated objects will share this identifier. """
+        """ Generate a globally unique identifier for the application. All associated 
+        objects will share this identifier. """
         system.name = f"{system.name}-{uuid.uuid4().hex}"
-        docker_compose = f"{system.name}-docker-compose.yaml"
+        docker_compose_file = f"{system.name}-docker-compose.yaml"
 
-        with open (docker_compose, 'w') as stream:
-            import yaml
-            from compose.cli.main import TopLevelCommand, project_from_options
-            yaml.dump (compose, stream)
+        # make unique sub directory, parallelize, etc.
+        with open (docker_compose_file, 'w') as stream:
+            stream.write (system.source_text)
 
         options = {
             "--no-deps": False,
@@ -48,6 +55,7 @@ class DockerComposeCompute(Compute):
             "--tail": "all",
             "-d": True,
         }
+        '''
         print (__file__)
         #project = project_from_options(os.path.dirname(__file__), options)
         project = project_from_options(os.getcwd(), options)
@@ -58,13 +66,20 @@ class DockerComposeCompute(Compute):
                 cmd.logs(options)
                 cmd.down(options)
             request.addfinalizer(fin)
-        from_worker ([ oh_my ])
-        return {}
+        oh_my ()
+        #from_worker ([ oh_my ])
+        '''
+        import subprocess
+        p = subprocess.Popen([ "docker-compose", "up", docker_compose_file ],
+                             stdout=subprocess.PIPE)
+        print (f"--communicate--> {p.communicate()}")
 
-    '''
-        with open(docker_compose, "w") as stream:
-            os.system 
-    '''
+        return {
+            'name' : system.name,
+            'sid' : system.identifier,
+            'containers' : {} #container_map
+        }
+    
     def delete (self, name, namespace="default"):
         pass
     
@@ -92,8 +107,6 @@ class KubernetesCompute(Compute):
 
         try:
 
-            system.name = f"{system.name}-{system.identifier}"
-            
             """ Turn an abstract system model into a cluster specific representation. """
             pod_manifest = system.project ("kubernetes-pod.yaml")
             """ Create a persistent volume claim """
@@ -263,3 +276,18 @@ class KubernetesCompute(Compute):
                     "sid"  : item.metadata.labels.get ("tycho-guid", None)
                 })
         return result
+
+    
+config = {
+#    "backplane" : "docker-compose"
+    "backplane" : "kubernetes"
+}
+config_factory = {
+    "kubernetes"     : KubernetesCompute,
+    "docker-compose" : DockerComposeCompute
+}
+
+class ComputeFactory:
+    @staticmethod
+    def create_compute ():
+        return config_factory[config['backplane']]()

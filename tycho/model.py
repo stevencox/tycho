@@ -44,8 +44,9 @@ class Container:
 class System:
     """ Distributed system of interacting containerized software. """
     def __init__(self, name, containers):
-        self.name = name
+        """ Construct a new system given a name and set of containers. """
         self.identifier = uuid.uuid4().hex
+        self.name = f"{name}-{self.identifier}"
         assert self.name is not None, "System name is required."
         containers_exist = len(containers) > 0
         none_are_null = not any([ c for c in containers if c == None ])
@@ -53,7 +54,10 @@ class System:
         self.containers = list(map(lambda v : Container(**v), containers)) \
                           if isinstance(containers[0], dict) else \
                              containers
+        self.source_text = None
+        
     def project (self, template):
+        """ Create a template for this system. """
         utils = TemplateUtils ()
         return utils.render (template, context={
             "name" : self.name,
