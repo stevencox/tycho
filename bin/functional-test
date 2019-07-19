@@ -1,0 +1,91 @@
+#/bin/bash
+
+set -e
+
+# cycles to wait for services.
+max_cycles=20
+
+# wait for the Tycho API endpoint
+tycho_port=5000
+api=http://localhost:$tycho_port
+for cycle in $(seq 1 $max_cycles); do
+    echo --testing $api cycle: $cycle
+    set +e
+    answer=$(wget --quiet -O- $api | grep Tycho)
+    set -e
+    if [ "$answer" ]; then
+        echo "  --got answer: $answer"
+        failed=0
+        break
+    else
+        sleep 5
+    fi
+done
+if [ "$failed" -eq 1 ]; then
+    echo --failed getting $api after $max_cycles attempts
+    exit 1
+fi
+
+# Deploy instances.
+cd tycho
+instances=3
+echo --launching $instances instances
+for i in $(seq 0 $(($instances-1))); do
+    tycho up -f sample/jupyter-datascience.yml \
+          --settings sample/jupyter-datascience-dev.env
+done
+
+# Show status
+echo --status...
+tycho status
+
+# Test connectivity to each instance
+hits=0
+minikube_ip=$(minikube ip)
+echo --testing $instances instances at $minikube_ip ...
+for p in $(tycho status | grep -v PORT | awk '{ print $4 }'); do
+    failed=1
+    for cycle in $(seq 1 $max_cycles); do
+        echo --testing http://$minikube_ip:$p cycle: $cycle
+        set +e
+        answer=$(wget --quiet -O- http://$minikube_ip:$p | grep /title)
+        set -e
+        if [ "$answer" ]; then
+            echo "  --got answer: $answer"
+            hits=$(( $hits + 1 ))
+            failed=0
+            break
+        else
+            sleep 5
+        fi
+    done
+    if [ "$failed" -eq 1 ]; then
+        echo $hits instances are taking traffic.
+        echo --failed getting http://$minikube_ip:$p after $max_cycles attempts
+        echo --taking down instances.
+        tycho down $(tycho status --terse)
+        exit 1
+    fi
+done
+
+# Report 
+if [ "$hits" -eq "$instances" ]; then
+    echo --all $instances instances are taking traffic
+else
+    echo --only $hits instances of $instances are taking traffic
+    exit 1
+fi
+
+# Show intances.
+echo --status...
+tycho status
+
+# Delete instances.
+echo --taking instances down
+tycho down $(tycho status --terse)
+
+# Show status.
+echo --status...
+tycho status
+
+exit 0

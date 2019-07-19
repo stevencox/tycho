@@ -11,8 +11,7 @@ from flasgger import Swagger
 from flask import Flask, jsonify, g, Response, request
 from flask_restful import Api, Resource
 from flask_cors import CORS
-#from tycho.compute import KubernetesCompute
-from tycho.compute import ComputeFactory
+from tycho.factory import ComputeFactory
 from tycho.model import System
 
 logger = logging.getLogger (__name__)
@@ -39,7 +38,7 @@ swagger = Swagger(app, template=template)
 def get_compute ():
     """ Connects to a compute context. """
     if not hasattr(g, 'compute'):
-        g.compute = ComputeFactory.create_compute () #KubernetesCompute ()
+        g.compute = ComputeFactory.create_compute ()
     return g.compute
 
 class TychoResource(Resource):
@@ -134,7 +133,7 @@ class StartSystemResource(TychoResource):
                 "command" : spec.get ('entrypoint', '').split(),
                 "env"     : spec.get ('environment', '').split (),
                 "ports"   : [
-                    { "containerPort" : p.split(':')[0] if ':' in p else p
+                    { "containerPort" : p.split(':')[1] if ':' in p else p
                       for p in spec.get ("ports", [])
                     }
                 ],

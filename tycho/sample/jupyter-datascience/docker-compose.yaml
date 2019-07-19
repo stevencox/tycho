@@ -6,9 +6,16 @@ services:
     image: jupyter/datascience-notebook
     entrypoint: start.sh jupyter lab --LabApp.token=
     ports:
-      - 8888:$HOST_PORT
+      - $HOST_PORT:8888
     volumes:
       - $LOCAL_STORE:/mydata
       - ./:/mydata1
       - ./home:/mydata2
-
+    deploy:
+      resources:
+        limits:
+          cpus: '0.001'
+          memory: 50M
+        reservations:
+          cpus: '0.0001'
+          memory: 20M
