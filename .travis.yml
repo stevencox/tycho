@@ -13,6 +13,7 @@ sudo: required
 
 env:
   global:
+    - PATH=$PWD/bin:$PATH
     - CHANGE_MINIKUBE_NONE_USER=true
     - MINIKUBE_WANTUPDATENOTIFICATION=false
     - MINIKUBE_WANTREPORTERRORPROMPT=false
@@ -46,4 +47,4 @@ script:
 - tycho api &
 - PID=$!
 - echo $PID
-- bin/functional-test
+- tycho-functional-test
