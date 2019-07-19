@@ -8,6 +8,7 @@ import yaml
 from kubernetes import client as k8s_client, config as k8s_config
 from tycho.compute import Compute
 from tycho.exceptions import DeleteException
+from tycho.exceptions import StartException
 from tycho.model import System
 from tycho.tycho_utils import TemplateUtils
 import kubernetes.client
@@ -38,7 +39,7 @@ class KubernetesCompute(Compute):
 
             """ Turn an abstract system model into a cluster specific representation. """
             pod_manifest = system.project ("kubernetes-pod.yaml")
-            volumes = pod_manifest['spec']['volumes']
+            volumes = pod_manifest.get('spec',{}).get('volumes', [])
             counter = 0
             for volume in volumes:
                 """ Create a persistent volume claim """

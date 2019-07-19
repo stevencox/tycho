@@ -13,6 +13,7 @@ from tycho.compute import Compute
 from tycho.model import System
 from tycho.tycho_utils import TemplateUtils
 from tycho.exceptions import DeleteException
+from tycho.exceptions import StartException
 from compose.cli.main import TopLevelCommand, project_from_options
 
 logger = logging.getLogger (__name__)
