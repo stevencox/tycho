@@ -6,7 +6,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 TYCHO_ROOT=$( dirname $DIR )
 
 # cycles to wait for services.
-max_cycles=20
+max_cycles=30
 
 # wait for the Tycho API endpoint
 tycho_port=5000
@@ -32,7 +32,7 @@ fi
 # Deploy instances.
 cd $TYCHO_ROOT/tycho
 pwd
-instances=3
+instances=2
 echo --launching $instances instances
 for i in $(seq 0 $(($instances-1))); do
     tycho up -f sample/jupyter-datascience/docker-compose.yaml
