@@ -131,7 +131,7 @@ class StartSystemResource(TychoResource):
                 "name"    : cname,
                 "image"   : spec['image'],
                 "command" : spec.get ('entrypoint', '').split(),
-                "env"     : spec.get ('environment', '').split (),
+                "env"     : spec.get ('environment', []), #'').split (),
                 "ports"   : [
                     { "containerPort" : p.split(':')[1] if ':' in p else p
                       for p in spec.get ("ports", [])
