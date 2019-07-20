@@ -14,7 +14,7 @@ api=http://localhost:$tycho_port/apidocs
 for cycle in $(seq 1 $max_cycles); do
     echo --testing $api cycle: $cycle
     set +e
-    answer=$(wget --quiet -O- $api | grep Tycho)
+    answer=$(wget --quiet -O- $api | grep /title | grep Tycho)
     set -e
     if [ "$answer" ]; then
         echo "  --got answer: $answer"
@@ -31,12 +31,12 @@ fi
 
 # Deploy instances.
 cd $TYCHO_ROOT/tycho
-pwd
+
 instances=2
 echo --launching $instances instances
 for i in $(seq 0 $(($instances-1))); do
     tycho up -f sample/jupyter-datascience/docker-compose.yaml
-    kubectl get svc
+    kubectl get svc | grep jupyter
 done
 
 # Show status
@@ -72,11 +72,13 @@ for p in $(tycho status | grep -v PORT | awk '{ print $4 }'); do
     fi
 done
 
-# Report 
+# Report
 if [ "$hits" -eq "$instances" ]; then
     echo --all $instances instances are taking traffic
 else
     echo --only $hits instances of $instances are taking traffic
+    echo --taking instances down
+    tycho down $(tycho status --terse)
     exit 1
 fi
 

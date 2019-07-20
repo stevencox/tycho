@@ -90,10 +90,11 @@ class KubernetesCompute(Compute):
             logger.debug (f"Creating service exposing container {container.name} on port {container_port}")
 
             """ render the service template. """
+            container_name = f"{container.name}-{system.name}" if len(system.containers) > 1 else system.name
             service_manifest=utils.render (template="service.yaml",
                                            context={
                                                "system" : system,
-                                               "container_name" : f"{container.name}-{system.name}",
+                                               "container_name" : container_name,
                                                "container_port" : container_port
                                            })
 
