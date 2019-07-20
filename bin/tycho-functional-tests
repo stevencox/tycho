@@ -6,7 +6,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 TYCHO_ROOT=$( dirname $DIR )
 
 # cycles to wait for services.
-max_cycles=30
+max_cycles=300
 
 # wait for the Tycho API endpoint
 tycho_port=5000
