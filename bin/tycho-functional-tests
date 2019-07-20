@@ -32,7 +32,7 @@ fi
 # Deploy instances.
 cd $TYCHO_ROOT/tycho
 
-instances=2
+instances=3
 echo --launching $instances instances
 for i in $(seq 0 $(($instances-1))); do
     tycho up -f sample/jupyter-datascience/docker-compose.yaml
