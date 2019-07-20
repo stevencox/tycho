@@ -24,7 +24,7 @@ CORS(app)
 
 schema_file_path = os.path.join (
     os.path.dirname (__file__),
-    'tycho-api-schema-0.0.1.yaml')
+    'api-schema.yaml')
 
 with open(schema_file_path, 'r') as file_obj:
     template = yaml.load(file_obj)

@@ -201,5 +201,3 @@ Using the command lines above without the `-s` flag for server will work on GKE.
 client_factory = TychoClientFactory ()
 client = client_factory.get_client ()
 ```
-
-

@@ -8,9 +8,6 @@ export PYTHONPATH=$TYCHO_ROOT
 export TYCHO=$TYCHO_ROOT/tycho
 
 api () {
-#    export FLASK_APP=$TYCHO/api.py
-#    export FLASK_ENV=development
-#    flask run
     python $TYCHO/api.py $*
 }
 up () {
@@ -21,6 +18,17 @@ down () {
 }
 status () {
     python $TYCHO/client.py --status $*
+}
+status-mk () {
+    # provide minkube urls
+    stat=tmk.stat
+    tycho status > $stat
+    for port in $(tycho status | grep -v POR | awk '{ print $4 }'); do
+        cat $stat | sed -E "s,$port,http://$(minikube ip):$port,g" > $stat.1
+        mv ${stat}.1 $stat
+    done
+    cat $stat
+    rm $stat*
 }
 
 $*
