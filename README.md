@@ -43,7 +43,7 @@ In one shell, run the API:
 $ export PATH=~/dev/tycho/bin:$PATH
 $ tycho api --debug
 ```
-In another, manage applications.
+In another, launch three notebook instances.
 ```
 $ export PATH=~/dev/tycho/bin:$PATH
 $ tycho up -f sample/jupyter-ds/docker-compose.yaml
@@ -51,24 +51,34 @@ SYSTEM                         GUID                                PORT
 jupyter-ds                     909f2e60b83340cd905ae3865d461156    32693  
 $ tycho up -f sample/jupyter-ds/docker-compose.yaml
 SYSTEM                         GUID                                PORT   
-jupyter-ds                     6fc07ab865d14c4c8fd2d6e0380b270e    31333  
+jupyter-ds                     6fc07ab865d14c4c8fd2d6e0380b270e    31333
 $ tycho up -f sample/jupyter-ds/docker-compose.yaml
 SYSTEM                         GUID                                PORT   
-jupyter-ds                     38f01c140f0141d9b4dc1baa33960362    32270  
-$ for p in $(tycho status | grep -v PORT | awk '{ print $4 }'); do url=http://$(minikube ip):$p; echo $url; wget -q -O- $url | grep /title; done
+jupyter-ds                     38f01c140f0141d9b4dc1baa33960362    32270
+```
+Then make a request to each instance to show it's running. It may take a moment for the instances to be ready, especially if you're pulling a container for the first time.
+```
+$ for p in $(tycho status | grep -v PORT | awk '{ print $4 }'); do 
+   url=http://$(minikube ip):$p; echo $url; wget -q -O- $url | grep /title;
+done
 http://192.168.99.111:32270
   <title>JupyterLab</title>
 http://192.168.99.111:31333
   <title>JupyterLab</title>
 http://192.168.99.111:32693
   <title>JupyterLab</title>
+```
+Delete all running deployments.
+```
 $ tycho down $(tycho status --terse)
 38f01c140f0141d9b4dc1baa33960362
 6fc07ab865d14c4c8fd2d6e0380b270e
 909f2e60b83340cd905ae3865d461156
+```
+And show that they're gone
+```
 $ tycho status
 None running
-
 ```
 
 ### Architecture
