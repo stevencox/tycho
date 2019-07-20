@@ -35,7 +35,7 @@ class Container:
             self.limits = self.limits[0] # TODO - not sure why this is a list.
         self.ports = ports
         self.command = command
-        self.env = env
+        self.env = list(map(lambda v : list(map(lambda r: str(r), v.split('='))), env))
         self.volumes = volumes
     def __repr__(self):
         return f"name:{self.name} image:{self.image} id:{self.identity} limits:{self.limits}"

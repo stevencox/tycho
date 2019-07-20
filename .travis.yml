@@ -47,11 +47,5 @@ script:
 - tycho api &
 - PID=$!
 - echo $PID
-- sleep 3
-- wget --quiet -O- http://localhost:5000/apidocs | grep /title
-- tycho up -f sample/jupyter-datascience.yml
-- tycho up -f sample/jupyter-datascience.yml
-- tycho up -f sample/jupyter-datascience.yml
-- tycho status
-- for i in $(tycho status --terse); do tycho down $i; done
-- exit 0
+- tycho-functional-tests
+

@@ -4,10 +4,10 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    name: {{ system.name }}
+    name: {{ container_name }} 
     executor: tycho
     tycho-guid: {{ system.identifier }}
-  name: {{ system.name }}
+  name: {{ container_name }} 
 resourceversion: v1
 spec:
 #  type : NodePort

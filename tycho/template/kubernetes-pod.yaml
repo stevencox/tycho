@@ -18,7 +18,11 @@ spec:
     command: {{ container.command }}
 {% endif %}
 {% if container.env %}
-    env: {{ container.env }}
+    env:
+    {%for e in container.env %}
+    - name : {{ e[0] }}
+      value : "{{ e[1] }}"
+    {% endfor %}
 {% endif %}
 {% if container.ports %}     
     ports:

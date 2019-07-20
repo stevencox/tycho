@@ -6,7 +6,6 @@ import sys
 import traceback
 import argparse
 import yaml
-from string import Template
 from tycho.tycho_utils import TemplateUtils
 from kubernetes import client as k8s_client, config as k8s_config
 
@@ -44,17 +43,23 @@ class TychoClient:
             "system" : system
         }
         response = self.start (request)
+        logger.debug (json.dumps(response,indent=2))
         error = response.get('result',{}).get('error', None)
         if error:
             print (''.join (error))
         else:
-            print ('{:<65}  {:<40} {:<15}'.format("SYSTEM", "GUID", "PORT"))
-            result = response.get('result',{})            
+            format_string = '{:<30} {:<35} {:<7}'
+            print (format_string.format("SYSTEM", "GUID", "PORT"))
+            result = response.get('result',{})
+            port='--'
             for process, spec in result.get('containers',{}).items ():
-                port = spec['port']
-            print ('{:<65}  {:<40} {:<15}'.format (
-                result.get('name', ''),
-                result.get('sid', '-'),
+                for port_name, port_num in spec.items ():
+                    port = port_num
+            sid = result.get ('sid',  None)
+            item_name = result.get ('name', 'unknown').replace (f"-{sid}", "")
+            print (format_string.format (
+                TemplateUtils.trunc (item_name, max_len=28),
+                TemplateUtils.trunc (sid, max_len=33),
                 port))
                 #print (f"(minikube)=> http://192.168.99.111:{port}")
     def list (self, name, terse=False):
@@ -62,30 +67,39 @@ class TychoClient:
             request = { "name" : self.format_name (name) } if name else {}
             response = self.status (request)
             status = response.get('status', None)
+            #print (json.dumps(status,indent=2))
             if status  == 'success':
                 items = response.get('result', [])
                 if terse:
                     for item in items:
                         print (item.get ('sid', None))
+                elif len(items) == 0:
+                    print ('None running')
                 else:
-                    print ('{:<65}  {:<16}'.format("SYSTEM", "GUID"))
+                    format_string = '{:<30} {:<35} {:<10} {:<7}'
+                    print (format_string.format("SYSTEM", "GUID", "IP", "PORT"))
                     for item in items:
-                        print ("{:<65}  {:<16}".format (
-                            item.get('name', None),
-                            item.get ('sid', None)
+                        sid = item.get ('sid',  None)
+                        item_name = item.get ('name', 'unknown').replace (f"-{sid}", "")
+                        print (format_string.format (
+                            TemplateUtils.trunc (item_name, max_len=28),
+                            TemplateUtils.trunc (sid, max_len=33),
+                            item.get ('ip',   '--'),
+                            item.get ('port', '--')
                         ))
             elif status == 'error':
                 print (json.dumps(response, indent=2))
         except Exception as e:
-            traceback.print_exc (e)
-    def down (self, name):
+            raise e #traceback.print_exc (e)
+    def down (self, names):
         """ Bring down a service. """
         try:
-            response = self.delete ({ "name" : self.format_name(name) })
-            if response.get('status',None) == 'success':
-                print (f"{name}")
-            else:
-                print (json.dumps (response, indent=2))
+            for name in names:
+                response = self.delete ({ "name" : self.format_name(name) })
+                if response.get('status',None) == 'success':
+                    print (f"{name}")
+                else:
+                    print (json.dumps (response, indent=2))
         except Exception as e:
             traceback.print_exc (e)
             
@@ -119,29 +133,12 @@ class TychoClientFactory:
             client = TychoClient (url=url) 
         return client
 
-class TychoClientUtils:
-    """ Client utilities. """
-    @staticmethod
-    def apply_environment (environment, text):
-        """ Given an environment configuration consisting of lines of Bash style variable assignemnts,
-        parse the variables and apply them to the given text."""
-        resolved = text
-        if environment:
-            mapping = {
-                line.split("=", maxsplit=1)[0] : line.split("=", maxsplit=1)[1]
-                for line in environment.split ("\n") if '=' in line
-            }
-            print (f"{json.dumps (mapping, indent=2)}")
-            resolved = Template(text).safe_substitute (**mapping)
-            print (resolved)
-        return resolved
-    
 if __name__ == "__main__":
     status_command="@status_command"
     parser = argparse.ArgumentParser(description='Tycho Client')
     parser.add_argument('-u', '--up', help="Launch service.", action='store_true')
     parser.add_argument('-s', '--status', help="Get status of running systems.", nargs='?', const=status_command, default=None)
-    parser.add_argument('-d', '--down', help="Delete a running system. Requires a system id.")
+    parser.add_argument('-d', '--down', help="Delete a running system. Requires a system id.", nargs='*')
     parser.add_argument('-p', '--port', type=int, help="Port to expose.")
     parser.add_argument('-c', '--container', help="Container to run.")
     parser.add_argument('-n', '--name', help="Service name.")
@@ -151,7 +148,7 @@ if __name__ == "__main__":
     parser.add_argument('--settings', help="Environment settings", default=None)
     parser.add_argument('-f', '--file', help="A docker compose (subset) formatted system spec.")
     parser.add_argument('-t', '--trace', help="Trace (debug) logging", action='store_true', default=False)
-    parser.add_argument('--terse', help="Keep status short", action='store_true', default=True)
+    parser.add_argument('--terse', help="Keep status short", action='store_true', default=False)
     parser.add_argument('-v', '--volumes', help="Mounts a volume", default=None)
     args = parser.parse_args ()
 
@@ -170,9 +167,18 @@ if __name__ == "__main__":
     if args.file:
         """ Load the docker-compose spec, applying environment settings. """
         name = args.file.split('.')[0]
+        name = name.split (os.sep)[-2]
+
+        """ Apply settings. """
+        env_file = os.path.join (os.path.dirname (args.file), ".env")
+        if os.path.exists (env_file):
+            with open (env_file, 'r') as stream:
+                settings = stream.read ()
+                #print (f"-----...---> {settings}")
+
         with open(args.file, "r") as stream:
             text = stream.read ()
-            text = TychoClientUtils.apply_environment (settings, text)
+            text = TemplateUtils.apply_environment (settings, text)
             system = yaml.load (text)
     else:
         """ Generate a docker-compose spec based on the CLI args. """
@@ -195,7 +201,7 @@ if __name__ == "__main__":
                 - "{{args.volumes}}"
               {% endif %}"""
         system = template_utils.render_text(
-            TychoClientUtils.apply_environment (settings, template),
+            TemplateUtils.apply_environment (settings, template),
             context={ "args" : args })
 
     client = None
@@ -214,7 +220,7 @@ if __name__ == "__main__":
     if args.up:
         client.up (name=name, system=system)
     elif args.down:
-        client.down (name=args.down)
+        client.down (names=args.down)
     elif args.status:
         if args.status == status_command: # non arg
             client.list (name=None, terse=args.terse)

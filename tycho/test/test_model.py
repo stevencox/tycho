@@ -14,7 +14,7 @@ def test_system_model ():
             }
         ]
     })
-    assert system.name == 'test'
+    assert system.name.startswith ('test-')
     assert system.containers[0].name == 'nginx-container'
     assert system.containers[0].image == 'nginx:1.9.1'
     assert system.containers[0].limits.cpus == "0.5"
