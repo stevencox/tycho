@@ -26,7 +26,7 @@ This work relies on or is motivated by these foundations:
 
 
 ## Quick Start
-samples/jupyter-datascience.yml:
+samples/jupyter-ds/docker-compose.yaml:
 ```
 ---
 # Docker compose formatted system.
@@ -41,31 +41,34 @@ services:
 In one shell, run the API:
 ```
 $ export PATH=~/dev/tycho/bin:$PATH
-$ tycho api
+$ tycho api --debug
 ```
 In another, manage applications.
 ```
 $ export PATH=~/dev/tycho/bin:$PATH
-$ tycho up -f sample/jupyter-datascience.yml
-SYSTEM                                                             GUID                                     PORT           
-sample-jupyter-datascience-4868096f8cdc400197b4d2f58b076b92        4868096f8cdc400197b4d2f58b076b92         32641          
-$ tycho up -f sample/jupyter-datascience.yml
-SYSTEM                                                             GUID                                     PORT           
-sample-jupyter-datascience-4d76d198246d4e8192060d218401864c        4d76d198246d4e8192060d218401864c         32081          
-$ wget --quiet -O- http://192.168.99.111:32641 | grep -i /title
+$ tycho up -f sample/jupyter-ds/docker-compose.yaml
+SYSTEM                         GUID                                PORT   
+jupyter-ds                     909f2e60b83340cd905ae3865d461156    32693  
+$ tycho up -f sample/jupyter-ds/docker-compose.yaml
+SYSTEM                         GUID                                PORT   
+jupyter-ds                     6fc07ab865d14c4c8fd2d6e0380b270e    31333  
+$ tycho up -f sample/jupyter-ds/docker-compose.yaml
+SYSTEM                         GUID                                PORT   
+jupyter-ds                     38f01c140f0141d9b4dc1baa33960362    32270  
+$ for p in $(tycho status | grep -v PORT | awk '{ print $4 }'); do url=http://$(minikube ip):$p; echo $url; wget -q -O- $url | grep /title; done
+http://192.168.99.111:32270
   <title>JupyterLab</title>
-$ wget --quiet -O- http://192.168.99.111:32081 | grep -i /title
+http://192.168.99.111:31333
   <title>JupyterLab</title>
+http://192.168.99.111:32693
+  <title>JupyterLab</title>
+$ tycho down $(tycho status --terse)
+38f01c140f0141d9b4dc1baa33960362
+6fc07ab865d14c4c8fd2d6e0380b270e
+909f2e60b83340cd905ae3865d461156
 $ tycho status
-SYSTEM                                                       GUID            
-sample-jupyter-datascience-4868096f8cdc400197b4d2f58b076b92  4868096f8cdc400197b4d2f58b076b92
-sample-jupyter-datascience-4d76d198246d4e8192060d218401864c  4d76d198246d4e8192060d218401864c
-$ for i in $(tycho status | grep -v SYSTEM | awk '{ print $2 }'); do tycho down $i; done
-deleted
-deleted
-$ wget --quiet -O- http://192.168.99.111:32081 | grep -i /title
-$ wget --quiet -O- http://192.168.99.111:32641 | grep -i /title
-$
+None running
+
 ```
 
 ### Architecture
