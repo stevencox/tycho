@@ -35,7 +35,7 @@ cd $TYCHO_ROOT/tycho
 instances=3
 echo --launching $instances instances
 for i in $(seq 0 $(($instances-1))); do
-    tycho up -f sample/jupyter-datascience/docker-compose.yaml
+    tycho up -f sample/jupyter-ds/docker-compose.yaml
     kubectl get svc | grep jupyter
 done
 
