@@ -12,6 +12,7 @@ from flask import Flask, jsonify, g, Response, request
 from flask_restful import Api, Resource
 from flask_cors import CORS
 from tycho.factory import ComputeFactory
+from tycho.factory import supported_backplanes
 from tycho.model import System
 
 logger = logging.getLogger (__name__)
@@ -250,10 +251,15 @@ api.add_resource(DeleteSystemResource, '/system/delete')
 
 if __name__ == "__main__":
    parser = argparse.ArgumentParser(description='Tycho Distributed Compute API')
+   parser.add_argument('-b', '--backplane', help='Compute backplane type.', default="kubernetes")
    parser.add_argument('-p', '--port',  type=int, help='Port to run service on.', default=5000)
    parser.add_argument('-d', '--debug', help="Debug log level.", default=False, action='store_true')
 
    args = parser.parse_args ()
+   if not ComputeFactory.is_valid_backplane (args.backplane):
+       print (f"Unrecognized backplane value: {args.backplane}. Supported backplanes: {supported_backplanes}")
+       parser.print_help ()
+       sys.exit (1)
    if args.debug:
        logging.basicConfig(level=logging.DEBUG)
    app.run(debug=args.debug)

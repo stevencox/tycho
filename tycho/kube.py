@@ -36,6 +36,7 @@ class KubernetesCompute(Compute):
         Generae each required K8s artifact and wire them together.
         """
         try:
+            utils = TemplateUtils ()
 
             """ Turn an abstract system model into a cluster specific representation. """
             pod_manifest = system.project ("kubernetes-pod.yaml")
@@ -43,7 +44,6 @@ class KubernetesCompute(Compute):
             counter = 0
             for volume in volumes:
                 """ Create a persistent volume claim """
-                utils = TemplateUtils ()
                 pvc_manifest = utils.render(template="pvc.yaml",
                                             context={
                                                 "system": system,
@@ -90,10 +90,10 @@ class KubernetesCompute(Compute):
             logger.debug (f"Creating service exposing container {container.name} on port {container_port}")
 
             """ render the service template. """
-            utils = TemplateUtils ()
             service_manifest=utils.render (template="service.yaml",
                                            context={
                                                "system" : system,
+                                               "container_name" : f"{container.name}-{system.name}",
                                                "container_port" : container_port
                                            })
 
@@ -112,13 +112,13 @@ class KubernetesCompute(Compute):
     def pod_to_deployment (self, name, template, namespace="default"):
         
         """ Create a deployment specification. """
-        #logger.debug (template)
+        logger.debug (template)
         deployment_spec = k8s_client.ExtensionsV1beta1DeploymentSpec(
             replicas=1,
             template=template)
         
         """ Instantiate the deployment object """
-        #logger.debug (deployment_spec)
+        logger.debug (deployment_spec)
         deployment = k8s_client.ExtensionsV1beta1Deployment(
             api_version="extensions/v1beta1",
             kind="Deployment",
@@ -152,7 +152,8 @@ class KubernetesCompute(Compute):
         
             """ Delete the service. No obvious collection based api for service deletion. """
             service_list = self.api.list_namespaced_service(
-            label_selector=f"tycho-guid={name}", namespace=namespace)
+                label_selector=f"tycho-guid={name}",
+                namespace=namespace)
             for service in service_list.items:
                 if service.metadata.labels.get ("tycho-guid", None) == name:
                     logger.info (f" --deleting service {name} in namespace {namespace}")
@@ -192,7 +193,7 @@ class KubernetesCompute(Compute):
         With a name, it will get status for the specified system.
         """
         result = []
-        """ Find all our generated deployment. """
+        """ Find all our generated deployments. """
         response = self.extensions_api.list_namespaced_deployment (
             namespace,
             label_selector=f"executor=tycho")
@@ -200,21 +201,24 @@ class KubernetesCompute(Compute):
         if response:
             #print(f"** response: {response}")
             for item in response.items:
-                service = self.api.read_namespaced_service(
-                    name=item.metadata.name,
+                item_guid = item.metadata.labels.get ("tycho-guid", None)
+                """ List all services with this guid. """
+                services = self.api.list_namespaced_service(
+                    label_selector=f"tycho-guid={item_guid}",
                     namespace=namespace)
-                print (service)
-                ip_address = None
-                """ We have a reliable way to get an IP address for load balanced services but nothing else yet. """
-                if service.status.load_balancer.ingress and len(service.status.load_balancer.ingress) > 0:
-                    ip_address = service.status.load_balancer.ingress[0].ip
-                port = service.spec.ports[0].node_port
-                #url = f"http://{ip_address}:{port}"
-                print (item)
-                result.append ({
-                    "name" : item.metadata.name,
-                    "sid"  : item.metadata.labels.get ("tycho-guid", None),
-                    #"ip"   : None, #"--", #ip_address,
-                    "port" : port
-                })
+                """ Inspect and report each service connected to this element separately. """
+                for service in services.items:
+                    if service.status.load_balancer.ingress and \
+                       len(service.status.load_balancer.ingress) > 0:
+                        ip_address = service.status.load_balancer.ingress[0].ip
+                    port = service.spec.ports[0].node_port
+                    #url = f"http://{ip_address}:{port}"
+                    print (item)
+                    print (f"port -- {port}")
+                    result.append ({
+                        "name" : service.metadata.name, #item.metadata.name,
+                        "sid"  : item_guid,
+                        #"ip"   : None, #"--", #ip_address,
+                        "port" : str(port)
+                    })
         return result

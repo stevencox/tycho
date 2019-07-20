@@ -67,6 +67,7 @@ class TychoClient:
             request = { "name" : self.format_name (name) } if name else {}
             response = self.status (request)
             status = response.get('status', None)
+            #print (json.dumps(status,indent=2))
             if status  == 'success':
                 items = response.get('result', [])
                 if terse:
@@ -84,7 +85,7 @@ class TychoClient:
                             TemplateUtils.trunc (item_name, max_len=28),
                             TemplateUtils.trunc (sid, max_len=33),
                             item.get ('ip',   '--'),
-                            item.get ('port', None)
+                            item.get ('port', '--')
                         ))
             elif status == 'error':
                 print (json.dumps(response, indent=2))
@@ -173,7 +174,7 @@ if __name__ == "__main__":
         if os.path.exists (env_file):
             with open (env_file, 'r') as stream:
                 settings = stream.read ()
-                print (f"-----...---> {settings}")
+                #print (f"-----...---> {settings}")
 
         with open(args.file, "r") as stream:
             text = stream.read ()
