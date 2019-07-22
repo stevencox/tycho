@@ -1,8 +1,12 @@
 import argparse
+import logging
 import json
 import os
 import uuid
+import yaml
 from tycho.tycho_utils import TemplateUtils
+
+logger = logging.getLogger (__name__)
 
 class Limits:
     """ Abstraction of resource limits on a container in a system. """
@@ -25,22 +29,27 @@ class Container:
                  env=None,
                  identity=None,
                  limits=None,
+                 requests=None,
                  ports=[],
                  volumes=None):
         self.name = name
         self.image = image
         self.identity = identity
         self.limits = Limits(**limits) if isinstance(limits, dict) else limits
+        self.requests = Limits(**requests) if isinstance(requests, dict) else requests
         if isinstance(self.limits, list):
             self.limits = self.limits[0] # TODO - not sure why this is a list.
         self.ports = ports
         self.command = command
-        self.env = list(map(lambda v : list(map(lambda r: str(r), v.split('='))), env))
+        self.env = \
+                   list(map(lambda v : list(map(lambda r: str(r), v.split('='))), env)) \
+                   if env else []
+                                                                             
         self.volumes = volumes
+
     def __repr__(self):
         return f"name:{self.name} image:{self.image} id:{self.identity} limits:{self.limits}"
 
-    
 class System:
     """ Distributed system of interacting containerized software. """
     def __init__(self, name, containers):
@@ -72,4 +81,40 @@ class SystemIdentifier:
     def __init__(self, identifier):
         self.identifier
 
-    
+class SystemParser:
+    """ Parse a system specification into our model. """
+    def parse (self, name, structure):
+        """ Construct a system model based on the input request. """
+        model_args = self.parse_docker_compose (name, structure)
+        logger.debug (f"result {model_args}")
+        result = System(**model_args)
+        result.source_text = yaml.dump (structure)
+        return result
+    def parse_docker_compose (self, name, compose):
+        """ Parse a docker-compose spec into a system spec. """
+        containers = []
+        logger.debug (f"compose {compose}")
+        for cname, spec in compose.get('services', {}).items ():
+            """ Entrypoint may be a string or an array. Deal with either case."""
+            entrypoint = spec.get ('entrypoint', '')
+            if isinstance(entrypoint, str):
+                entrypoint = entrypoint.split ()
+            containers.append ({
+                "name"    : cname,
+                "image"   : spec['image'],
+                "command" : entrypoint, #spec.get ('entrypoint', '').split(),
+                "env"     : spec.get ('environment', []),
+                "limits"  : spec.get ('deploy',{}).get('resources',{}).get('limits',{}),
+                "requests"  : spec.get ('deploy',{}).get('resources',{}).get('reservations',{}),
+                "ports"   : [
+                    { "containerPort" : p.split(':')[1] if ':' in p else p
+                      for p in spec.get ("ports", [])
+                    }
+                ],
+                "volumes"  : [ v.split(":")[1] for v in spec.get("volumes", []) ]
+            })
+        #print (json.dumps(containers, indent=2))
+        return {
+            "name" : name,
+            "containers" : containers
+        }

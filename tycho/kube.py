@@ -214,8 +214,8 @@ class KubernetesCompute(Compute):
                         ip_address = service.status.load_balancer.ingress[0].ip
                     port = service.spec.ports[0].node_port
                     #url = f"http://{ip_address}:{port}"
-                    print (item)
-                    print (f"port -- {port}")
+                    #print (item)
+                    #print (f"port -- {port}")
                     result.append ({
                         "name" : service.metadata.name, #item.metadata.name,
                         "sid"  : item_guid,

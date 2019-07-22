@@ -16,13 +16,18 @@ class TychoClient:
 
     def __init__(self, url):
         self.url = f"{url}/system"
-    def request (self, service, request):
-        """ Send a request to the server. Generic underlayer to all requests. """
+    def request (self, service, request):        
+        """ Send a request to the server. Generic underlayer to all requests. 
+
+        :param service: URL path to the service to invoke.
+        :param request: JSON to send to the API endpoint.
+        """
         response = requests.post (f"{self.url}/{service}", json=request)
         result_text = f"HTTP status {response.status_code} received from service: {service}"
         logger.debug (result_text)
         if not response.status_code == 200:
-            raise Exception (f"Error: {result_text}")    
+            raise Exception (f"Error: {result_text}")
+        #print (json.dumps(response.json (), indent=2))
         return response.json ()
     def format_name (self, name):
         """ Format a service name to be a valid DNS label. """
@@ -37,7 +42,13 @@ class TychoClient:
         """ Get status of running systems. """
         return self.request ("status", request)
     def up (self, name, system):
-        """ Bring a service up starting with a docker-compose spec. """
+        """ Bring a service up starting with a docker-compose spec. 
+        
+        Start a service on the Tycho compute fabric.::
+
+            tycho up path/to/docker-compose.yaml
+
+        """
         request = {
             "name" : self.format_name (name),
             "system" : system
@@ -67,7 +78,7 @@ class TychoClient:
             request = { "name" : self.format_name (name) } if name else {}
             response = self.status (request)
             status = response.get('status', None)
-            #print (json.dumps(status,indent=2))
+            #print (json.dumps(response,indent=2))
             if status  == 'success':
                 items = response.get('result', [])
                 if terse:

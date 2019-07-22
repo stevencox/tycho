@@ -32,11 +32,14 @@ fi
 # Deploy instances.
 cd $TYCHO_ROOT/tycho
 
-instances=3
+instances=1
+test_tag=nginx
 echo --launching $instances instances
 for i in $(seq 0 $(($instances-1))); do
-    tycho up -f sample/jupyter-ds/docker-compose.yaml
-    kubectl get svc | grep jupyter
+    #tycho up -f sample/jupyter-ds/docker-compose.yaml
+    tycho up -f sample/nginx/docker-compose.yaml
+    #kubectl get svc | grep jupyter
+    kubectl get svc | grep $test_tag
 done
 
 # Show status
@@ -47,11 +50,12 @@ tycho status
 hits=0
 minikube_ip=$(minikube ip)
 echo --testing $instances instances at $minikube_ip ...
-for p in $(tycho status | grep -v PORT | awk '{ print $4 }'); do
+for p in $(tycho status | grep $test_tag | grep -v PORT | awk '{ print $4 }'); do
     failed=1
     for cycle in $(seq 1 $max_cycles); do
         echo --testing http://$minikube_ip:$p cycle: $cycle
         set +e
+        #answer=$(wget --quiet -O- http://$minikube_ip:$p | grep /title)
         answer=$(wget --quiet -O- http://$minikube_ip:$p | grep /title)
         set -e
         if [ "$answer" ]; then

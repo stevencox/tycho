@@ -2,15 +2,10 @@
 # Docker compose formatted system.
 version: "3"
 services:
-  jupyter-datascience:
-    image: jupyter/datascience-notebook
-    entrypoint: start.sh jupyter lab --LabApp.token=
+  nginx:
+    image: nginx:stable-alpine
     ports:
-      - $HOST_PORT:8888
-    volumes:
-      - $LOCAL_STORE:/mydata
-      - ./:/mydata1
-      - ./home:/mydata2
+      - $HOST_PORT:80
     deploy:
       resources:
         limits:

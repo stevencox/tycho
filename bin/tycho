@@ -30,6 +30,9 @@ status-mk () {
     cat $stat
     rm $stat*
 }
+test () {
+    python pytest $TYCHO/test
+}
 
 $*
 

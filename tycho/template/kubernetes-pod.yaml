@@ -28,13 +28,20 @@ spec:
     ports:
        - containerPort: {{ container.ports[0]['containerPort'] }}
          protocol: TCP
-   {% endif %}
-{% if container.limits %}
+{% endif %} # ports
+{% if container.limits or container.requests %}
     resources:
-      requests:
+      {% if container.limits %}
+      limits:
         cpu: "{{ container.limits.cpus }}"  
         memory: "{{ container.limits.memory }}"
-    {% endif %}
+      {% endif %}
+      {% if container.requests %}
+      requests:
+        cpu: "{{ container.requests.cpus }}"
+        memory: "{{ container.requests.memory }}"
+      {% endif %}
+{% endif %}
     volumeMounts:
 {% if container.volumes %}
 {% for volume in container.volumes %}
