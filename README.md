@@ -95,7 +95,8 @@ None running
 python3 -m venv environmentName
 source environmentName/bin/activate
 pip install -r requirements.txt
-python api.py
+export PATH=<tycho-repo-dir>/bin:$PATH
+tycho api
 ```
 
 ### Usage - A. Development Environment Next to Minikube
