@@ -95,7 +95,7 @@ None running
 python3 -m venv environmentName
 source environmentName/bin/activate
 pip install -r requirements.txt
-export PATH=~/dev/tycho/bin:$PATH
+export PATH=<tycho-repo-dir>/bin:$PATH
 tycho api
 ```
 
