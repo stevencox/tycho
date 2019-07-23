@@ -30,6 +30,7 @@ class KubernetesCompute(Compute):
         api_client = k8s_client.ApiClient()
         self.api = k8s_client.CoreV1Api(api_client)
         self.extensions_api = k8s_client.ExtensionsV1beta1Api(api_client)
+        self.networking_api = k8s_client.NetworkingV1Api(api_client)
 
     def start (self, system, namespace="default"):
         """ Start an abstractly described distributed system on the cluster.
@@ -57,7 +58,7 @@ class KubernetesCompute(Compute):
                 pv_raw.pop(len(pv_raw)-1)
                 pv_name = "-".join(pv_raw) + "-" + str(counter)
                 counter += 1
-                logger.debug (f"PV NAME {pv_name}")
+                logger.debug (f"pv-name: {pv_name}")
                 pv_manifest = utils.render(template="pv.yaml",
                                            context={
                                                "system": system,
@@ -70,7 +71,17 @@ class KubernetesCompute(Compute):
             deployment = self.pod_to_deployment (
                 name=system.name,
                 template=pod_manifest,
-                namespace=namespace) 
+                namespace=namespace)
+
+            """ Create a network policy """
+            network_policy_manifest = utils.render (
+                template="policy/tycho-default-netpolicy.yaml",
+                context={ "system" : system })
+            print (f"{network_policy_manifest}")
+            network_policy = self.networking_api.create_namespaced_network_policy (
+                body=network_policy_manifest,
+                namespace=namespace)
+
         except Exception as e:
             self.delete (system.name)
             exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -91,12 +102,13 @@ class KubernetesCompute(Compute):
 
             """ render the service template. """
             container_name = f"{container.name}-{system.name}" if len(system.containers) > 1 else system.name
-            service_manifest=utils.render (template="service.yaml",
-                                           context={
-                                               "system" : system,
-                                               "container_name" : container_name,
-                                               "container_port" : container_port
-                                           })
+            service_manifest=utils.render (
+                template="service.yaml",
+                context={
+                    "system" : system,
+                    "container_name" : container_name,
+                    "container_port" : container_port
+                })
 
             response = self.api.create_namespaced_service(
                 body=service_manifest,
@@ -141,16 +153,6 @@ class KubernetesCompute(Compute):
     def delete (self, name, namespace="default"):
         """ Delete the deployment. """
         try:
-            logger.info (f" --deleting deployment {name} in namespace {namespace}")
-            response = self.extensions_api.delete_collection_namespaced_deployment(
-                label_selector=f"tycho-guid={name}",
-                namespace=namespace)
-            
-            logger.info (f" --deleting replica_set {name} in namespace {namespace}")
-            response = self.extensions_api.delete_collection_namespaced_replica_set(
-                label_selector=f"tycho-guid={name}",
-                namespace=namespace)
-        
             """ Delete the service. No obvious collection based api for service deletion. """
             service_list = self.api.list_namespaced_service(
                 label_selector=f"tycho-guid={name}",
@@ -162,21 +164,26 @@ class KubernetesCompute(Compute):
                         name=service.metadata.name,
                         body={},
                         namespace=namespace)
-                
-            logger.info (f" --deleting pod {name} in namespace {namespace}")
-            response = self.api.delete_collection_namespaced_pod(
-                label_selector=f"tycho-guid={name}",
-                namespace=namespace)
 
+            """ Treat everything with a namespace parameterized collections based delete 
+            operator the same. """
+            finalizers = {
+                "deployment"  : self.extensions_api.delete_collection_namespaced_deployment,
+                "replica_set" : self.extensions_api.delete_collection_namespaced_replica_set,
+                "pod"         : self.api.delete_collection_namespaced_pod,
+                "persistentvolumeclaim" : self.api.delete_collection_namespaced_persistent_volume_claim,
+                "networkpolicy" : self.networking_api.delete_collection_namespaced_network_policy
+            }
+            for object_type, finalizer in finalizers.items ():
+                logger.info (f" --deleting {object_type} elements of {name} in namespace {namespace}")
+                response = finalizer (
+                    label_selector=f"tycho-guid={name}",
+                    namespace=namespace)
+                
             logger.info (f" --deleting persistent volume {name} in namespace {namespace}")
             response = self.api.delete_collection_persistent_volume(
                 label_selector=f"tycho-guid={name}")
             
-            logger.info (f" --deleting persistent volume claim {name} in namespace {namespace}")
-            response = self.api.delete_collection_namespaced_persistent_volume_claim(
-                label_selector=f"tycho-guid={name}",
-                namespace=namespace)
-        
         except ApiException as e:
             traceback.print_exc (e)
             exc_type, exc_value, exc_traceback = sys.exc_info()

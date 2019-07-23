@@ -1,0 +1,33 @@
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  # Produce a name unique to our instance.
+  name: {{ system.identifier }}-netpolicy
+  labels:
+    executor: tycho
+    tycho-guid: {{ system.identifier }}
+spec:
+  podSelector:
+    matchLabels:
+      tycho-guid: {{ system.identifier }}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  {% if system.firewall.client_cidrs %}
+  {% for cidr in system.firewall.ingress_cidrs %}
+  - from:
+    - ipBlock:
+        cidr: {{ cidr }}
+  {% endfor %}
+    - podSelector:
+        matchLabels:
+          name: {{ system.name }}
+    {% if system.firewall.ingress_ports %}
+    ports:
+    {% for port in system.firewall.ingress_ports %}
+    - protocol: TCP
+      port: {{ port }}
+    {% endfor %}
+    {% endif %}
+  {% endif %}

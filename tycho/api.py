@@ -1,7 +1,9 @@
 import argparse
+import ipaddress
 import json
 import jsonschema
 import logging
+import netifaces
 import os
 import requests
 import sys
@@ -22,6 +24,7 @@ app = Flask(__name__)
 
 api = Api(app)
 CORS(app)
+debug=False
 
 schema_file_path = os.path.join (
     os.path.dirname (__file__),
@@ -46,6 +49,16 @@ def get_compute ():
 class TychoResource(Resource):
     def __init__(self):
         self.specs = {}
+
+    def get_client_ip (self, request):
+        ip_addr = request.remote_addr
+        if debug:
+            interface = netifaces.ifaddresses ('en0')
+            ip_addr = interface[2][0]['addr']
+            #cidr = ipaddress.ip_network(ip_addr)
+        app.logger.debug (f"(debug mode ip addr:)--> {ip_addr}")
+        return ip_addr
+    
     """ Functionality common to Tycho services. """
     def validate (self, request, component):
         """ Validate a request against the schema. """
@@ -99,13 +112,21 @@ class StartSystemResource(TychoResource):
                             type: string
 
         """
+        ip_addr = self.get_client_ip (request)
         response = {}
         try:
             app.logger.info (f"start-system: {json.dumps(request.json, indent=2)}")
             self.validate (request, component="System")
             system = self.system_parser.parse (
                 name=request.json['name'],
-                structure=request.json['system'])
+                structure=request.json['system'],
+                settings=request.json['env'],
+                firewall={
+                    'ingress_ports' : [ '80' ],
+                    'egress_ports' : [],
+                    'ingress_cidrs' : [ ipaddress.ip_network(ip_addr) ],
+                    'egress_cidrs' : []
+                })
             response = {
                 'status'  : 'success',
                 'result'  : get_compute().start (system),
@@ -117,7 +138,7 @@ class StartSystemResource(TychoResource):
             error_text = ''.join (text)
             response = {
                 'status' : "error",
-                'message' : f"Failed to start system {system.name if system else 'system'}",
+                'message' : f"Failed to start system",
                 'result' : { "error" : error_text }
             }
         return response
@@ -246,6 +267,7 @@ if __name__ == "__main__":
        parser.print_help ()
        sys.exit (1)
    if args.debug:
+       debug = True
        logging.basicConfig(level=logging.DEBUG)
    app.run(debug=args.debug)
    app.run(host='0.0.0.0', port=args.port, debug=True, threaded=True)

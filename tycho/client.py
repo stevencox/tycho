@@ -41,7 +41,7 @@ class TychoClient:
     def status (self, request):
         """ Get status of running systems. """
         return self.request ("status", request)
-    def up (self, name, system):
+    def up (self, name, system, settings=""):
         """ Bring a service up starting with a docker-compose spec. 
         
         Start a service on the Tycho compute fabric.::
@@ -51,6 +51,7 @@ class TychoClient:
         """
         request = {
             "name" : self.format_name (name),
+            "env"  : settings,
             "system" : system
         }
         response = self.start (request)
@@ -173,24 +174,26 @@ if __name__ == "__main__":
         with open(args.settings, "r") as stream:
             settings = stream.read ()
 
-    name=None
+    name=args.name
     system=None
     if args.file:
-        """ Load the docker-compose spec, applying environment settings. """
-        name = args.file.split('.')[0]
-        name = name.split (os.sep)[-2]
+        if not args.name:
+            """ We've been given a docker-compose.yaml. Come up with a name for the app 
+            based on the containing directory if none has been otherwise supplied. """
+            if os.sep in args.file:
+                name = args.file.split('.')[0] if '.' in args.file else args.file
+                name = name.split (os.sep)[-2]
+            else:
+                name = os.path.basename (os.getcwd ())
 
         """ Apply settings. """
         env_file = os.path.join (os.path.dirname (args.file), ".env")
         if os.path.exists (env_file):
             with open (env_file, 'r') as stream:
                 settings = stream.read ()
-                #print (f"-----...---> {settings}")
-
+                
         with open(args.file, "r") as stream:
-            text = stream.read ()
-            text = TemplateUtils.apply_environment (settings, text)
-            system = yaml.load (text)
+            system = yaml.load (stream.read ())
     else:
         """ Generate a docker-compose spec based on the CLI args. """
         name = args.name
@@ -211,6 +214,7 @@ if __name__ == "__main__":
               volumes:
                 - "{{args.volumes}}"
               {% endif %}"""
+
         system = template_utils.render_text(
             TemplateUtils.apply_environment (settings, template),
             context={ "args" : args })
@@ -229,7 +233,7 @@ if __name__ == "__main__":
         client = TychoClient (url=args.service)
         
     if args.up:
-        client.up (name=name, system=system)
+        client.up (name=name, system=system, settings=settings)
     elif args.down:
         client.down (names=args.down)
     elif args.status:

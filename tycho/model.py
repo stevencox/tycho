@@ -64,6 +64,7 @@ class System:
                           if isinstance(containers[0], dict) else \
                              containers
         self.source_text = None
+        self.firewall = None
         
     def project (self, template):
         """ Create a template for this system. """
@@ -75,27 +76,41 @@ class System:
         })
     def __repr__(self):
         return f"name:{self.name} containers:{self.containers}"
-    
-class SystemIdentifier:
-    """ Opaque unique handle to a system. """
-    def __init__(self, identifier):
-        self.identifier
+
+class Firewall:
+    def __init__(self,
+                 ingress_ports=None, egress_ports=None,
+                 ingress_cidrs=[], egress_cidrs=[]):
+        self.ingress_ports = ingress_ports
+        self.egress_ports = egress_ports
+        self.ingress_cidrs = ingress_cidrs
+        self.egress_cidrs = egress_cidrs
 
 class SystemParser:
     """ Parse a system specification into our model. """
-    def parse (self, name, structure):
+    def parse (self, name, structure, settings=None, firewall=None):
         """ Construct a system model based on the input request. """
-        model_args = self.parse_docker_compose (name, structure)
+        model_args = self.parse_docker_compose (name, structure, settings)
         logger.debug (f"result {model_args}")
         result = System(**model_args)
+        if firewall:
+            result.firewall = Firewall (**firewall)
         result.source_text = yaml.dump (structure)
         return result
-    def parse_docker_compose (self, name, compose):
+    def parse_docker_compose (self, name, compose, settings=None):
         """ Parse a docker-compose spec into a system spec. """
         containers = []
+        if settings:
+            """ Apply environment settings. """
+            text = yaml.dump (compose)
+            text = TemplateUtils.apply_environment (settings, text)
+            logger.debug (f"applied settings:\n {text}")
+            compose = yaml.load (text)
+
+        """ Model each service. """
         logger.debug (f"compose {compose}")
         for cname, spec in compose.get('services', {}).items ():
-            """ Entrypoint may be a string or an array. Deal with either case."""
+            """ Entrypoint may be a string or an array. Deal with either case."""            
             entrypoint = spec.get ('entrypoint', '')
             if isinstance(entrypoint, str):
                 entrypoint = entrypoint.split ()
