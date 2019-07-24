@@ -1,0 +1,13 @@
+tycho:
+  compute:
+    resources:
+      default:
+        cpus: 0.2
+        memory: 50MB
+  policy:
+    network:
+      ingress:
+        restrict_by_client_cidr: true
+      egress:
+        mode: none
+        

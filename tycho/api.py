@@ -13,26 +13,34 @@ from flasgger import Swagger
 from flask import Flask, jsonify, g, Response, request
 from flask_restful import Api, Resource
 from flask_cors import CORS
-from tycho.factory import ComputeFactory
-from tycho.factory import supported_backplanes
-from tycho.model import SystemParser
-from tycho.model import System
+from tycho.core import Tycho
+from tycho.tycho_utils import NetworkUtils
 
+"""
+Defines the Tycho API
+
+Provides endpoints for creating, monitoring, and deleting distributed systems of cloud native
+containers running on abstracted compute fabrics. 
+ 
+"""
 logger = logging.getLogger (__name__)
 
 app = Flask(__name__)
 
+""" Enable CORS. """
 api = Api(app)
 CORS(app)
 debug=False
 
+""" Load the schema. """
 schema_file_path = os.path.join (
     os.path.dirname (__file__),
     'api-schema.yaml')
-
+template = None
 with open(schema_file_path, 'r') as file_obj:
     template = yaml.load(file_obj)
-    
+
+""" Describe the API. """
 app.config['SWAGGER'] = {
     'title': 'Tycho Compute API',
     'description': 'An API, compiler, and executor for cloud native distributed systems.',
@@ -40,25 +48,17 @@ app.config['SWAGGER'] = {
 }
 swagger = Swagger(app, template=template)
 
-def get_compute ():
-    """ Connects to a compute context. """
-    if not hasattr(g, 'compute'):
-        g.compute = ComputeFactory.create_compute ()
-    return g.compute
-
+backplane = None
+def tycho ():
+    if not hasattr(g, 'tycho'):
+        g.tycho = Tycho (backplane=backplane)
+    return g.tycho
+    
 class TychoResource(Resource):
+    """ Base class handler for Tycho API requests. """
     def __init__(self):
         self.specs = {}
-
-    def get_client_ip (self, request):
-        ip_addr = request.remote_addr
-        if debug:
-            interface = netifaces.ifaddresses ('en0')
-            ip_addr = interface[2][0]['addr']
-            #cidr = ipaddress.ip_network(ip_addr)
-        app.logger.debug (f"(debug mode ip addr:)--> {ip_addr}")
-        return ip_addr
-    
+        
     """ Functionality common to Tycho services. """
     def validate (self, request, component):
         """ Validate a request against the schema. """
@@ -75,17 +75,30 @@ class TychoResource(Resource):
             traceback.print_exc (error)
             abort(Response(str(error), 400))
 
+    def create_response (self, result=None, status='success', message='', exception=None):
+        """ Create a response. Handle formatting and modifiation of status for exceptions. """
+        if exception:
+            traceback.print_exc ()
+            status='error'
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            result = {
+                'error' : repr(traceback.format_exception(exc_type, exc_value, exc_traceback))
+            }
+        return {
+            'status'  : status,
+            'result'  : result,
+            'message' : message
+        }
+            
 class StartSystemResource(TychoResource):
     """ Parse, model, emit orchestrator artifacts and execute a system. """
     
-    def __init__(self):        
-        super().__init__()
-        self.system_parser = SystemParser ()
-        
     """ System initiation. """
     def post(self):
         """
         Start a system based on a specification on the compute fabric.
+        
+        The specification is a docker-compose yaml parsed into a JSON object.
         ---
         tag: start
         description: Start a system on the compute fabric.
@@ -112,39 +125,34 @@ class StartSystemResource(TychoResource):
                             type: string
 
         """
-        ip_addr = self.get_client_ip (request)
+        ip_addr = NetworkUtils.get_client_ip (request, debug=debug)
         response = {}
         try:
             app.logger.info (f"start-system: {json.dumps(request.json, indent=2)}")
             self.validate (request, component="System")
-            system = self.system_parser.parse (
-                name=request.json['name'],
-                structure=request.json['system'],
-                settings=request.json['env'],
-                firewall={
-                    'ingress_ports' : [ '80' ],
-                    'egress_ports' : [],
-                    'ingress_cidrs' : [ ipaddress.ip_network(ip_addr) ],
-                    'egress_cidrs' : []
-                })
-            response = {
-                'status'  : 'success',
-                'result'  : get_compute().start (system),
-                'message' :  f"Started system {system.name}"
-            }
+            system = tycho().parse (name=request.json['name'],
+                                    structure=request.json['system'],
+                                    settings=request.json['env'],
+                                    firewall={
+                                        'ingress_ports' : [ '80' ],
+                                        'egress_ports' : [],
+                                        'ingress_cidrs' : [
+                                            ipaddress.ip_network(ip_addr)
+                                        ],
+                                        'egress_cidrs' : []
+                                    })
+            response = self.create_response (
+                result=tycho().get_compute().start (system),
+                message=f"Started system {system.name}")
         except Exception as e:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            text = traceback.format_exception(exc_type, exc_value, exc_traceback)
-            error_text = ''.join (text)
-            response = {
-                'status' : "error",
-                'message' : f"Failed to start system",
-                'result' : { "error" : error_text }
-            }
+            response = self.create_response (
+                exception=e,
+                message=f"Failed to create system.")
         return response
     
 class DeleteSystemResource(TychoResource):
-    """ System termination. """
+    """ System termination. Given a GUID for a Tycho system, use Tycho core to eliminate all
+    components comprising the running system."""
     def post(self):
         """
         Delete a system based on a name.
@@ -175,27 +183,22 @@ class DeleteSystemResource(TychoResource):
 
         """
         response = {}
+        system_name=None
         try:
             logging.debug (f"delete-request: {json.dumps(request.json, indent=2)}")
             self.validate (request, component="DeleteRequest")
             system_name = request.json['name']
-            response = {
-                'status'  : 'success',
-                'result'  : get_compute().delete (system_name),
-                'message' : f"Deleted system {system_name}"
-            }
+            response = self.create_response (
+                result=tycho().get_compute().delete (system_name),
+                message=f"Deleted system {system_name}")
         except Exception as e:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            text = repr(traceback.format_exception(exc_type, exc_value, exc_traceback))
-            response = {
-                'status'  : "error",
-                'message' : f"Failed to delete system {system_name}",
-                'result'  : { "error" : text }
-            }
+            response = self.create_response (
+                exception=e,
+                message=f"Failed to delete system {system_name}.")
         return response
 
 class StatusSystemResource(TychoResource):
-    """ Status executing systems. """
+    """ Status executing systems. Given a GUID (or not) determine system status. """
     def post(self):
         """
         Status running systems.
@@ -230,20 +233,13 @@ class StatusSystemResource(TychoResource):
             logging.debug (f"list-request: {json.dumps(request.json, indent=2)}")
             self.validate (request, component="StatusRequest") 
             system_name = request.json.get('name', None)
-            response = {
-                'status'  : 'success',
-                'result'  : get_compute().status (system_name),
-                'message' : f"Status system: {system_name}"
-            }
+            response = self.create_response (
+                result=tycho().get_compute().status (system_name),
+                message=f"Get status for system {system_name}")
         except Exception as e:
-            exc_type, exc_value, exc_traceback = sys.exc_info()
-            text = traceback.format_exception(exc_type, exc_value, exc_traceback)
-            app.logger.debug (''.join (text))
-            response = {
-                'status' : "error",
-                'message': f"Failed to get system status",
-                'result' : { "error" : text }
-            }
+            response = self.create_response (
+                exception=e,
+                message=f"Failed to get system status.")
         print (json.dumps (response, indent=2))
         return response
 
@@ -261,11 +257,12 @@ if __name__ == "__main__":
    args = parser.parse_args ()
 
    """ Configure the compute back end. """
-   if not ComputeFactory.is_valid_backplane (args.backplane):
+   if not Tycho.is_valid_backplane (args.backplane):
        print (f"Unrecognized backplane value: {args.backplane}.")
-       print (f"Supported backplanes: {supported_backplanes}")
+       print (f"Supported backplanes: {Tycho.supported_backplanes()}")
        parser.print_help ()
        sys.exit (1)
+   backplane = args.backplane
    if args.debug:
        debug = True
        logging.basicConfig(level=logging.DEBUG)

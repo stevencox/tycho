@@ -1,6 +1,7 @@
 import datetime
 import json
 import logging
+import netifaces
 import os
 import string
 import traceback
@@ -11,6 +12,7 @@ logger = logging.getLogger (__name__)
 
 class TemplateUtils:
     """ Utilities for generating text. """
+    
     def render (self, template, context):
         """Render a template object given a context. """
         result=None
@@ -25,6 +27,7 @@ class TemplateUtils:
         template.globals['now'] = datetime.datetime.utcnow
         text = template.render (**context)
         return yaml.load (text)
+
     @staticmethod
     def apply_environment (environment, text):
         """ Given an environment configuration consisting of lines of Bash style variable assignemnts,
@@ -39,6 +42,21 @@ class TemplateUtils:
             logger.debug (f"environment={json.dumps (mapping, indent=2)}")
             logger.debug (resolved)
         return resolved
+
     @staticmethod
     def trunc (a_string, max_len=80):
         return (a_string[:max_len] + '..') if len(a_string) > max_len else a_string
+
+class NetworkUtils:
+    @staticmethod
+    def get_client_ip (request, debug=False):
+        """ Get the IP address of the client. Account for requests from proxies. 
+        In debug mode, ignore loopback and try to get an IP from a n interface."""
+        ip_addr = request.remote_addr
+        if request.headers.getlist("X-Forwarded-For"):
+            ip_addr = request.headers.getlist("X-Forwarded-For")[0]
+        if debug:
+            interface = netifaces.ifaddresses ('en0')
+            ip_addr = interface[2][0]['addr']
+        logger.debug (f"(debug mode ip addr:)--> {ip_addr}")
+        return ip_addr
