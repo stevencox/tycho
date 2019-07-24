@@ -1,4 +1,4 @@
-from config import Config
+from tycho.config import Config
 from tycho.factory import ComputeFactory
 from tycho.factory import supported_backplanes
 from tycho.model import SystemParser
