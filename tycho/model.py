@@ -83,8 +83,17 @@ class Firewall:
                  ingress_cidrs=[], egress_cidrs=[]):
         self.ingress_ports = ingress_ports
         self.egress_ports = egress_ports
-        self.ingress_cidrs = ingress_cidrs
+        self.ingress_cidrs = list(map(lambda v:str(v), ingress_cidrs))
         self.egress_cidrs = egress_cidrs
+    def __repr__(self):
+        print (f"{str(self.ingress_cidrs)}")
+        
+        return json.dumps ({
+            "ingress_ports" : self.ingress_ports,
+            "ingress_cidrs" : self.ingress_cidrs,
+            "egress_ports"  : self.egress_ports,
+            "egress_cidrs"  : self.egress_cidrs
+        }, indent=2)
 
 class SystemParser:
     """ Parse a system specification into our model. """
@@ -95,6 +104,7 @@ class SystemParser:
         result = System(**model_args)
         if firewall:
             result.firewall = Firewall (**firewall)
+            logger.debug (f"-----------------------> {result.firewall}")
         result.source_text = yaml.dump (structure)
         return result
     def parse_docker_compose (self, name, compose, settings=None):

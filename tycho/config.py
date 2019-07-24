@@ -2,7 +2,7 @@ import os
 import yaml
 import traceback
 import re
-from tycho.util import Resource
+from tycho.tycho_utils import Resource
 
 class Config(dict):
     def __init__(self, config, prefix=''):

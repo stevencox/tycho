@@ -14,7 +14,7 @@ spec:
   - Ingress
   - Egress
   ingress:
-  {% if system.firewall.client_cidrs %}
+  {% if system.firewall.ingress_cidrs %}
   {% for cidr in system.firewall.ingress_cidrs %}
   - from:
     - ipBlock:
@@ -22,7 +22,7 @@ spec:
   {% endfor %}
     - podSelector:
         matchLabels:
-          name: {{ system.name }}
+          tycho-guid: {{ system.identifier }}
     {% if system.firewall.ingress_ports %}
     ports:
     {% for port in system.firewall.ingress_ports %}
