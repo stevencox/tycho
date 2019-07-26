@@ -10,6 +10,8 @@ metadata:
     executor: tycho
     tycho-guid: {{ system_id }}
 spec:
+  nodeSelector:
+    pool-name: medium
   containers:
 {% for container in containers %}    
   - name: {{ container.name }}
