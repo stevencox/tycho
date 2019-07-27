@@ -1,0 +1,15 @@
+# Docker compose formatted system.
+version: "3"
+services:
+  guacamole-desktop:
+    image: heliumdatastage/renci-guacamole-vnc:with-ohif-and-ortha-latest
+    ports:
+      - 8080:8080
+    deploy:
+      resources:
+        limits:
+          cpus: '3'
+          memory: 3G
+        reservations:
+          cpus: '3'
+          memory: 3G

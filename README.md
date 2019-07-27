@@ -12,11 +12,11 @@ Tycho is an API, compiler, and executor for cloud native distributed systems.
 * **Microservice**: We wanted an end to end Python 12-factory style OpenAPI microservice that fits seamlessly into a Python ecosystem (which is why we did not use the excellent Kompose tool as a starting point).
 * **Lifecycle Management**: Tycho treats distributed systems as programs whose entire lifecycle can be programmatically managed via an API.
 * **Pluggable Orchestrators**: The Tycho compiler abstracts clients from the orchestrator. It creates an abstract syntax tree to model input systems and generates orchestrator specific artifacts.
-* **Policy**: Tycho anticipates incorporating a policy definition and enforcement layer to allow roles, network policy, and other concerns to be woven into a deployment.
+* **Policy**: Tycho now generates network policy configurations governing the ingress and egress of traffic to systems. We anticipate generalizing the policy layer to allow security and other concerns to be woven into a deployment dynamically.
 
 ## Prior Art
 
-This work relies on or is motivated by these foundations:
+This work relies on these foundations:
 * **[PIVOT](https://renci.org/wp-content/uploads/2019/02/Cloud_19.pdf)**: A cloud agnostic scheduler with an API for executing distributed systems.
 * **[Kubernetes](https://kubernetes.io/)**: Widely deployed, highly programmable, horizontally scalable container orchestration platform. 
 * **[Kompose](https://docs.docker.com/compose/)**: Automates conversion of Docker Compose to Kubernetes. Written in Go, does not provide an API. Supports Docker Compose to Kubernetes only.
