@@ -16,7 +16,7 @@ Tycho is an API, compiler, and executor for cloud native distributed systems.
 
 ## Prior Art
 
-This work relies on or is motivated by these foundations:
+This work relies on these foundations:
 * **[PIVOT](https://renci.org/wp-content/uploads/2019/02/Cloud_19.pdf)**: A cloud agnostic scheduler with an API for executing distributed systems.
 * **[Kubernetes](https://kubernetes.io/)**: Widely deployed, highly programmable, horizontally scalable container orchestration platform. 
 * **[Kompose](https://docs.docker.com/compose/)**: Automates conversion of Docker Compose to Kubernetes. Written in Go, does not provide an API. Supports Docker Compose to Kubernetes only.
