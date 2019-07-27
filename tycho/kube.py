@@ -17,11 +17,16 @@ from kubernetes.client.rest import ApiException
 logger = logging.getLogger (__name__)
 
 class KubernetesCompute(Compute):
-    """ A Kubernetes specific implementation. """
+    """ A Kubernetes specific implementation.
+
+        Tested with Minikube and Google Kubernetes Engine.
+    """
 
     def __init__(self):
-        """ Initialize connection to Kubernetes. """
-        """ TODO: Authentication. """
+        """ Initialize connection to Kubernetes. 
+        
+            Connects to Kubernetes configuration using an environment appropriate method.
+        """
         super(KubernetesCompute, self).__init__()
         if os.getenv('KUBERNETES_SERVICE_HOST'):
             k8s_config.load_incluster_config()
@@ -34,13 +39,21 @@ class KubernetesCompute(Compute):
 
     def start (self, system, namespace="default"):
         """ Start an abstractly described distributed system on the cluster.
-        Generae each required K8s artifact and wire them together.
+            Generate each required K8s artifact and wire them together. Currently 
+            explicitly modeled elements include Deployment, PersistentVolume, 
+            PersistentVolumeClaim, and Service components.
+
+            :param system: An abstract system model.
+            :type system: :class:`.System`
+            :param namespace: Namespace to run the system in.
+            :type namespace: str
         """
         try:
             utils = TemplateUtils ()
 
             """ Turn an abstract system model into a cluster specific representation. """
-            pod_manifest = system.project ("kubernetes-pod.yaml")
+            pod_manifest = system.render ("kubernetes-pod.yaml")
+            
             volumes = pod_manifest.get('spec',{}).get('volumes', [])
             counter = 0
             for volume in volumes:
@@ -52,7 +65,7 @@ class KubernetesCompute(Compute):
                                                 "claim_name": volume['persistentVolumeClaim']['claimName']
                                             })
                 response = self.api.create_namespaced_persistent_volume_claim(
-                    namespace='default',
+                    namespace=namespace,
                     body=pvc_manifest)
                 pv_raw = system.name.split("-")
                 pv_raw.pop(len(pv_raw)-1)
@@ -73,15 +86,42 @@ class KubernetesCompute(Compute):
                 template=pod_manifest,
                 namespace=namespace)
 
-            """ Create a network policy """
-            network_policy_manifest = utils.render (
-                template="policy/tycho-default-netpolicy.yaml",
-                context={ "system" : system })
-            print (f"{network_policy_manifest}")
-            network_policy = self.networking_api.create_namespaced_network_policy (
-                body=network_policy_manifest,
-                namespace=namespace)
+            """ Create a network policy if appropriate. """
+            if system.requires_network_policy ():
+                logger.debug ("creating network policy")
+                network_policy_manifest = system.render (
+                    template="policy/tycho-default-netpolicy.yaml")
+                logger.debug (f"applying network policy: {network_policy_manifest}")
+                network_policy = self.networking_api.create_namespaced_network_policy (
+                    body=network_policy_manifest,
+                    namespace=namespace)
 
+            """ Create service endpoints. """
+            container_map = {}
+            for container in system.containers:
+                service = system.services.get (container.name, None)
+                if service:
+                    logger.debug (f"generating service for container {container.name}")
+                    service_manifest = system.render (
+                        template="service.yaml",
+                        context={
+                            "service" : service
+                        })
+                    logger.debug (f"creating service for container {container.name}")
+                    response = self.api.create_namespaced_service(
+                        body=service_manifest,
+                        namespace=namespace)
+                    """ Return generated node ports to caller. """
+                    container_map[container.name] = {
+                        port.name : port.node_port for port in response.spec.ports
+                    }
+                    
+            result = {
+                'name'       : system.name,
+                'sid'        : system.identifier,
+                'containers' : container_map
+            }
+        
         except Exception as e:
             self.delete (system.name)
             exc_type, exc_value, exc_traceback = sys.exc_info()
@@ -90,48 +130,26 @@ class KubernetesCompute(Compute):
             raise StartException (
                 message=f"Unable to start system: {system.name}",
                 details=text)
-        
-        """ one port mappable per container for now. """
-        container_map = {}
-        for container in system.containers:
-            if len(container.ports) != 1:
-                continue
 
-            container_port = container.ports[0]['containerPort']
-            logger.debug (f"Creating service exposing container {container.name} on port {container_port}")
-
-            """ render the service template. """
-            container_name = f"{container.name}-{system.name}" if len(system.containers) > 1 else system.name
-            service_manifest=utils.render (
-                template="service.yaml",
-                context={
-                    "system" : system,
-                    "container_name" : container_name,
-                    "container_port" : container_port
-                })
-
-            response = self.api.create_namespaced_service(
-                body=service_manifest,
-                namespace='default')
-            container_map[container.name] = {
-                port.name : port.node_port for port in response.spec.ports
-            }
-        return {
-            'name' : system.name,
-            'sid' : system.identifier,
-            'containers' : container_map
-        }
+        logger.debug (f"result: {json.dumps(result,indent=2)}")
+        return result
 
     def pod_to_deployment (self, name, template, namespace="default"):
-        
-        """ Create a deployment specification. """
-        logger.debug (template)
+        """ Create a deployment specification based on a pod template.
+            
+            :param name: Name of the system.
+            :type name: str
+            :param template: Relative path to the template to use.
+            :type template: str
+            :param namepsace: Namespace to run the pod in.
+            :type namespace: str
+        """
         deployment_spec = k8s_client.ExtensionsV1beta1DeploymentSpec(
             replicas=1,
             template=template)
         
         """ Instantiate the deployment object """
-        logger.debug (deployment_spec)
+        logger.debug (f"creating deployment specification {template}")
         deployment = k8s_client.ExtensionsV1beta1Deployment(
             api_version="extensions/v1beta1",
             kind="Deployment",
@@ -139,6 +157,7 @@ class KubernetesCompute(Compute):
             spec=deployment_spec)
 
         """ Create the deployment. """
+        logger.debug (f"applying deployment {template}")
         api_response = self.extensions_api.create_namespaced_deployment(
             body=deployment,
             namespace=namespace)
@@ -150,9 +169,18 @@ class KubernetesCompute(Compute):
             logger.debug ("--succeeded")
         elif response.status == 'Failure':
             logger.error (f"--failed: {response}")
+            
     def delete (self, name, namespace="default"):
-        """ Delete the deployment. """
+        """ Delete the deployment. 
+                
+            :param name: GUID of the system to delete.
+            :type name: str
+            :param namespace: Namespace the system runs in.
+            :type namespace: str
+        """
         try:
+            """ todo: kubectl delete pv,pvc,deployment,pod,svc,networkpolicy -l executor=tycho """
+            
             """ Delete the service. No obvious collection based api for service deletion. """
             service_list = self.api.list_namespaced_service(
                 label_selector=f"tycho-guid={name}",
@@ -197,8 +225,13 @@ class KubernetesCompute(Compute):
     
     def status (self, name=None, namespace="default"):
         """ Get status.
-        Without a name, this will get status for all running systems.
-        With a name, it will get status for the specified system.
+            Without a name, this will get status for all running systems.
+            With a name, it will get status for the specified system.
+
+            :param name: GUID of a system to get status for.
+            :type name: str
+            :param namespace: Namespace the system runs in.
+            :type namespace: str
         """
         result = []
         """ Find all our generated deployments. """
@@ -220,9 +253,6 @@ class KubernetesCompute(Compute):
                        len(service.status.load_balancer.ingress) > 0:
                         ip_address = service.status.load_balancer.ingress[0].ip
                     port = service.spec.ports[0].node_port
-                    #url = f"http://{ip_address}:{port}"
-                    #print (item)
-                    #print (f"port -- {port}")
                     result.append ({
                         "name" : service.metadata.name, #item.metadata.name,
                         "sid"  : item_guid,

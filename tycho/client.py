@@ -12,48 +12,119 @@ from kubernetes import client as k8s_client, config as k8s_config
 logger = logging.getLogger (__name__)
 
 class TychoClient:
-    """ Client to Tycho dynamic application deployment API. """
+    """ Python client to Tycho dynamic application deployment API. """
 
     def __init__(self, url):
+        """ Construct a client.
+
+            :param url: URL of the Tycho API endpoint.
+            :type url: string
+        """
         self.url = f"{url}/system"
-    def request (self, service, request):        
+        
+    def request (self, service, request):
         """ Send a request to the server. Generic underlayer to all requests. 
 
-        :param service: URL path to the service to invoke.
-        :param request: JSON to send to the API endpoint.
+            :param service: URL path to the service to invoke.
+            :param request: JSON to send to the API endpoint.
         """
         response = requests.post (f"{self.url}/{service}", json=request)
         result_text = f"HTTP status {response.status_code} received from service: {service}"
         logger.debug (result_text)
         if not response.status_code == 200:
             raise Exception (f"Error: {result_text}")
-        #print (json.dumps(response.json (), indent=2))
         return response.json ()
+    
     def format_name (self, name):
-        """ Format a service name to be a valid DNS label. """
+        """ Format a service name to be a valid DNS label.
+        
+            :param name: Format a name.
+        """
         return name.replace (os.sep, '-')
+
+    def parse_env (self, environment):
+        return {
+            line.split("=", maxsplit=1)[0] : line.split("=", maxsplit=1)[1]
+            for line in environment.split ("\n") if '=' in line
+        }
+        
     def start (self, request):
-        """ Start a service. """
+        """ Start a service. 
+        
+            The general format of a start request is::
+
+                {
+                   "name"   : <name of the system>,
+                   "env"    : <text of .env environment variables>,
+                   "system" : <JSON of a docker-compose yaml>
+                }
+
+            :param request: A request object formatted as above.
+            :type request: JSON
+        """
         return self.request ("start", request)
+    
     def delete (self, request):
-        """ Delete a service. """
+        """ Delete a service. 
+            
+            Given the GUID of a running service, delete it and all its constituent parts.
+
+            The general format of a delete request is::
+        
+                {
+                   "name" : <GUID>
+                }
+
+            :param request: A request formatted as above.
+            :type request: JSON
+        """
         return self.request ("delete", request)
+    
     def status (self, request):
-        """ Get status of running systems. """
+        """ Get status of running systems.
+        
+            Get the status of a system by GUID or across systems.
+
+            The format of a request is::
+ 
+                {}
+
+            :param request: Request formatted as above.
+            :type request: JSON
+        """
         return self.request ("status", request)
+    
     def up (self, name, system, settings=""):
         """ Bring a service up starting with a docker-compose spec. 
         
-        Start a service on the Tycho compute fabric.::
+            CLI endpoint to start a service on the Tycho compute fabric.::
 
-            tycho up path/to/docker-compose.yaml
+                tycho up -f path/to/docker-compose.yaml
 
+            :param name: Name of the system.
+            :type name: str
+            :param system: Docker-compose JSON structure.
+            :type system: JSON
+            :param settings: The textual contents of a .env file.
+            :type settings: str
         """
+        services = {}
+        for container_name, container in system['services'].items ():
+            ports = container['ports']
+            for port in ports:
+                port_num = int(port.split(':')[1] if ':' in port else port)
+                services[container_name] = {
+                    "port" : port_num
+                    #"clients" : [ "192.16.1.179" ]
+                }
+                    
         request = {
-            "name" : self.format_name (name),
-            "env"  : settings,
-            "system" : system
+            "name"   : self.format_name (name),
+            "env"    : self.parse_env (settings),
+            "system" : system,
+            "services" : services
         }
+        logger.debug (f"request: {json.dumps(request, indent=2)}")
         response = self.start (request)
         logger.debug (json.dumps(response,indent=2))
         error = response.get('result',{}).get('error', None)
@@ -75,9 +146,22 @@ class TychoClient:
                 port))
                 #print (f"(minikube)=> http://192.168.99.111:{port}")
     def list (self, name, terse=False):
+        """ List status of executing systems.
+
+            CLI endpoint to list status of services.::
+
+                tycho status
+                tycho status -terse
+
+            :param name: GUID of a service to get status for.
+            :type name: str
+            :param terse: Print just the GUID for running systems
+            :type terse: boolean
+        """
         try:
             request = { "name" : self.format_name (name) } if name else {}
             response = self.status (request)
+            logger.debug (json.dumps(response,indent=2))
             status = response.get('status', None)
             #print (json.dumps(response,indent=2))
             if status  == 'success':
@@ -104,10 +188,19 @@ class TychoClient:
         except Exception as e:
             raise e #traceback.print_exc (e)
     def down (self, names):
-        """ Bring down a service. """
+        """ Bring down a service. 
+
+            CLI endpoint for deleting running systems.::
+
+                tycho down <GUID>
+
+            :param names: GUIDs of systems to delete.
+            :type name: str
+        """
         try:
             for name in names:
                 response = self.delete ({ "name" : self.format_name(name) })
+                logger.debug (json.dumps(response,indent=2))
                 if response.get('status',None) == 'success':
                     print (f"{name}")
                 else:
@@ -116,18 +209,39 @@ class TychoClient:
             traceback.print_exc (e)
             
 class TychoClientFactory:
-    """ Locate Tycho. This is written to work in-cluster or standalone. """
+    """ Locate a Tycho API instance in a Kubernetes cluster.
+
+        This is written to work wheter run in-cluster or standalone. If we're running outside of 
+        the cluster we use the environment's kubernetes configuration. If we're running 
+        insde kubernetes, we use the "in cluster" configuration to locate the configuration.        
+    """
     def __init__(self):
-        """ Initialize connection to Kubernetes. """
-        """ TODO: Authentication. """
+        """ Initialize connection to Kubernetes.
+
+            Load the kubernetes configuration in an enviroment appropriate way as described above.
+
+            Then create the K8S API endpoint.
+        """
         if os.getenv('KUBERNETES_SERVICE_HOST'):
             k8s_config.load_incluster_config()
         else:
             k8s_config.load_kube_config()
         api_client = k8s_client.ApiClient()
         self.api = k8s_client.CoreV1Api(api_client)
+        
     def get_client (self, name="tycho-api", namespace="default"):
-        """ Locate the client endpoint using the K8s API. """
+        """ Locate the client endpoint using the K8s API.
+
+            Locate the Tycho API using the K8S API. We do this by reading services in the
+            given namespace with the given name. Then we look for a load balancer IP and port 
+            to build a URL. This works for public cloud clusters. With some modification, it
+            could work for Minikube but that is a future effort.
+
+            :param name: Name of the Tycho API service in Kubernetes.
+            :type name: str
+            :param namespace: The namespace the service is deployed to.
+            :type namespace: str
+        """
         url = None
         client = None
         try:
@@ -138,14 +252,14 @@ class TychoClientFactory:
             port = service.spec.ports[0].port
             url = f"http://{ip_address}:{port}"
         except Exception as e:
-            pass
             #traceback.print_exc (e)
-            #logger.error (e)
+            logger.info (f"did not find {name} in namespace {namespace}")
         if url:
             client = TychoClient (url=url) 
         return client
 
 if __name__ == "__main__":
+    """ A CLI for Tycho. """
     status_command="@status_command"
     parser = argparse.ArgumentParser(description='Tycho Client')
     parser.add_argument('-u', '--up', help="Launch service.", action='store_true')
@@ -181,6 +295,7 @@ if __name__ == "__main__":
             """ We've been given a docker-compose.yaml. Come up with a name for the app 
             based on the containing directory if none has been otherwise supplied. """
             if os.sep in args.file:
+                args.file = os.path.abspath (args.file)
                 name = args.file.split('.')[0] if '.' in args.file else args.file
                 name = name.split (os.sep)[-2]
             else:

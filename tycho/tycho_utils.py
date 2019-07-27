@@ -12,20 +12,26 @@ logger = logging.getLogger (__name__)
 
 class TemplateUtils:
     """ Utilities for generating text. """
-    
-    def render (self, template, context):
+
+    @staticmethod
+    def render (template, context):
         """Render a template object given a context. """
         result=None
         template_path = os.path.join (os.path.dirname (__file__), "template", template)
         with open(template_path, "r") as stream:
             template_text = stream.read ()
-            result = self.render_text (template_text, context)
+            result = TemplateUtils.render_text (template_text, context)
         return result
-    def render_text (self, template_text, context):
+
+    @staticmethod
+    def render_text (template_text, context):
         """ Render the text of a template given a context. """
+        logger.debug (template_text)
+        logger.debug (context)
         template = Template (template_text)
         template.globals['now'] = datetime.datetime.utcnow
         text = template.render (**context)
+        logger.debug (text)
         return yaml.load (text)
 
     @staticmethod

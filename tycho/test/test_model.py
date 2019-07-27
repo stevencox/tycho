@@ -2,7 +2,6 @@ import os
 import json
 import yaml
 from tycho.model import System
-from tycho.model import SystemParser
 
 def test_system_model ():
     system = System (**{
@@ -30,8 +29,10 @@ def test_system_parser ():
     spec_path = os.path.join (base_dir, "sample", "jupyter-ds", "docker-compose.yaml")
     with open (spec_path, "r") as stream:
         structure = yaml.load (stream)
-        parser = SystemParser ()
-        system =  parser.parse ("jupyter-ds", structure)
+        system =  System.parse (
+            name   = "jupyter-ds",
+            system = structure)
+
         print (f"{system}")
         assert system.name.startswith ('jupyter-ds')
         assert system.containers[0].name == 'jupyter-datascience'

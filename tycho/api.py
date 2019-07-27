@@ -125,22 +125,12 @@ class StartSystemResource(TychoResource):
                             type: string
 
         """
-        ip_addr = NetworkUtils.get_client_ip (request, debug=debug)
+        #ip_addr = NetworkUtils.get_client_ip (request, debug=debug)
         response = {}
         try:
             app.logger.info (f"start-system: {json.dumps(request.json, indent=2)}")
             self.validate (request, component="System")
-            system = tycho().parse (name=request.json['name'],
-                                    structure=request.json['system'],
-                                    settings=request.json['env'],
-                                    firewall={
-                                        'ingress_ports' : [ '80' ],
-                                        'egress_ports' : [],
-                                        'ingress_cidrs' : [
-                                            ipaddress.ip_network(ip_addr)
-                                        ],
-                                        'egress_cidrs' : []
-                                    })
+            system = tycho().parse (request.json)
             response = self.create_response (
                 result=tycho().get_compute().start (system),
                 message=f"Started system {system.name}")
