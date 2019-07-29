@@ -22,12 +22,13 @@ class KubernetesCompute(Compute):
         Tested with Minikube and Google Kubernetes Engine.
     """
 
-    def __init__(self):
+    def __init__(self, config):
         """ Initialize connection to Kubernetes. 
         
             Connects to Kubernetes configuration using an environment appropriate method.
         """
         super(KubernetesCompute, self).__init__()
+        self.config = config
         if os.getenv('KUBERNETES_SERVICE_HOST'):
             k8s_config.load_incluster_config()
         else:
@@ -111,10 +112,26 @@ class KubernetesCompute(Compute):
                     response = self.api.create_namespaced_service(
                         body=service_manifest,
                         namespace=namespace)
+
+                    logger.info (response)
+                    """ Get IP address of allocated ingress. """
+                    ip_address = self.get_service_ip_address (response)
+                    '''
+                    ip_address = None
+                    if response.status.load_balancer.ingress and \
+                       len(response.status.load_balancer.ingress) > 0:
+                        ip_address = response.status.load_balancer.ingress[0].ip
+                    if not ip_address:
+                        ip_address = self.config['tycho']['compute']['platform']['kube']['ip']
+                    '''
+                    logger.info (f"ingress ip: {ip_address}")
+                        
                     """ Return generated node ports to caller. """
-                    container_map[container.name] = {
-                        port.name : port.node_port for port in response.spec.ports
-                    }
+                    for port in response.spec.ports:
+                        container_map[container.name] = {
+                            "ip_address" : ip_address,
+                            port.name : port.node_port 
+                        }
                     
             result = {
                 'name'       : system.name,
@@ -134,6 +151,15 @@ class KubernetesCompute(Compute):
         logger.debug (f"result: {json.dumps(result,indent=2)}")
         return result
 
+    def get_service_ip_address (self, service_metadata):
+        ip_address = None
+        if service_metadata.status.load_balancer.ingress and \
+           len(service_metadata.status.load_balancer.ingress) > 0:
+            ip_address = service_metadata.status.load_balancer.ingress[0].ip
+        if not ip_address:
+            ip_address = self.config['tycho']['compute']['platform']['kube']['ip']
+        return ip_address
+    
     def pod_to_deployment (self, name, template, namespace="default"):
         """ Create a deployment specification based on a pod template.
             
@@ -249,14 +275,12 @@ class KubernetesCompute(Compute):
                     namespace=namespace)
                 """ Inspect and report each service connected to this element separately. """
                 for service in services.items:
-                    if service.status.load_balancer.ingress and \
-                       len(service.status.load_balancer.ingress) > 0:
-                        ip_address = service.status.load_balancer.ingress[0].ip
+                    ip_address = self.get_service_ip_address (service)
                     port = service.spec.ports[0].node_port
                     result.append ({
                         "name" : service.metadata.name, #item.metadata.name,
                         "sid"  : item_guid,
-                        #"ip"   : None, #"--", #ip_address,
+                        "ip"   : ip_address,
                         "port" : str(port)
                     })
         return result

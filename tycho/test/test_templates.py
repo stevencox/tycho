@@ -23,6 +23,7 @@ def system():
             }
         }
     }
+    print (f"{json.dumps(request, indent=2)}")
     return tycho.parse (request)
     
 def get_sample_spec (name):

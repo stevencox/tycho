@@ -125,7 +125,6 @@ class StartSystemResource(TychoResource):
                             type: string
 
         """
-        #ip_addr = NetworkUtils.get_client_ip (request, debug=debug)
         response = {}
         try:
             app.logger.info (f"start-system: {json.dumps(request.json, indent=2)}")

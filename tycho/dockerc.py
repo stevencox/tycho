@@ -77,7 +77,8 @@ class DockerComposeThread(threading.Thread):
             cwd=self.app_root)
         
 class DockerComposeCompute(Compute):
-    def __init__(self):
+    def __init__(self, config):
+        self.config = config
         self.app_root_base = "apps"
     def start (self, system, namespace="default"):
         import subprocess

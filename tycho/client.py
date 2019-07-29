@@ -131,18 +131,20 @@ class TychoClient:
         if error:
             print (''.join (error))
         else:
-            format_string = '{:<30} {:<35} {:<7}'
-            print (format_string.format("SYSTEM", "GUID", "PORT"))
+            format_string = '{:<30} {:<35} {:<15} {:<7}'
+            print (format_string.format("SYSTEM", "GUID", "IP_ADDRESS", "PORT"))
             result = response.get('result',{})
             port='--'
-            for process, spec in result.get('containers',{}).items ():
-                for port_name, port_num in spec.items ():
-                    port = port_num
+            ip_address='--'
+            for process, host_port in result.get('containers',{}).items ():
+                ip_address = host_port['ip_address']
+                port = host_port['port']
             sid = result.get ('sid',  None)
             item_name = result.get ('name', 'unknown').replace (f"-{sid}", "")
             print (format_string.format (
                 TemplateUtils.trunc (item_name, max_len=28),
                 TemplateUtils.trunc (sid, max_len=33),
+                ip_address,
                 port))
                 #print (f"(minikube)=> http://192.168.99.111:{port}")
     def list (self, name, terse=False):
@@ -172,8 +174,8 @@ class TychoClient:
                 elif len(items) == 0:
                     print ('None running')
                 else:
-                    format_string = '{:<30} {:<35} {:<10} {:<7}'
-                    print (format_string.format("SYSTEM", "GUID", "IP", "PORT"))
+                    format_string = '{:<30} {:<35} {:<15} {:<7}'
+                    print (format_string.format("SYSTEM", "GUID", "IP_ADDRESS", "PORT"))
                     for item in items:
                         sid = item.get ('sid',  None)
                         item_name = item.get ('name', 'unknown').replace (f"-{sid}", "")

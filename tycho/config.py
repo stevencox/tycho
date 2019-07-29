@@ -1,13 +1,19 @@
+import json
+import logging
 import os
 import yaml
 import traceback
 import re
 from tycho.tycho_utils import Resource
 
+logger = logging.getLogger (__name__)
+
 class Config(dict):
     def __init__(self, config, prefix=''):
+        
         if isinstance(config, str):
             config_path = Resource.get_resource_path (config)
+            logger.debug (f"loading config: {config_path}")
             with open(config_path, 'r') as f:
                 self.conf = yaml.safe_load (f)
         elif isinstance(config, dict):
@@ -15,8 +21,17 @@ class Config(dict):
         else:
             raise ValueError
         self.prefix = prefix
+        logger.debug (f"loaded config: {json.dumps(self.conf,indent=2)}")
+        ip = os.popen('minikube ip').read().strip ()
+        if len(ip) > 0:
+            logger.info (f"Configuring minikube ip: {ip}")
+            self.conf['tycho']['compute']['platform']['kube']['ip'] = ip
+            
+
+    '''
     def __setitem__(self, key, val):
         raise TypeError("Setting configuration is not allowed.")
+
     def __str__(self):
         return "Config with keys: "+', '.join(list(self.conf.keys()))
     def get(self, key, default=None):
@@ -25,7 +40,7 @@ class Config(dict):
         except KeyError:
             return default
     def __getitem__(self, key):
-        '''
+        """
         Use this accessor instead of getting conf directly in order to permit overloading with environment variables.
         Imagine you have a config file of the form
 
@@ -35,18 +50,30 @@ class Config(dict):
 
         This will be overridden by an environment variable by the name of PERSON_ADDRESS_STREET,
         e.g. export PERSON_ADDRESS_STREET=Gregson
-        '''
+        """
+        result = None
         key_var = re.sub('[\W]', '', key)
         name = self.prefix+'_'+key_var if self.prefix else key_var
-        #print(f"Config looking for {name}")
+        logger.debug (f"config looking for {name}")
         try:
             env_name = name.upper()
-            #print ("IN ENVI")
-            return os.environ[env_name]
+            logger.debug (f"  --found key {env_name} in environment")
+            result = os.environ[env_name]
         except KeyError:
             value = self.conf[key]
             #print(f'GOT {value}')
             if isinstance(value, dict):
-                return Config(value, prefix=name)
+                result = Config(value, prefix=name)
             else:
-                return value
+                result = value
+        logger.debug (f"returning result: {result}")
+        return result
+    '''
+    def __setitem__(self, key, val):
+        self.conf.__setitem__(key, val)
+    def __str__(self):
+        return self.conf.__str__()
+    def __getitem__(self, key):
+        return self.conf.__getitem__(key)
+    def get (self, key, default=None):
+        return self.conf.get(key, default)

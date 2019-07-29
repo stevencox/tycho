@@ -1,9 +1,16 @@
 tycho:
+  backplane: kubernetes
   compute:
-    resources:
-      default:
-        cpus: 0.2
-        memory: 50MB
+    platform:
+      kube:
+        ip: null
+    system:
+      defaults:
+        services:
+          deploy:
+            resources:
+              cpus: 0.2
+              memory: 50MB
   policy:
     network:
       ingress:
