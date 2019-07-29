@@ -254,10 +254,16 @@ class KubernetesCompute(Compute):
         """
         result = []
         """ Find all our generated deployments. """
+        label = f"tycho-guid={name}" if name else f"executor=tycho"
+        logger.debug (f"getting status using label: {label}")
+        response = self.extensions_api.list_namespaced_deployment (
+            namespace,
+            label_selector=label)
+        '''
         response = self.extensions_api.list_namespaced_deployment (
             namespace,
             label_selector=f"executor=tycho")
-        
+        '''
         if response:
             #print(f"** response: {response}")
             for item in response.items:
