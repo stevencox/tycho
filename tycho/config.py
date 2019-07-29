@@ -1,3 +1,4 @@
+import ipaddress
 import json
 import logging
 import os
@@ -22,11 +23,17 @@ class Config(dict):
             raise ValueError
         self.prefix = prefix
         logger.debug (f"loaded config: {json.dumps(self.conf,indent=2)}")
-        ip = os.popen('minikube ip').read().strip ()
-        if len(ip) > 0:
-            logger.info (f"Configuring minikube ip: {ip}")
-            self.conf['tycho']['compute']['platform']['kube']['ip'] = ip
-            
+        if 'TYCHO_ON_MINIKUBE' in os.environ:
+            ip = os.popen('minikube ip').read().strip ()
+            if len(ip) > 0:
+                try:
+                    ipaddress.ip_address (ip)
+                    logger.info (f"Configuring minikube ip: {ip}")
+                    self.conf['tycho']['compute']['platform']['kube']['ip'] = ip
+                except ValueError as e:
+                    logger.error ("Unable to get minikube ip address")
+                    traceback.print_exc (e)
+                    
 
     '''
     def __setitem__(self, key, val):

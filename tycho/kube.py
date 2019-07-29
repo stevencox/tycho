@@ -116,20 +116,13 @@ class KubernetesCompute(Compute):
                     logger.info (response)
                     """ Get IP address of allocated ingress. """
                     ip_address = self.get_service_ip_address (response)
-                    '''
-                    ip_address = None
-                    if response.status.load_balancer.ingress and \
-                       len(response.status.load_balancer.ingress) > 0:
-                        ip_address = response.status.load_balancer.ingress[0].ip
-                    if not ip_address:
-                        ip_address = self.config['tycho']['compute']['platform']['kube']['ip']
-                    '''
+
                     logger.info (f"ingress ip: {ip_address}")
                         
                     """ Return generated node ports to caller. """
                     for port in response.spec.ports:
                         container_map[container.name] = {
-                            "ip_address" : ip_address,
+                            "ip_address" : ip_address if ip_address else '--',
                             port.name : port.node_port 
                         }
                     

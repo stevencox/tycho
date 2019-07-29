@@ -144,7 +144,7 @@ class TychoClient:
             print (format_string.format (
                 TemplateUtils.trunc (item_name, max_len=28),
                 TemplateUtils.trunc (sid, max_len=33),
-                ip_address,
+                ip_address if ip_address else '--',
                 port))
                 #print (f"(minikube)=> http://192.168.99.111:{port}")
     def list (self, name, terse=False):
@@ -177,13 +177,15 @@ class TychoClient:
                     format_string = '{:<30} {:<35} {:<15} {:<7}'
                     print (format_string.format("SYSTEM", "GUID", "IP_ADDRESS", "PORT"))
                     for item in items:
+                        ip_address = item.get('ip', '--')
+                        port = item.get ('port', '--')
                         sid = item.get ('sid',  None)
                         item_name = item.get ('name', 'unknown').replace (f"-{sid}", "")
                         print (format_string.format (
                             TemplateUtils.trunc (item_name, max_len=28),
                             TemplateUtils.trunc (sid, max_len=33),
-                            item.get ('ip',   '--'),
-                            item.get ('port', '--')
+                            ip_address if ip_address else '--',
+                            port if port else '--'
                         ))
             elif status == 'error':
                 print (json.dumps(response, indent=2))

@@ -9,8 +9,8 @@ services:
       - $HOST_PORT:8888
     volumes:
       - $LOCAL_STORE:/mydata
-      - ./:/mydata1
-      - ./home:/mydata2
+#      - ./:/mydata1
+#      - ./home:/mydata2
     deploy:
       resources:
         limits:

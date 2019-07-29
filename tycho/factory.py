@@ -26,6 +26,5 @@ class ComputeFactory:
         
     @staticmethod
     def create_compute (config):
-        print (f"------------------> {json.dumps(config, indent=2)}")
         backplane = config['tycho']['backplane']
         return config_factory[backplane](config=config)
