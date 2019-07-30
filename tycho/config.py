@@ -11,7 +11,6 @@ logger = logging.getLogger (__name__)
 
 class Config(dict):
     def __init__(self, config, prefix=''):
-        
         if isinstance(config, str):
             config_path = Resource.get_resource_path (config)
             logger.debug (f"loading config: {config_path}")
@@ -28,10 +27,10 @@ class Config(dict):
             if len(ip) > 0:
                 try:
                     ipaddress.ip_address (ip)
-                    logger.info (f"Configuring minikube ip: {ip}")
+                    logger.info (f"configuring minikube ip: {ip}")
                     self.conf['tycho']['compute']['platform']['kube']['ip'] = ip
                 except ValueError as e:
-                    logger.error ("Unable to get minikube ip address")
+                    logger.error ("unable to get minikube ip address")
                     traceback.print_exc (e)
                     
 

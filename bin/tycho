@@ -1,35 +1,80 @@
 #!/bin/bash
 
+################################################################
+##
+## Tycho compiles and runs docker-compose distributed systems
+## in orchestrator backplanes like Kubernetes.
+##
+##   This is the Bash command line interface (CLI) for Tycho.
+##   
+##   author: steven cox
+##   version: 0.1
+##   usage:
+##      
+##     up: 
+##      
+##       tycho up -f <docker-compose>
+##       ex: tycho up -f tycho/samples/jupyter-ds/docker-compose.yaml
+##      
+##     status:
+##      
+##       tycho status [--terse] [--trace]
+##       ex: tycho status
+##      
+##     down:
+##      
+##       tycho down <GUID>
+##       ex: tycho down $(tycho status --terse)
+##   
+################################################################
 set -e
 
+##
+## Get our location and configure the path.
+##
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 TYCHO_ROOT=$( dirname $DIR )
 export PYTHONPATH=$TYCHO_ROOT
 export TYCHO=$TYCHO_ROOT/tycho
 
+##
+## Tell Tycho to use Minikube settings.
+##
+minikube () {
+    export TYCHO_ON_MINIKUBE=true
+}
+
+##
+## Run the API. 
+##
 api () {
     python $TYCHO/api.py $*
 }
+
+##
+## Bring a service up.
+##
 up () {
     python $TYCHO/client.py --up $*
 }
+
+##
+## Shut a service down.
+##
 down () {
     python $TYCHO/client.py --down $*
 }
+
+##
+## Get status for a service.
+##
 status () {
     python $TYCHO/client.py --status $*
 }
-status-mk () {
-    # provide minkube urls
-    stat=tmk.stat
-    tycho status > $stat
-    for port in $(tycho status | grep -v POR | awk '{ print $4 }'); do
-        cat $stat | sed -E "s,$port,http://$(minikube ip):$port,g" > $stat.1
-        mv ${stat}.1 $stat
-    done
-    cat $stat
-    rm $stat*
-}
+
+##
+## Run tests.
+##
 test () {
     python pytest $TYCHO/test
 }

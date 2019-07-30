@@ -4,6 +4,8 @@ import yaml
 from tycho.model import System
 
 def test_system_model ():
+    """ Test that the abstract model parses structures as we expect and puts the pieces
+    where they belong. """
     system = System (**{
         "name" : "test",
         "containers" : [
@@ -25,6 +27,7 @@ def test_system_model ():
     assert system.containers[0].limits['memory'] == "512M"
 
 def test_system_parser ():
+    """ Test parsing of a docker-compose into the standard model. """
     base_dir = os.path.dirname (os.path.dirname (__file__))
     spec_path = os.path.join (base_dir, "sample", "jupyter-ds", "docker-compose.yaml")
     with open (spec_path, "r") as stream:
@@ -43,8 +46,7 @@ def test_system_parser ():
         assert system.containers[0].requests.memory == '20M'
         assert system.containers[0].ports[0]['containerPort'] == '8888'
         assert system.containers[0].volumes[0] == '/mydata'
-        assert system.containers[0].volumes[1] == '/mydata1'
-        assert system.containers[0].volumes[2] == '/mydata2'
+
 
 
 

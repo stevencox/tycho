@@ -180,15 +180,9 @@ class KubernetesCompute(Compute):
         api_response = self.extensions_api.create_namespaced_deployment(
             body=deployment,
             namespace=namespace)
-        #print(f"Deployment created. status={api_response.status}")
+        logger.debug (f"deployment created. status={api_response.status}")
         return deployment
 
-    def log_status (self, response):
-        if not response.status or response.status == 'Success':
-            logger.debug ("--succeeded")
-        elif response.status == 'Failure':
-            logger.error (f"--failed: {response}")
-            
     def delete (self, name, namespace="default"):
         """ Delete the deployment. 
                 
@@ -259,13 +253,8 @@ class KubernetesCompute(Compute):
         response = self.extensions_api.list_namespaced_deployment (
             namespace,
             label_selector=label)
-        '''
-        response = self.extensions_api.list_namespaced_deployment (
-            namespace,
-            label_selector=f"executor=tycho")
-        '''
+
         if response:
-            #print(f"** response: {response}")
             for item in response.items:
                 item_guid = item.metadata.labels.get ("tycho-guid", None)
                 """ List all services with this guid. """
@@ -277,7 +266,7 @@ class KubernetesCompute(Compute):
                     ip_address = self.get_service_ip_address (service)
                     port = service.spec.ports[0].node_port
                     result.append ({
-                        "name" : service.metadata.name, #item.metadata.name,
+                        "name" : service.metadata.name,
                         "sid"  : item_guid,
                         "ip"   : ip_address,
                         "port" : str(port)

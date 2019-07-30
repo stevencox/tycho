@@ -55,7 +55,7 @@ class TychoClient:
 
                 {
                    "name"   : <name of the system>,
-                   "env"    : <text of .env environment variables>,
+                   "env"    : <JSON dict created from .env environment variables>,
                    "system" : <JSON of a docker-compose yaml>
                 }
 
