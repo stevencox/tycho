@@ -14,9 +14,9 @@ logger = logging.getLogger (__name__)
 class TychoService:
     """ Represent a service endpoint. """
     
-    def __init__(self, name, ip, port):
+    def __init__(self, name, ip_address, port):
         self.name = name
-        self.ip = ip
+        self.ip_address = ip_address
         self.port = port
         
 class TychoSystem:
@@ -27,7 +27,7 @@ class TychoSystem:
         self.name = result['name']
         self.identifier = result['sid']
         self.services = [
-            TychoService(name=k, ip=v['ip_address'], port=v['port'])
+            TychoService(name=k, ip_address=v['ip_address'], port=v['port'])
             for k, v in result['containers'].items ()
         ]
         self.message = message
@@ -101,8 +101,8 @@ class TychoClient:
             :returns: Returns a TychoSystem object
         """
         response = self.request ("start", request)
-        system = TychoSystem (**response)
-        
+        return TychoSystem (**response)
+
     def delete (self, request):
         """ Delete a service. 
             
