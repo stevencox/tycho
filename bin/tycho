@@ -76,7 +76,7 @@ status () {
 ## Run tests.
 ##
 test () {
-    pytest $TYCHO/test
+    pytest $TYCHO/test $* #--log-format="%(asctime)s %(levelname)s %(message)s" $*
 }
 
 $*

@@ -11,6 +11,27 @@ from kubernetes import client as k8s_client, config as k8s_config
 
 logger = logging.getLogger (__name__)
 
+class TychoService:
+    """ Represent a service endpoint. """
+    
+    def __init__(self, name, ip, port):
+        self.name = name
+        self.ip = ip
+        self.port = port
+        
+class TychoSystem:
+    """ Represents a running system. """
+
+    def __init__(self, status, result, message):
+        self.status = status
+        self.name = result['name']
+        self.identifier = result['sid']
+        self.services = [
+            TychoService(name=k, ip=v['ip_address'], port=v['port'])
+            for k, v in result['containers'].items ()
+        ]
+        self.message = message
+        
 class TychoClient:
     """ Python client to Tycho dynamic application deployment API. """
 
@@ -63,7 +84,25 @@ class TychoClient:
             :type request: JSON
         """
         return self.request ("start", request)
-    
+        
+    def start2 (self, request):
+        """ Start a service. 
+        
+            The general format of a start request is::
+
+                {
+                   "name"   : <name of the system>,
+                   "env"    : <JSON dict created from .env environment variables>,
+                   "system" : <JSON of a docker-compose yaml>
+                }
+
+            :param request: A request object formatted as above.
+            :type request: JSON
+            :returns: Returns a TychoSystem object
+        """
+        response = self.request ("start", request)
+        system = TychoSystem (**response)
+        
     def delete (self, request):
         """ Delete a service. 
             
@@ -233,7 +272,7 @@ class TychoClientFactory:
         api_client = k8s_client.ApiClient()
         self.api = k8s_client.CoreV1Api(api_client)
         
-    def get_client (self, name="tycho-api", namespace="default"):
+    def get_client (self, name="tycho-api", namespace="default", default_url="http://localhost:5000"):
         """ Locate the client endpoint using the K8s API.
 
             Locate the Tycho API using the K8S API. We do this by reading services in the
@@ -246,7 +285,7 @@ class TychoClientFactory:
             :param namespace: The namespace the service is deployed to.
             :type namespace: str
         """
-        url = None
+        url = default_url
         client = None
         try:
             service = self.api.read_namespaced_service(
@@ -254,13 +293,13 @@ class TychoClientFactory:
                 namespace=namespace)
             ip_address = service.status.load_balancer.ingress[0].ip
             port = service.spec.ports[0].port
+            logger.debug (f"located tycho api instance in kube")
             url = f"http://{ip_address}:{port}"
         except Exception as e:
             #traceback.print_exc (e)
             logger.info (f"did not find {name} in namespace {namespace}")
-        if url:
-            client = TychoClient (url=url) 
-        return client
+        logger.info (f"creating tycho client with url: {url}")
+        return TychoClient (url=url) 
 
 if __name__ == "__main__":
     """ A CLI for Tycho. """
@@ -281,7 +320,7 @@ if __name__ == "__main__":
     parser.add_argument('--terse', help="Keep status short", action='store_true', default=False)
     parser.add_argument('-v', '--volumes', help="Mounts a volume", default=None)
     args = parser.parse_args ()
-
+                
     """ Honor debug and trace settings. """
     if args.trace:
         logging.basicConfig(level=logging.DEBUG)
@@ -350,7 +389,7 @@ if __name__ == "__main__":
     if not client:
         logger.info (f"creating client directly {args.service}")
         client = TychoClient (url=args.service)
-        
+
     if args.up:
         client.up (name=name, system=system, settings=settings)
     elif args.down:

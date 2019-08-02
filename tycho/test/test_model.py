@@ -3,9 +3,10 @@ import json
 import yaml
 from tycho.model import System
 
-def test_system_model ():
+def test_system_model (request):
     """ Test that the abstract model parses structures as we expect and puts the pieces
     where they belong. """
+    print (f"{request.node.name}")
     system = System (**{
         "name" : "test",
         "containers" : [
@@ -26,8 +27,9 @@ def test_system_model ():
     assert system.containers[0].limits['cpus'] == "0.5"
     assert system.containers[0].limits['memory'] == "512M"
 
-def test_system_parser ():
+def test_system_parser (request):
     """ Test parsing of a docker-compose into the standard model. """
+    print (f"{request.node.name}")
     base_dir = os.path.dirname (os.path.dirname (__file__))
     spec_path = os.path.join (base_dir, "sample", "jupyter-ds", "docker-compose.yaml")
     with open (spec_path, "r") as stream:

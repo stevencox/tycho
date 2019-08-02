@@ -5,37 +5,12 @@ import pytest
 import yaml
 from tycho.model import System
 from tycho.core import Tycho
+from tycho.test.lib import system
 
 logger = logging.getLogger (__name__)
 
-@pytest.fixture(scope='module')
-def system():
-    """ Create a Tycho request object to test with. """
-    tycho = Tycho (backplane='kubernetes')
-    request = {
-        "name"   : "test",
-        "env"    : {},
-        "system" : get_sample_spec ("jupyter-ds"),
-        "services" : {
-            "jupyter-datascience" : {
-                "port"    : "8888",
-                "clients" : [ "127.0.0.1" ]
-            }
-        }
-    }
-    print (f"{json.dumps(request, indent=2)}")
-    return tycho.parse (request)
-    
-def get_sample_spec (name):
-    """ Load a docker-compose specification from our samples. """
-    result = None
-    d = os.path.dirname (__file__)
-    sample_path = os.path.join (d, "..", "sample", name, "docker-compose.yaml")
-    with open(sample_path, "r") as stream:
-        result = yaml.load (stream)
-    return result
-    
-def test_pod (system):
+def test_pod (system, request):
+    print (f"{request.node.name}")
     """ Test generation and integrity of the pod (the deployment template). """
     output = system.render ("kubernetes-pod.yaml")
     print (json.dumps (output, indent=2))
@@ -52,7 +27,8 @@ def test_pod (system):
     assert containers[0]['name'] == 'jupyter-datascience'
     assert containers[0]['image'] == "jupyter/datascience-notebook"
     
-def test_service_template (system):
+def test_service_template (system, request):
+    print (f"{request.node.name}")
     """ Verify the generated service selects our pod correctly and is 
         otherwise correctly parameterized.
     """
@@ -77,8 +53,9 @@ def test_service_template (system):
             labels = pod_spec.get('metadata',{}).get('labels',{})
             assert labels['name'] == service_manifest['spec']['selector']['name']
 
-def test_networkpolicy (system):
+def test_networkpolicy (system, request):
     """ Verify the network policy selects our pod, allows our ports, and IP blocks. """
+    print (f"{request.node.name}")
     pod = system.render ("kubernetes-pod.yaml")
     pod_labels = pod.get('metadata',{}).get('labels',{})
     guid = pod_labels['tycho-guid']
