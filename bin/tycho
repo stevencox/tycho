@@ -76,7 +76,7 @@ status () {
 ## Run tests.
 ##
 test () {
-    python pytest $TYCHO/test
+    pytest $TYCHO/test
 }
 
 $*
