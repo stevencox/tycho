@@ -266,9 +266,9 @@ class KubernetesCompute(Compute):
                     ip_address = self.get_service_ip_address (service)
                     port = service.spec.ports[0].node_port
                     result.append ({
-                        "name" : service.metadata.name,
-                        "sid"  : item_guid,
-                        "ip"   : ip_address,
-                        "port" : str(port)
+                        "name"       : service.metadata.name,
+                        "sid"        : item_guid,
+                        "ip_address" : ip_address,
+                        "port"       : str(port)
                     })
         return result

@@ -13,15 +13,21 @@ logger = logging.getLogger (__name__)
 
 class TychoService:
     """ Represent a service endpoint. """
-    
-    def __init__(self, name, ip_address, port):
+    def __init__(self, name, ip_address, port, sid=None):
         self.name = name
         self.ip_address = ip_address
         self.port = port
-        
+        self.identifier = sid
+
+class TychoStatus:
+    """ A response from a status request. """ 
+    def __init__(self, status, result, message):
+        self.status = status
+        self.services = list(map(lambda v: TychoService (**v), result))
+        self.message = message
+
 class TychoSystem:
     """ Represents a running system. """
-
     def __init__(self, status, result, message):
         self.status = status
         self.name = result['name']
@@ -54,7 +60,9 @@ class TychoClient:
         logger.debug (result_text)
         if not response.status_code == 200:
             raise Exception (f"Error: {result_text}")
-        return response.json ()
+        result = response.json ()
+        logger.debug (json.dumps(result, indent=2))
+        return result
     
     def format_name (self, name):
         """ Format a service name to be a valid DNS label.
@@ -69,7 +77,7 @@ class TychoClient:
             for line in environment.split ("\n") if '=' in line
         }
         
-    def start (self, request):
+    def start0 (self, request):
         """ Start a service. 
         
             The general format of a start request is::
@@ -85,7 +93,7 @@ class TychoClient:
         """
         return self.request ("start", request)
         
-    def start2 (self, request):
+    def start (self, request):
         """ Start a service. 
         
             The general format of a start request is::
@@ -119,7 +127,7 @@ class TychoClient:
         """
         return self.request ("delete", request)
     
-    def status (self, request):
+    def status0 (self, request):
         """ Get status of running systems.
         
             Get the status of a system by GUID or across systems.
@@ -133,7 +141,22 @@ class TychoClient:
         """
         return self.request ("status", request)
     
-    def up (self, name, system, settings=""):
+    def status (self, request):
+        """ Get status of running systems.
+        
+            Get the status of a system by GUID or across systems.
+
+            The format of a request is::
+ 
+                {}
+
+            :param request: Request formatted as above.
+            :type request: JSON
+        """
+        response = self.request ("status", request)
+        return TychoStatus (**response)
+            
+    def up0 (self, name, system, settings=""):
         """ Bring a service up starting with a docker-compose spec. 
         
             CLI endpoint to start a service on the Tycho compute fabric.::
@@ -186,6 +209,52 @@ class TychoClient:
                 ip_address if ip_address else '--',
                 port))
                 #print (f"(minikube)=> http://192.168.99.111:{port}")
+
+    def up (self, name, system, settings=""):
+        """ Bring a service up starting with a docker-compose spec. 
+        
+            CLI endpoint to start a service on the Tycho compute fabric.::
+
+                tycho up -f path/to/docker-compose.yaml
+
+            :param name: Name of the system.
+            :type name: str
+            :param system: Docker-compose JSON structure.
+            :type system: JSON
+            :param settings: The textual contents of a .env file.
+            :type settings: str
+        """
+        services = {}
+        for container_name, container in system['services'].items ():
+            ports = container['ports']
+            for port in ports:
+                port_num = int(port.split(':')[1] if ':' in port else port)
+                services[container_name] = {
+                    "port" : port_num
+                    #"clients" : [ "192.16.1.179" ]
+                }
+                    
+        request = {
+            "name"   : self.format_name (name),
+            "env"    : self.parse_env (settings),
+            "system" : system,
+            "services" : services
+        }
+        logger.debug (f"request: {json.dumps(request, indent=2)}")
+        response = self.start (request)
+        logger.debug (response)
+        if response.status == 'error':
+            print (response.message)
+        else:
+            format_string = '{:<30} {:<35} {:<15} {:<7}'
+            print (format_string.format("SERVICE", "GUID", "IP_ADDRESS", "PORT"))
+            for service in response.services:
+                print (format_string.format (
+                    TemplateUtils.trunc (service.name, max_len=28),
+                    TemplateUtils.trunc (response.identifier, max_len=33),
+                    service.ip_address,
+                    service.port))
+
     def list (self, name, terse=False):
         """ List status of executing systems.
 
@@ -200,36 +269,29 @@ class TychoClient:
             :type terse: boolean
         """
         try:
-            request = { "name" : self.format_name (name) } if name else {}
+            request = { "name" : self.format_name (name) } if name else {}        
             response = self.status (request)
-            logger.debug (json.dumps(response,indent=2))
-            status = response.get('status', None)
-            #print (json.dumps(response,indent=2))
-            if status  == 'success':
-                items = response.get('result', [])
+            logger.debug (response)
+            if response.status  == 'success':
                 if terse:
-                    for item in items:
-                        print (item.get ('sid', None))
-                elif len(items) == 0:
+                    for service in response.services:
+                        print (service.identifier)
+                elif len(response.services) == 0:
                     print ('None running')
                 else:
                     format_string = '{:<30} {:<35} {:<15} {:<7}'
                     print (format_string.format("SYSTEM", "GUID", "IP_ADDRESS", "PORT"))
-                    for item in items:
-                        ip_address = item.get('ip', '--')
-                        port = item.get ('port', '--')
-                        sid = item.get ('sid',  None)
-                        item_name = item.get ('name', 'unknown').replace (f"-{sid}", "")
+                    for service in response.services:
                         print (format_string.format (
-                            TemplateUtils.trunc (item_name, max_len=28),
-                            TemplateUtils.trunc (sid, max_len=33),
-                            ip_address if ip_address else '--',
-                            port if port else '--'
-                        ))
-            elif status == 'error':
-                print (json.dumps(response, indent=2))
+                            TemplateUtils.trunc (service.name, max_len=28),
+                            TemplateUtils.trunc (service.identifier, max_len=33),
+                            service.ip_address,
+                            service.port))
+            elif response.status == 'error':
+                print (response)
         except Exception as e:
-            raise e #traceback.print_exc (e)
+            raise e
+        
     def down (self, names):
         """ Bring down a service. 
 

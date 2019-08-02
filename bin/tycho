@@ -38,16 +38,13 @@ export PYTHONPATH=$TYCHO_ROOT
 export TYCHO=$TYCHO_ROOT/tycho
 
 ##
-## Tell Tycho to use Minikube settings.
-##
-minikube () {
-    export TYCHO_ON_MINIKUBE=true
-}
-
-##
 ## Run the API. 
 ##
 api () {
+    which minikube >> /dev/null && \
+        minikube status | grep -c "apiserver: Running" >> /dev/null && \
+        export TYCHO_ON_MINIKUBE=true
+    echo TOM: $TYCHO_ON_MINIKUBE
     python $TYCHO/api.py $*
 }
 
