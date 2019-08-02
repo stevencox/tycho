@@ -3,7 +3,12 @@ dist: xenial
 language: python
 python:
   - "3.7"
-  
+
+notifications:
+  email:
+    - scox@renci.org
+    - muralikarthik.k@renci.org
+    
 # command to install dependencies
 install:
   - pip install -r requirements.txt
@@ -43,6 +48,7 @@ script:
 #- kubectl run travis-example --image=redis --labels="app=travis-example"
 # Make sure created pod is scheduled and running.
 #- JSONPATH='{range .items[*]}{@.metadata.name}:{range @.status.conditions[*]}{@.type}={@.status};{end}{end}'; until kubectl -n default get pods -lapp=travis-example -o jsonpath="$JSONPATH" 2>&1 | grep -q "Ready=True"; do sleep 1;echo "waiting for travis-example deployment to be available"; kubectl get pods -n default; done
+- tycho test
 - cd tycho
 - tycho api &
 - PID=$!
