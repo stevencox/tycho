@@ -28,7 +28,7 @@ def test_client_start (mocker, system_request, client, request):
         "message": "Started system jupyter-ds-caa94baea8a849d89e427bd78cad17eb"
     }
     with mock.patch.object(TychoClient, 'request', return_value=response):
-        tycho_system = client.start2 (system_request)
+        tycho_system = client.start (system_request)
         result = response['result']
         jupyter = result['containers']['jupyter-datascience']
         assert tycho_system.status == 'success'
