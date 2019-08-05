@@ -186,7 +186,6 @@ class KubernetesCompute(Compute):
         """
         try:
             """ todo: kubectl delete pv,pvc,deployment,pod,svc,networkpolicy -l executor=tycho """
-            
             """ Delete the service. No obvious collection based api for service deletion. """
             service_list = self.api.list_namespaced_service(
                 label_selector=f"tycho-guid={name}",
