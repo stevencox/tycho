@@ -1,15 +1,26 @@
+{% for volume in system.volumes %}
+{% if volume["claim_name"] != "nfs" %}
+---
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: pv-for-{{ volume_name }}
+  name: {{ volume["volume_name"] }}
   labels:
     executor: tycho
     tycho-guid: {{ system.identifier }}
 spec:
+  storageClassName: manual
   accessModes:
     - ReadWriteOnce
   capacity:
-    storage: 100Mi
+    storage: 2Gi
   persistentVolumeReclaimPolicy: Recycle
+{% if volume["host_path"] %}
+  hostPath:
+    path: {{ volume["host_path"] }}
+{% else %}
   gcePersistentDisk:
-    pdName: {{ pv_name }}-disk
+    pdName: {{ volume["disk_name"] }}
+  {% endif %}
+{% endif %}
+{% endfor %}
