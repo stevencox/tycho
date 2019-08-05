@@ -179,7 +179,8 @@ class System:
                 template_text=system_template,
                 context=env)
             logger.debug (f"applied settings:\n {system_rendered}")
-            system = system_rendered
+            for system_render in system_rendered:
+                system = system_render
 
         """ Model each service. """
         logger.debug (f"compose {system}")
