@@ -46,12 +46,13 @@ class Volumes:
                 disk_name = f"{self.name_noiden}-{index}-disk"
                 mount_path = volume.split(":")[1]
                 host_path = volume.split(":")[0]
-                if os.environ['TYCHO_ON_MINIKUBE'] == "True":
-                    if host_path == "TYCHO_NFS":
-                        continue
-                    else:
-                        self.volumes.append({"volume_name": volume_name, "claim_name": claim_name, 
-                                             "mount_path": mount_path, "host_path": host_path})
+                if "TYCHO_ON_MINIKUBE" in os.environ:
+                    if os.environ['TYCHO_ON_MINIKUBE'] == "True":
+                        if host_path == "TYCHO_NFS":
+                            continue
+                        else:
+                            self.volumes.append({"volume_name": volume_name, "claim_name": claim_name, 
+                                                 "mount_path": mount_path, "host_path": host_path})
                 else:
                     if host_path == "TYCHO_NFS":
                         claim_name = "nfs" 
