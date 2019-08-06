@@ -28,7 +28,7 @@ class Config(dict):
             #    try:
             #        ipaddress.ip_address (ip)
             #        logger.info (f"configuring minikube ip: {ip}")
-            self.conf['tycho']['compute']['platform']['kube']['ip'] = ip
+            self.conf['tycho']['compute']['platform']['kube']['ip'] = "192.168.1.27"
                 #except ValueError as e:
                 #    logger.error ("unable to get minikube ip address")
                 #    traceback.print_exc (e)
