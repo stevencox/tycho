@@ -3,7 +3,7 @@ tycho:
   compute:
     platform:
       kube:
-        ip: null
+        ip: 192.168.1.26
     system:
       defaults:
         services:

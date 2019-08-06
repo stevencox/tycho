@@ -54,16 +54,16 @@ spec:
 {% endif %}
     volumeMounts:
 {% if container.volumes %}
-{% for volume in container.volumes %}
-      - name: {{ system.name }}-{{ loop.index }}
-        mountPath: {{ volume }}
-        readOnly: false
-{% endfor %}
+{% for volume in system.volumes %}
+    - name: {{ volume["volume_name"] }}
+      mountPath: {{ volume["mount_path"] }}
+      readOnly: false
+  {% endfor %}
   volumes:
-{% for volume in container.volumes %}
-    - name: {{ system.name }}-{{ loop.index }}
+{% for volume in system.volumes %}
+    - name: {{ volume["volume_name"] }}
       persistentVolumeClaim:
-        claimName: pvc-for-{{ system.name }}-{{ loop.index }}     
-{% endfor %}
-{% endif %}
-{% endfor %}
+        claimName: {{ volume["claim_name"] }}      
+  {% endfor %}
+  {% endif %}
+{% endfor %}   

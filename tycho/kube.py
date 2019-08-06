@@ -53,39 +53,31 @@ class KubernetesCompute(Compute):
             utils = TemplateUtils ()
 
             """ Turn an abstract system model into a cluster specific representation. """
-            pod_manifest = system.render ("kubernetes-pod.yaml")
+            pod_manifests = system.render ("kubernetes-pod.yaml")
             
-            volumes = pod_manifest.get('spec',{}).get('volumes', [])
-            counter = 0
-            for volume in volumes:
-                """ Create a persistent volume claim """
-                pvc_manifest = utils.render(template="pvc.yaml",
-                                            context={
-                                                "system": system,
-                                                "volume_name": volume['name'],
-                                                "claim_name": volume['persistentVolumeClaim']['claimName']
-                                            })
-                response = self.api.create_namespaced_persistent_volume_claim(
-                    namespace=namespace,
-                    body=pvc_manifest)
-                pv_raw = system.name.split("-")
-                pv_raw.pop(len(pv_raw)-1)
-                pv_name = "-".join(pv_raw) + "-" + str(counter)
-                counter += 1
-                logger.debug (f"pv-name: {pv_name}")
-                pv_manifest = utils.render(template="pv.yaml",
-                                           context={
-                                               "system": system,
-                                               "pv_name": pv_name,
-                                               "volume_name": volume['name']
-                                           })
+            """ Create a persistent volume claim """
+            pvc_manifests = utils.render(template="pvc.yaml",
+                                        context={
+                                            "system": system
+                                        })
+            for pvc_manifest in pvc_manifests:
+                if pvc_manifest["metadata"]["name"] != "nfs":
+                    response = self.api.create_namespaced_persistent_volume_claim(namespace='default', body=pvc_manifest)
+                    
+            """ Create Persistent Volumes. """
+            pv_manifests = utils.render(template="pv.yaml",
+                                       context={
+                                           "system": system
+                                       })
+            for pv_manifest in pv_manifests:
                 response = self.api.create_persistent_volume(body=pv_manifest)
         
             """ Create a deployment for the pod. """
-            deployment = self.pod_to_deployment (
-                name=system.name,
-                template=pod_manifest,
-                namespace=namespace)
+            for pod_manifest in pod_manifests:
+                deployment = self.pod_to_deployment (
+                    name=system.name,
+                    template=pod_manifest,
+                    namespace=namespace)
 
             """ Create a network policy if appropriate. """
             if system.requires_network_policy ():
@@ -103,15 +95,16 @@ class KubernetesCompute(Compute):
                 service = system.services.get (container.name, None)
                 if service:
                     logger.debug (f"generating service for container {container.name}")
-                    service_manifest = system.render (
+                    service_manifests = system.render (
                         template="service.yaml",
                         context={
                             "service" : service
                         })
                     logger.debug (f"creating service for container {container.name}")
-                    response = self.api.create_namespaced_service(
-                        body=service_manifest,
-                        namespace=namespace)
+                    for service_manifest in service_manifests:
+                        response = self.api.create_namespaced_service(
+                            body=service_manifest,
+                            namespace=namespace)
 
                     logger.info (response)
                     """ Get IP address of allocated ingress. """
@@ -193,7 +186,6 @@ class KubernetesCompute(Compute):
         """
         try:
             """ todo: kubectl delete pv,pvc,deployment,pod,svc,networkpolicy -l executor=tycho """
-            
             """ Delete the service. No obvious collection based api for service deletion. """
             service_list = self.api.list_namespaced_service(
                 label_selector=f"tycho-guid={name}",

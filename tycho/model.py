@@ -30,6 +30,40 @@ class Limits:
         self.memory = memory
     def __repr__(self):
         return f"cpus:{self.cpus} gpus:{self.gpus} mem:{self.memory}"
+
+class Volumes:
+    def __init__(self, name, name_noiden, containers):
+        self.name = name
+        self.name_noiden = name_noiden
+        self.containers = containers
+        self.volumes = []
+
+    def process_volumes(self):
+        try:
+            for index, volume in enumerate(self.containers[0]['volumes']):
+                volume_name = f"{self.name}-{index}"
+                claim_name = f"pvc-for-{volume_name}"
+                disk_name = f"{self.name_noiden}-{index}-disk"
+                mount_path = volume.split(":")[1]
+                host_path = volume.split(":")[0]
+                if "TYCHO_ON_MINIKUBE" in os.environ:
+                    if os.environ['TYCHO_ON_MINIKUBE'] == "True":
+                        if host_path == "TYCHO_NFS":
+                            continue
+                        else:
+                            self.volumes.append({"volume_name": volume_name, "claim_name": claim_name, 
+                                                 "mount_path": mount_path, "host_path": host_path})
+                else:
+                    if host_path == "TYCHO_NFS":
+                        claim_name = "nfs" 
+                        self.volumes.append({"volume_name": volume_name, "claim_name": claim_name, 
+                                             "disk_name": disk_name, "mount_path": mount_path})
+                    else:
+                        self.volumes.append({"volume_name": volume_name, "claim_name": claim_name, 
+                                             "disk_name": disk_name, "mount_path": mount_path})
+            return self.volumes
+        except Exception as e:
+            print(f"VOLUMES----> Do not exist {e}")
     
 class Container:
     """ Invocation of an image in a specific infastructural context. """
@@ -107,7 +141,7 @@ class System:
         }
         for name, service in self.services.items ():
             service.name = f"{name}-{self.identifier}"
-            
+        self.volumes = Volumes(self.name, name, containers).process_volumes()    
         self.source_text = None
 
     def requires_network_policy (self):
@@ -145,7 +179,8 @@ class System:
                 template_text=system_template,
                 context=env)
             logger.debug (f"applied settings:\n {system_rendered}")
-            system = system_rendered
+            for system_render in system_rendered:
+                system = system_render
 
         """ Model each service. """
         logger.debug (f"compose {system}")
@@ -165,7 +200,7 @@ class System:
                     "containerPort" : p.split(':')[1] if ':' in p else p
                     for p in spec.get ("ports", [])
                 }],
-                "volumes"  : [ v.split(":")[1] for v in spec.get("volumes", []) ]
+                "volumes"  : [ v for v in spec.get("volumes", []) ]
             })
         system_specification = {
             "name" : name,

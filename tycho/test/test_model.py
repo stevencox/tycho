@@ -47,7 +47,7 @@ def test_system_parser (request):
         assert system.containers[0].requests.cpus == '0.01'
         assert system.containers[0].requests.memory == '20M'
         assert system.containers[0].ports[0]['containerPort'] == '8888'
-        assert system.containers[0].volumes[0] == '/mydata'
+        assert system.containers[0].volumes[0] == '$LOCAL_STORE:/mydata'
 
 
 

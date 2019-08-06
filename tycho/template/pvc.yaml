@@ -1,15 +1,20 @@
+{% for volume in system.volumes %}
+---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   labels:
-    name: {{ volume_name }}
+    name: {{ system.name }}
     executor: tycho
     tycho-guid: {{ system.identifier }}
-  name: {{ claim_name }}
+  name: {{ volume["claim_name"] }}
 spec:
+  storageClassName: manual
   accessModes:
   - ReadWriteOnce
   resources:
     requests:
-      storage: 100Mi
+      storage: 2Gi
+  volumeName: {{ volume['volume_name'] }}
 status: {}
+{% endfor %}
