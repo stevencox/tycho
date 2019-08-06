@@ -34,7 +34,7 @@ def test_service_template (system, request):
         otherwise correctly parameterized.
     """
     pod_specs = system.render ("kubernetes-pod.yaml")
-    for pod_spec in pod_spec:
+    for pod_spec in pod_specs:
     
         for container in system.containers:
             print (container.name)
