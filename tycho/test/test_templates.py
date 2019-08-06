@@ -48,8 +48,8 @@ def test_service_template (system, request):
                     context={
                         "service" : service
                     })
-                print (f"{json.dumps(service_manifest,indent=2)}")
                 for service_manifest in service_manifests:
+                    print (f"{json.dumps(service_manifest,indent=2)}")
                     assert service_manifest['spec']['ports'][0]['port'] == 8888
                     assert service_manifest['spec']['selector']['name'] == system.name
             
