@@ -23,15 +23,15 @@ class Config(dict):
         self.prefix = prefix
         logger.debug (f"loaded config: {json.dumps(self.conf,indent=2)}")
         if 'TYCHO_ON_MINIKUBE' in os.environ:
-            #ip = os.popen('minikube ip').read().strip ()
-            #if len(ip) > 0:
-            #    try:
-            #        ipaddress.ip_address (ip)
-            #        logger.info (f"configuring minikube ip: {ip}")
-            self.conf['tycho']['compute']['platform']['kube']['ip'] = "192.168.1.27"
-                #except ValueError as e:
-                #    logger.error ("unable to get minikube ip address")
-                #    traceback.print_exc (e)
+            ip = os.popen('minikube ip').read().strip ()
+            if len(ip) > 0:
+                try:
+                    ipaddress.ip_address (ip)
+                    logger.info (f"configuring minikube ip: {ip}")
+                    self.conf['tycho']['compute']['platform']['kube']['ip'] = "192.168.1.27"
+                except ValueError as e:
+                    logger.error ("unable to get minikube ip address")
+                    traceback.print_exc (e)
 
     def __setitem__(self, key, val):
         self.conf.__setitem__(key, val)
