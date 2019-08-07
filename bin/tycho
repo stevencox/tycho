@@ -41,6 +41,8 @@ export TYCHO=$TYCHO_ROOT/tycho
 ## Run the API. 
 ##
 api () {
+    # If the minikube executable exists and the system is running,
+    # configure the app to use minikube.
     which minikube >> /dev/null && \
         minikube status | grep -c "apiserver: Running" >> /dev/null && \
         export TYCHO_ON_MINIKUBE=true

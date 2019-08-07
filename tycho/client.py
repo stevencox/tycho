@@ -350,20 +350,22 @@ class TychoClientFactory:
             :param namespace: The namespace the service is deployed to.
             :type namespace: str
         """
-        url = default_url
+        url = None
         client = None
-        '''
         try:
             service = self.api.read_namespaced_service(
                 name=name,
                 namespace=namespace)
-            if service.status.load_balancer.ingress:
+            if not service:
+                url = default_url
+            elif service.status and service.status.load_balancer and \
+                 service.status.load_balancer.ingress:
                 logger.debug ("--looking in kube for an ingress based service.")
                 ip_address = service.status.load_balancer.ingress[0].ip
                 port = service.spec.ports[0].port
                 logger.debug (f"located tycho api instance in kube")
                 url = f"http://{ip_address}:{port}"
-            elif len(service.spec.ports) > 0:
+            elif service.spec and len(service.spec.ports) > 0:
                 logger.debug ("--looking in minikube for a node port based service.")
                 ip = os.popen('minikube ip').read().strip ()
                 if len(ip) > 0:
@@ -378,9 +380,9 @@ class TychoClientFactory:
                         traceback.print_exc (e)
         except Exception as e:
             url = default_url
-            traceback.print_exc (e)
+            #traceback.print_exc (e)
             logger.info (f"did not find {name} in namespace {namespace}")
-        '''
+
         logger.info (f"creating tycho client with url: {url}")
         return TychoClient (url=url) 
 

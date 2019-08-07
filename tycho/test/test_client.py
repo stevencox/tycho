@@ -11,7 +11,7 @@ from unittest import mock
 
 logger = logging.getLogger (__name__)
 
-def dont_test_client_start (mocker, system_request, client, request):
+def test_client_start (mocker, system_request, client, request):
     print (f"{request.node.name}")
     response = {
         "status": "success",

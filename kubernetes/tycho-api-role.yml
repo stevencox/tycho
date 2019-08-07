@@ -11,6 +11,12 @@ rules:
   - services
   - persistentvolumeclaims
   - persistentvolumes
+  - deployments/rollback
+  - deployments/scale
+  - ingresses
+  - networkpolicies
+  - replicasets
+  - replicasets/scale
   verbs:
   - '*'
 - apiGroups:
