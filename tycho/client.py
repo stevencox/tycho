@@ -1,4 +1,5 @@
 import requests
+import ipaddress
 import json
 import logging
 import os
@@ -328,8 +329,10 @@ class TychoClientFactory:
             Then create the K8S API endpoint.
         """
         if os.getenv('KUBERNETES_SERVICE_HOST'):
+            logger.debug ("--loading in cluster configuration.")
             k8s_config.load_incluster_config()
         else:
+            logger.debug ("--loading kube config, cluster external.")
             k8s_config.load_kube_config()
         api_client = k8s_client.ApiClient()
         self.api = k8s_client.CoreV1Api(api_client)
@@ -353,12 +356,27 @@ class TychoClientFactory:
             service = self.api.read_namespaced_service(
                 name=name,
                 namespace=namespace)
-            ip_address = service.status.load_balancer.ingress[0].ip
-            port = service.spec.ports[0].port
-            logger.debug (f"located tycho api instance in kube")
-            url = f"http://{ip_address}:{port}"
+            if service.status.load_balancer.ingress:
+                logger.debug ("--looking in kube for an ingress based service.")
+                ip_address = service.status.load_balancer.ingress[0].ip
+                port = service.spec.ports[0].port
+                logger.debug (f"located tycho api instance in kube")
+                url = f"http://{ip_address}:{port}"
+            elif len(service.spec.ports) > 0:
+                logger.debug ("--looking in minikube for a node port based service.")
+                ip = os.popen('minikube ip').read().strip ()
+                if len(ip) > 0:
+                    try:
+                        ipaddress.ip_address (ip)
+                        logger.info (f"configuring minikube ip: {ip}")
+                        port = service.spec.ports[0].node_port
+                        logger.debug (f"located tycho api instance in minikube")
+                        url = f"http://{ip}:{port}"
+                    except ValueError as e:
+                        logger.error ("unable to get minikube ip address")
+                        traceback.print_exc (e)
         except Exception as e:
-            #traceback.print_exc (e)
+            traceback.print_exc (e)
             logger.info (f"did not find {name} in namespace {namespace}")
         logger.info (f"creating tycho client with url: {url}")
         return TychoClient (url=url) 
