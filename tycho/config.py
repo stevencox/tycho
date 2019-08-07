@@ -6,6 +6,7 @@ import yaml
 import traceback
 import re
 from tycho.tycho_utils import Resource
+from tycho.client import TychoClientFactory
 
 logger = logging.getLogger (__name__)
 
@@ -23,12 +24,13 @@ class Config(dict):
         self.prefix = prefix
         logger.debug (f"loaded config: {json.dumps(self.conf,indent=2)}")
         if 'TYCHO_ON_MINIKUBE' in os.environ:
-            ip = os.popen('minikube ip').read().strip ()
+            client = TychoClientFactory ().get_client ()
+            ip = client.url.split("/")[2].split(":")[0]
             if len(ip) > 0:
                 try:
                     ipaddress.ip_address (ip)
                     logger.info (f"configuring minikube ip: {ip}")
-                    self.conf['tycho']['compute']['platform']['kube']['ip'] = "192.168.1.27"
+                    self.conf['tycho']['compute']['platform']['kube']['ip'] = ip
                 except ValueError as e:
                     logger.error ("unable to get minikube ip address")
                     traceback.print_exc (e)
