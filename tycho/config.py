@@ -24,8 +24,9 @@ class Config(dict):
         self.prefix = prefix
         logger.debug (f"loaded config: {json.dumps(self.conf,indent=2)}")
         if 'TYCHO_ON_MINIKUBE' in os.environ:
-            client = TychoClientFactory ().get_client ()
-            ip = client.url.split("/")[2].split(":")[0]
+            #client = TychoClientFactory ().get_client ()
+            #ip = client.url.split("/")[2].split(":")[0]
+            ip = os.popen('minikube ip').read().strip ()
             if len(ip) > 0:
                 try:
                     ipaddress.ip_address (ip)
