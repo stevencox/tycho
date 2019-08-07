@@ -352,6 +352,7 @@ class TychoClientFactory:
         """
         url = default_url
         client = None
+        '''
         try:
             service = self.api.read_namespaced_service(
                 name=name,
@@ -376,8 +377,10 @@ class TychoClientFactory:
                         logger.error ("unable to get minikube ip address")
                         traceback.print_exc (e)
         except Exception as e:
+            url = default_url
             traceback.print_exc (e)
             logger.info (f"did not find {name} in namespace {namespace}")
+        '''
         logger.info (f"creating tycho client with url: {url}")
         return TychoClient (url=url) 
 
