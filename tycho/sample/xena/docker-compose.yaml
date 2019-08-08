@@ -1,0 +1,22 @@
+version: '3.0'
+
+---
+# Docker compose system specification for Xena.
+# Designed to work with Tycho.
+services:
+  xena:
+    image: quay.io/coverbeck/xenahub:v0.3
+    container_name: xena
+    ports:
+      - ${HTTP_PORT}:7222
+      - ${HTTPS_PORT}:7223
+    volumes:
+      - ${PWD}/xena:/root/xena
+    deploy:
+      resources:
+        limits:
+          cpus: $CPUS
+          memory: $MEMORY
+        reservations:
+          cpus: $CPUS
+          memory: $MEMORY

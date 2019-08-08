@@ -14,7 +14,6 @@ rules:
   - deployments/rollback
   - deployments/scale
   - ingresses
-  - networkpolicies
   - replicasets
   - replicasets/scale
   verbs:
@@ -22,18 +21,24 @@ rules:
 - apiGroups:
   - extensions
   - apps
+  - networking.k8s.io
   resources:
   - deployments
   - replicasets
   verbs:
   - '*' 
-#- apiGroups: [""]
-#  resources:
-#    - pods
-#    - deployments
-#    - services
-#    - replica_sets
-#  verbs: ["list", "create", "delete"]
+
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingresses
+  - networkpolicies
+  verbs:
+  - create
+  - delete
+  - deletecollection
+  - patch
+  - update
 ---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
