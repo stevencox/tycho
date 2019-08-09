@@ -6,12 +6,13 @@ import yaml
 import traceback
 import re
 from tycho.tycho_utils import Resource
-from tycho.client import TychoClientFactory
 
 logger = logging.getLogger (__name__)
 
-class Config(dict):
-    def __init__(self, config, prefix=''):
+class Config(dict): 
+    """ Handle configuration for the system. """
+    def __init__(self, config="conf/tycho.yaml"):
+        """ Load the system configuration. """
         if isinstance(config, str):
             config_path = Resource.get_resource_path (config)
             logger.debug (f"loading config: {config_path}")
@@ -21,11 +22,11 @@ class Config(dict):
             self.conf = config
         else:
             raise ValueError
-        self.prefix = prefix
+
+        """ Determine if we're on minikube. If so, share its ip address via
+        the config. """
         logger.debug (f"loaded config: {json.dumps(self.conf,indent=2)}")
         if 'TYCHO_ON_MINIKUBE' in os.environ:
-            #client = TychoClientFactory ().get_client ()
-            #ip = client.url.split("/")[2].split(":")[0]
             ip = os.popen('minikube ip').read().strip ()
             if len(ip) > 0:
                 try:

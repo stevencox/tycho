@@ -37,16 +37,22 @@ TYCHO_ROOT=$( dirname $DIR )
 export PYTHONPATH=$TYCHO_ROOT
 export TYCHO=$TYCHO_ROOT/tycho
 
-##
-## Run the API. 
-##
-api () {
+config=~/.tycho
+if [[ ! -e $config ]]; then
+    echo "unset TYCHO_ON_MINIKUBE" > $config
     # If the minikube executable exists and the system is running,
     # configure the app to use minikube.
     which minikube >> /dev/null && \
         minikube status | grep -c "apiserver: Running" >> /dev/null && \
-        export TYCHO_ON_MINIKUBE=true
-    echo TOM: $TYCHO_ON_MINIKUBE
+        echo "export TYCHO_ON_MINIKUBE=True" > $config
+fi 
+source $config
+#echo TYCHO_ON_MINIKUBE : $TYCHO_ON_MINIKUBE
+
+##
+## Run the API. 
+##
+api () {
     python $TYCHO/api.py $*
 }
 
@@ -76,6 +82,7 @@ status () {
 ##
 test () {
     pytest $TYCHO/test $* #--log-format="%(asctime)s %(levelname)s %(message)s" $*
+    $DIR/tycho-functional-tests
 }
 
 $*

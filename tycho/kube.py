@@ -17,7 +17,7 @@ from kubernetes.client.rest import ApiException
 logger = logging.getLogger (__name__)
 
 class KubernetesCompute(Compute):
-    """ A Kubernetes specific implementation.
+    """ A Kubernetes orchestrator implementation.
 
         Tested with Minikube and Google Kubernetes Engine.
     """
@@ -30,8 +30,10 @@ class KubernetesCompute(Compute):
         super(KubernetesCompute, self).__init__()
         self.config = config
         if os.getenv('KUBERNETES_SERVICE_HOST'):
+            """ We're running inside K8S. Load the config appropriately. """
             k8s_config.load_incluster_config()
         else:
+            """ We're running outside of K8S. Load the config. """
             k8s_config.load_kube_config()
         api_client = k8s_client.ApiClient()
         self.api = k8s_client.CoreV1Api(api_client)
@@ -50,27 +52,25 @@ class KubernetesCompute(Compute):
             :type namespace: str
         """
         try:
-            utils = TemplateUtils ()
 
             """ Turn an abstract system model into a cluster specific representation. """
-            pod_manifests = system.render ("kubernetes-pod.yaml")
+            pod_manifests = system.render ("pod.yaml")
             
-            """ Create a persistent volume claim """
-            pvc_manifests = utils.render(template="pvc.yaml",
-                                        context={
-                                            "system": system
-                                        })
+            """ Render a persistent volume claim. """
+            pvc_manifests = system.render(template="pvc.yaml")
+            """ Create persistent volume claims. """
             for pvc_manifest in pvc_manifests:
                 if pvc_manifest["metadata"]["name"] != "nfs":
-                    response = self.api.create_namespaced_persistent_volume_claim(namespace='default', body=pvc_manifest)
+                    response = self.api.create_namespaced_persistent_volume_claim(
+                        namespace='default',
+                        body=pvc_manifest)
                     
-            """ Create Persistent Volumes. """
-            pv_manifests = utils.render(template="pv.yaml",
-                                       context={
-                                           "system": system
-                                       })
+            """ Render persistent volumes. """
+            pv_manifests = system.render(template="pv.yaml")
+            """ Create the persistent volumes. """
             for pv_manifest in pv_manifests:
-                response = self.api.create_persistent_volume(body=pv_manifest)
+                response = self.api.create_persistent_volume(
+                    body=pv_manifest)
         
             """ Create a deployment for the pod. """
             for pod_manifest in pod_manifests:
@@ -92,32 +92,28 @@ class KubernetesCompute(Compute):
             """ Create service endpoints. """
             container_map = {}
             for container in system.containers:
+                """ Determine if a service is configured for this container. """
                 service = system.services.get (container.name, None)
                 if service:
                     logger.debug (f"generating service for container {container.name}")
-                    service_manifests = system.render (
-                        template="service.yaml",
-                        context={
-                            "service" : service
-                        })
-                    logger.debug (f"creating service for container {container.name}")
+                    service_manifests = system.render (template="service.yaml",
+                                                       context={"service":service})
                     for service_manifest in service_manifests:
+                        logger.debug (f"creating service for container {container.name}")
                         response = self.api.create_namespaced_service(
                             body=service_manifest,
                             namespace=namespace)
 
-                    logger.info (response)
-                    """ Get IP address of allocated ingress. """
-                    ip_address = self.get_service_ip_address (response)
-
-                    logger.info (f"ingress ip: {ip_address}")
-                        
-                    """ Return generated node ports to caller. """
-                    for port in response.spec.ports:
-                        container_map[container.name] = {
-                            "ip_address" : ip_address if ip_address else '--',
-                            port.name : port.node_port 
-                        }
+                        """ Get IP address of allocated ingress (or minikube). """
+                        ip_address = self.get_service_ip_address (response)
+                        logger.debug (f"service {container.name} ingress ip: {ip_address}")
+                    
+                        """ Return generated node ports to caller. """
+                        for port in response.spec.ports:
+                            container_map[container.name] = {
+                                "ip_address" : ip_address if ip_address else '--',
+                                port.name : port.node_port 
+                            }
                     
             result = {
                 'name'       : system.name,
@@ -138,6 +134,13 @@ class KubernetesCompute(Compute):
         return result
 
     def get_service_ip_address (self, service_metadata):
+        """ Get the IP address for a service. On a system with a load balancer
+            that will be in the service status' load balancer section. On minikube,
+            we use the minikube IP address which is in the system config. 
+
+            :param service_metadata: Service metadata.
+            :returns: ip_address IP Address of the service.
+            """
         ip_address = None
         if service_metadata.status.load_balancer.ingress and \
            len(service_metadata.status.load_balancer.ingress) > 0:
@@ -184,7 +187,7 @@ class KubernetesCompute(Compute):
             :param namespace: Namespace the system runs in.
             :type namespace: str
         """
-        try:
+        try: 
             """ todo: kubectl delete pv,pvc,deployment,pod,svc,networkpolicy -l executor=tycho """
             """ Delete the service. No obvious collection based api for service deletion. """
             service_list = self.api.list_namespaced_service(
@@ -192,7 +195,7 @@ class KubernetesCompute(Compute):
                 namespace=namespace)
             for service in service_list.items:
                 if service.metadata.labels.get ("tycho-guid", None) == name:
-                    logger.info (f" --deleting service {name} in namespace {namespace}")
+                    logger.debug (f" --deleting service {name} in namespace {namespace}")
                     response = self.api.delete_namespaced_service(
                         name=service.metadata.name,
                         body={},
@@ -208,12 +211,12 @@ class KubernetesCompute(Compute):
                 "networkpolicy" : self.networking_api.delete_collection_namespaced_network_policy
             }
             for object_type, finalizer in finalizers.items ():
-                logger.info (f" --deleting {object_type} elements of {name} in namespace {namespace}")
+                logger.debug (f" --deleting {object_type} elements of {name} in namespace {namespace}")
                 response = finalizer (
                     label_selector=f"tycho-guid={name}",
                     namespace=namespace)
                 
-            logger.info (f" --deleting persistent volume {name} in namespace {namespace}")
+            logger.debug (f" --deleting persistent volume {name} in namespace {namespace}")
             response = self.api.delete_collection_persistent_volume(
                 label_selector=f"tycho-guid={name}")
             

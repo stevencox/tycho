@@ -8,6 +8,7 @@ import traceback
 import argparse
 import yaml
 from tycho.tycho_utils import TemplateUtils
+from tycho.config import Config
 from kubernetes import client as k8s_client, config as k8s_config
 
 logger = logging.getLogger (__name__)
@@ -103,13 +104,17 @@ class TychoClient:
                    "name"   : <name of the system>,
                    "env"    : <JSON dict created from .env environment variables>,
                    "system" : <JSON of a docker-compose yaml>
-                }
+                } 
 
             :param request: A request object formatted as above.
             :type request: JSON
             :returns: Returns a TychoSystem object
         """
         response = self.request ("start", request)
+        error = response.get('result',{}).get('error',None)
+        if error == 'error':
+            for e in error:
+                logger.error (e)
         return TychoSystem (**response)
 
     def delete (self, request):
@@ -440,7 +445,7 @@ if __name__ == "__main__":
     else:
         """ Generate a docker-compose spec based on the CLI args. """
         name = args.name
-        template_utils = TemplateUtils ()
+        template_utils = TemplateUtils (config=Config())
         template = """
           version: "3"
           services:

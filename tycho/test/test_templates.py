@@ -12,7 +12,7 @@ logger = logging.getLogger (__name__)
 def test_pod (system, request):
     print (f"{request.node.name}")
     """ Test generation and integrity of the pod (the deployment template). """
-    outputs = system.render ("kubernetes-pod.yaml")
+    outputs = system.render ("pod.yaml")
     for output in outputs:
         print (json.dumps (output, indent=2))
 
@@ -33,7 +33,7 @@ def test_service_template (system, request):
     """ Verify the generated service selects our pod correctly and is 
         otherwise correctly parameterized.
     """
-    pod_specs = system.render ("kubernetes-pod.yaml")
+    pod_specs = system.render ("pod.yaml")
     for pod_spec in pod_specs:
     
         for container in system.containers:
@@ -56,10 +56,18 @@ def test_service_template (system, request):
                     labels = pod_spec.get('metadata',{}).get('labels',{})
                     assert labels['name'] == service_manifest['spec']['selector']['name']
 
+def test_pvc (system, request):
+    print (f"{request.node.name}")
+    pvcs = system.render ("pvc.yaml")
+    for pvc in pvcs:
+        print (pvc)
+        assert pvc.get('spec',{}).get('storageClassName',None) == 'manual'
+        assert pvc['spec']['resources']['requests']['storage'] == '2Gi'
+    
 def test_networkpolicy (system, request):
     """ Verify the network policy selects our pod, allows our ports, and IP blocks. """
     print (f"{request.node.name}")
-    pods = system.render ("kubernetes-pod.yaml")
+    pods = system.render ("pod.yaml")
     for pod in pods:
         pod_labels = pod.get('metadata',{}).get('labels',{})
         guid = pod_labels['tycho-guid']
@@ -81,3 +89,4 @@ def test_networkpolicy (system, request):
             assert policy['spec'].get('egress',None) == None
             assert found_pod_selector == True
             assert matched_clients == len(list(system.services.values())[0].clients)
+ 

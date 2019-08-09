@@ -3,7 +3,7 @@ from tycho.factory import ComputeFactory
 from tycho.factory import supported_backplanes
 from tycho.model import System
 
-class Tycho:
+class Tycho: 
     """ An organizing abstraction for the Tycho system. 
 
         Tycho adds a layer of system architecture and policy support to 
@@ -48,6 +48,7 @@ class Tycho:
             :returns: `.System`
         """
         return System.parse (
+            config=self.config,
             name=request['name'],
             system=request['system'],
             env=request.get ('env', {}),

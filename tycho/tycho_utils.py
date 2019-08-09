@@ -13,11 +13,16 @@ logger = logging.getLogger (__name__)
 class TemplateUtils:
     """ Utilities for generating text. """
 
-    @staticmethod
-    def render (template, context):
+    def __init__(self, config):
+        self.config = config
+
+    def render (self, template, context):
         """Render a template object given a context. """
         result=None
         template_path = os.path.join (os.path.dirname (__file__), "template", template)
+        if not os.path.exists (template_path):
+            # try config for alternates.
+            pass
         with open(template_path, "r") as stream:
             template_text = stream.read ()
             result = TemplateUtils.render_text (template_text, context)

@@ -51,16 +51,28 @@ class Volumes:
                         if host_path == "TYCHO_NFS":
                             continue
                         else:
-                            self.volumes.append({"volume_name": volume_name, "claim_name": claim_name, 
-                                                 "mount_path": mount_path, "host_path": host_path})
+                            self.volumes.append({
+                                "volume_name": volume_name,
+                                "claim_name": claim_name, 
+                                "mount_path": mount_path,
+                                "host_path": host_path
+                            })
                 else:
                     if host_path == "TYCHO_NFS":
                         claim_name = "nfs" 
-                        self.volumes.append({"volume_name": volume_name, "claim_name": claim_name, 
-                                             "disk_name": disk_name, "mount_path": mount_path})
+                        self.volumes.append({
+                            "volume_name": volume_name,
+                            "claim_name": claim_name, 
+                            "disk_name": disk_name,
+                            "mount_path": mount_path
+                        })
                     else:
-                        self.volumes.append({"volume_name": volume_name, "claim_name": claim_name, 
-                                             "disk_name": disk_name, "mount_path": mount_path})
+                        self.volumes.append({
+                            "volume_name": volume_name,
+                            "claim_name": claim_name, 
+                            "disk_name": disk_name,
+                            "mount_path": mount_path
+                        })
             return self.volumes
         except Exception as e:
             print(f"VOLUMES----> Do not exist {e}")
@@ -115,16 +127,19 @@ class Container:
 
 class System:
     """ Distributed system of interacting containerized software. """
-    def __init__(self, name, containers, services={}):
+    def __init__(self, config, name, containers, services={}):
         """ Construct a new abstract model of a system given a name and set of containers.
         
             Serves as context for the generation of compute cluster specific artifacts.
 
+            :param config: Configuration information.
+            :type name: `Config`
             :param name: Name of the system.
             :type name: str
             :param containers: List of container specifications.
             :type containers: list of containers
         """
+        self.config = config
         self.identifier = uuid.uuid4().hex
         self.name = f"{name}-{self.identifier}"
         assert self.name is not None, "System name is required."
@@ -155,12 +170,13 @@ class System:
         final_context = { "system" : self }
         for n, v in context.items ():
             final_context[n] = v
-        template = TemplateUtils.render (template, context=final_context)
+        generator = TemplateUtils (config=self.config)
+        template = generator.render (template, context=final_context)
         logger.debug (f"--generated template: {template}")
         return template
 
     @staticmethod
-    def parse (name, system, env={}, services={}):
+    def parse (config, name, system, env={}, services={}):
         """ Construct a system model based on the input request.
 
             Parses a docker-compose spec into a system specification.
@@ -203,11 +219,12 @@ class System:
                 "volumes"  : [ v for v in spec.get("volumes", []) ]
             })
         system_specification = {
-            "name" : name,
+            "config"     : config,
+            "name"       : name,
             "containers" : containers
         }
-        logger.debug (f"parsed-system: {json.dumps(system_specification, indent=2)}")
         system_specification['services'] = services
+        logger.debug (f"parsed-system: {json.dumps(system_specification, indent=2)}")
         system = System(**system_specification)
         system.source_text = yaml.dump (system)
         return system
