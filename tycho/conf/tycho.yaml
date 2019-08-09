@@ -1,10 +1,14 @@
 tycho:
+  # Configuration file for Tycho.
+
+  # Configure the orchestrator to use.
   backplane: kubernetes
   compute:
     platform:
       kube:
-        ip: 192.168.1.26
+        ip: x # Used for minikube environments.        
     system:
+      # Configure application defaults.
       defaults:
         services:
           deploy:
@@ -14,7 +18,12 @@ tycho:
   policy:
     network:
       ingress:
+        # If supplied, restrict ingress by CIDR.
         restrict_by_client_cidr: true
       egress:
         mode: none
         
+  templates:
+    paths:
+      - test/templates
+      
