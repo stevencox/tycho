@@ -24,6 +24,9 @@ tycho:
         mode: none
         
   templates:
-    paths:
-      - test/templates
+    # A list of alternate directories to search for templates.
+    # see tycho/templates for a list of templates that can be overriden.
+    # Place 
+    paths: []
+
       

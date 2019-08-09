@@ -90,3 +90,11 @@ def test_networkpolicy (system, request):
             assert found_pod_selector == True
             assert matched_clients == len(list(system.services.values())[0].clients)
  
+def test_user_defined_template (system, request):
+    """ Verify configured template directories are consulted to find templates, that the 
+        user defined templates override the system provided templates, and that the contents
+        of the user defined template are the ones generated. """
+    template_path = os.path.join (os.path.dirname (__file__), "templates")
+    system.config['tycho']['templates']['paths'] = [ template_path ]
+    spec = system.render ("pod.yaml")
+    assert list(spec)[0]['test'] == 'arbitrary_value_for_testing'

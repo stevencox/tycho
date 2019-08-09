@@ -19,21 +19,32 @@ class TemplateUtils:
     def render (self, template, context):
         """Render a template object given a context. """
         result=None
-        template_path = os.path.join (os.path.dirname (__file__), "template", template)
-        if not os.path.exists (template_path):
-            template_path = None
-            """ The template specified does not exist in the default location. If we have
-            additional template paths to check, look for the template in those places."""
-            alternate_paths = self.config['tycho']['templates']['paths']
-            for path in alternate_paths:
-                if os.path.exists (path):
-                    template_path = os.path.join (path, "template", template)
+        template_path = None
+        
+        """ First, allow the user to override the default templates with custom templates.
+            Check for a template with this name in the user provided paths. """
+        alternate_paths = self.config['tycho']['templates']['paths']
+        for path in alternate_paths:
+            if os.path.exists (path):
+                template_path = os.path.join (path, template)
+                if os.path.exists (template_path):
                     logger.debug (f"using user supplied template: {template_path}")
                 else:
-                    logger.warning (f"misconfiguration: template path {path} does not exist.")
+                    template_path = None
+            else:
+                logger.warning (f"template path {path} is configured but does not exist.")
+
+        if not template_path:
+            """ Still no template. Look for it in the default design. """
+            template_path = os.path.join (os.path.dirname (__file__), "template", template)
+            if not os.path.exists (template_path):
+                template_path = None
+
         if not template_path:
             raise ValueError (
                 f"No template {template} found in default location or in {alternate_paths}")
+        
+        logger.debug (f"applying template {template_path}")
         with open(template_path, "r") as stream:
             template_text = stream.read ()
             result = TemplateUtils.render_text (template_text, context)

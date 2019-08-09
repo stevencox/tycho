@@ -53,5 +53,5 @@ script:
 - PID=$!
 - echo $PID
 - tycho test
-
+- tycho test_functional
 

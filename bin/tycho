@@ -78,10 +78,15 @@ status () {
 }
 
 ##
-## Run tests.
+## Run unit tests.
 ##
 test () {
     pytest $TYCHO/test $* #--log-format="%(asctime)s %(levelname)s %(message)s" $*
+}
+##
+## Run tests.
+##
+test_functional () {
     $DIR/tycho-functional-tests
 }
 
