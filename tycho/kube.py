@@ -37,6 +37,7 @@ class KubernetesCompute(Compute):
             k8s_config.load_kube_config()
         api_client = k8s_client.ApiClient()
         self.api = k8s_client.CoreV1Api(api_client)
+        self.rbac_api = k8s_client.RbacAuthorizationV1Api(api_client)
         self.extensions_api = k8s_client.ExtensionsV1beta1Api(api_client)
         self.networking_api = k8s_client.NetworkingV1Api(api_client)
 
