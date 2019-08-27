@@ -141,6 +141,7 @@ class System:
         """
         self.config = config
         self.identifier = uuid.uuid4().hex
+        self.system_name = name
         self.name = f"{name}-{self.identifier}"
         assert self.name is not None, "System name is required."
         containers_exist = len(containers) > 0

@@ -114,7 +114,22 @@ class KubernetesCompute(Compute):
                                 "ip_address" : ip_address if ip_address else '--',
                                 port.name : port.node_port 
                             }
-                    
+            
+            try:
+                api_response = self.rbac_api.list_cluster_role(label_selector=f"name={system.system_name}")
+                if len(api_response.items) == 0:
+                    logger.debug("creating cluster role")
+                    cluster_role_manifest = system.render("clusterrole.yaml")
+                    logger.debug(f"applying cluster role: {cluster_role_manifest}")
+                    api_response = self.rbac_api.create_cluster_role(body=cluster_role_manifest)
+            except Exception as e:
+                logger.error(f"cannot create cluster role: {e}")
+
+            logger.debug("creating cluster role binding")
+            cluster_role_binding_manifest = system.render(template="clusterrolebinding.yaml")
+            logger.debug(f"applying cluster role binding: {cluster_role_binding_manifest}")
+            api_response = self.rbac_api.create_cluster_role_binding(body=cluster_role_binding_manifest)
+            
             result = {
                 'name'       : system.name,
                 'sid'        : system.identifier,
