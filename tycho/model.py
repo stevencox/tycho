@@ -60,19 +60,12 @@ class Volumes:
                 else:
                     if host_path == "TYCHO_NFS":
                         claim_name = "nfs" 
-                        self.volumes.append({
-                            "volume_name": volume_name,
-                            "claim_name": claim_name, 
-                            "disk_name": disk_name,
-                            "mount_path": mount_path
-                        })
-                    else:
-                        self.volumes.append({
-                            "volume_name": volume_name,
-                            "claim_name": claim_name, 
-                            "disk_name": disk_name,
-                            "mount_path": mount_path
-                        })
+                    self.volumes.append({
+                        "volume_name": volume_name,
+                        "claim_name": claim_name, 
+                        "disk_name": disk_name,
+                        "mount_path": mount_path
+                    })
             return self.volumes
         except Exception as e:
             print(f"VOLUMES----> Do not exist {e}")
