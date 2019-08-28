@@ -63,7 +63,7 @@ class KubernetesCompute(Compute):
             for pvc_manifest in pvc_manifests:
                 if pvc_manifest["metadata"]["name"] != "nfs":
                     response = self.api.create_namespaced_persistent_volume_claim(
-                        namespace='default',
+                        namespace=namespace,
                         body=pvc_manifest)
                     
             """ Render persistent volumes. """
