@@ -126,12 +126,16 @@ class KubernetesCompute(Compute):
                         api_response = self.rbac_api.create_cluster_role(body=cluster_role_manifest)
             except Exception as e:
                 logger.error(f"cannot create cluster role: {e}")
-
-            logger.debug("creating cluster role binding")
-            cluster_role_binding_manifests = system.render(template=f"{system.system_name}/clusterrolebinding.yaml")
-            for cluster_role_binding_manifest in cluster_role_binding_manifests:
-                logger.debug(f"applying cluster role binding: {cluster_role_binding_manifest}")
-                api_response = self.rbac_api.create_cluster_role_binding(body=cluster_role_binding_manifest)
+                traceback.print_exc (e)
+            try:
+                logger.debug("creating cluster role binding")
+                cluster_role_binding_manifests = system.render(template=f"{system.system_name}/clusterrolebinding.yaml")
+                for cluster_role_binding_manifest in cluster_role_binding_manifests:
+                    logger.debug(f"applying cluster role binding: {cluster_role_binding_manifest}")
+                    api_response = self.rbac_api.create_cluster_role_binding(body=cluster_role_binding_manifest)
+            except Exception as e:
+                logger.error(f"cannot create cluster role binding: {e}")
+                traceback.print_exc (e)
             
             result = {
                 'name'       : system.name,
