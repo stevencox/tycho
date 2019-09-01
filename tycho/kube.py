@@ -126,7 +126,7 @@ class KubernetesCompute(Compute):
                         api_response = self.rbac_api.create_cluster_role(body=cluster_role_manifest)
             except Exception as e:
                 logger.error(f"cannot create cluster role: {e}")
-                traceback.print_exc (file=open("logs.txt", "a"))
+                traceback.print_exc (e)
             
             logger.debug("creating cluster role binding")
             cluster_role_binding_manifests = system.render(template=f"{system.system_name}/clusterrolebinding.yaml")
