@@ -116,17 +116,17 @@ class KubernetesCompute(Compute):
                                 port.name : port.node_port 
                             }
             
-            
-            api_response = self.rbac_api.list_cluster_role(label_selector=f"name={system.system_name}")
-            if len(api_response.items) == 0:
-                logger.debug("creating cluster role")
-                cluster_role_manifests = system.render(f"cluster/{system.system_name}/clusterrole.yaml")
-                for cluster_role_manifest in cluster_role_manifests:
-                    logger.debug(f"applying cluster role: {cluster_role_manifest}")
-                    api_response = self.rbac_api.create_cluster_role(body=cluster_role_manifest)
-            #except Exception as e:
-            #    logger.error(f"cannot create cluster role: {e}")
-            #    traceback.print_exc (e)
+            try:
+                api_response = self.rbac_api.list_cluster_role(label_selector=f"name={system.system_name}")
+                if len(api_response.items) == 0:
+                    logger.debug("creating cluster role")
+                    cluster_role_manifests = system.render(f"cluster/{system.system_name}/clusterrole.yaml")
+                    for cluster_role_manifest in cluster_role_manifests:
+                        logger.debug(f"applying cluster role: {cluster_role_manifest}")
+                        api_response = self.rbac_api.create_cluster_role(body=cluster_role_manifest)
+            except Exception as e:
+                logger.error(f"cannot create cluster role: {e}")
+                traceback.print_exc (e)
             
             logger.debug("creating cluster role binding")
             cluster_role_binding_manifests = system.render(template=f"{system.system_name}/clusterrolebinding.yaml")
