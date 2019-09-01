@@ -5,10 +5,10 @@ metadata:
   labels:
     name: {{ system.system_name }}
     tycho-guid: {{ system.identifier }}
-#subjects:
-#- kind: Group
-#  name: manager
-#  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: default
 roleRef:
   kind: ClusterRole
   name: {{ system.system_name }}
