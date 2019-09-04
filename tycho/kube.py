@@ -107,11 +107,13 @@ class KubernetesCompute(Compute):
                             namespace=namespace)
 
                         """ Get IP address of allocated ingress (or minikube). """
-                        for i in range(0, 1000):
+                        for i in range(0, 200):
                             status_response = self.api.read_namespaced_service_status(name=response.metadata.name, namespace=namespace)
                             if status_response.status.load_balancer.ingress is None:
                                 sleep(1)
                                 continue
+                            elif "TYCHO_ON_MINIKUBE" in os.environ:
+                                break
                             else:
                                 response = status_response
                                 break
