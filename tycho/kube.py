@@ -5,6 +5,7 @@ import os
 import sys
 import traceback
 import yaml
+from time import sleep
 from kubernetes import client as k8s_client, config as k8s_config
 from tycho.compute import Compute
 from tycho.exceptions import DeleteException
@@ -106,6 +107,14 @@ class KubernetesCompute(Compute):
                             namespace=namespace)
 
                         """ Get IP address of allocated ingress (or minikube). """
+                        for i in range(0, 1000):
+                            status_response = self.api.read_namespaced_service_status(name=response.metadata.name, namespace=namespace)
+                            if status_response.status.load_balancer.ingress is None:
+                                sleep(1)
+                                continue
+                            else:
+                                response = status_response
+                                break
                         ip_address = self.get_service_ip_address (response)
                         logger.debug (f"service {container.name} ingress ip: {ip_address}")
                     
@@ -129,6 +138,9 @@ class KubernetesCompute(Compute):
                 traceback.print_exc (file=open("clusterrolelogs.txt", "a"))
             
             try:
+                if system.system_name == "nextflow":
+                    cluster_role = self.rbac_api.list_cluster_role(field_selector=f"name=edit")
+                    print(f"cluster role", cluster_role)
                 logger.debug("creating cluster role binding")
                 cluster_role_binding_manifests = system.render(template=f"{system.system_name}/clusterrolebinding.yaml")
                 for cluster_role_binding_manifest in cluster_role_binding_manifests:
