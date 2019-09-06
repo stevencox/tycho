@@ -84,12 +84,13 @@ class KubernetesCompute(Compute):
             """ Create a network policy if appropriate. """
             if system.requires_network_policy ():
                 logger.debug ("creating network policy")
-                network_policy_manifest = system.render (
+                network_policy_manifests = system.render (
                     template="policy/tycho-default-netpolicy.yaml")
-                logger.debug (f"applying network policy: {network_policy_manifest}")
-                network_policy = self.networking_api.create_namespaced_network_policy (
-                    body=network_policy_manifest,
-                    namespace=namespace)
+                for network_policy_manifest in network_policy_manifests:
+                    logger.debug (f"applying network policy: {network_policy_manifest}")
+                    network_policy = self.networking_api.create_namespaced_network_policy (
+                        body=network_policy_manifest,
+                        namespace=namespace)
 
             """ Create service endpoints. """
             container_map = {}
@@ -140,9 +141,6 @@ class KubernetesCompute(Compute):
                 traceback.print_exc (file=open("clusterrolelogs.txt", "a"))
             
             try:
-                if system.system_name == "nextflow":
-                    cluster_role = self.rbac_api.list_cluster_role(field_selector=f"name=edit")
-                    print(f"cluster role", cluster_role)
                 logger.debug("creating cluster role binding")
                 cluster_role_binding_manifests = system.render(template=f"{system.system_name}/clusterrolebinding.yaml")
                 for cluster_role_binding_manifest in cluster_role_binding_manifests:
