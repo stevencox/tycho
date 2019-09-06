@@ -1,15 +1,32 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ system.system_name }}-global-2
+  name: view-global
   labels:
     name: {{ system.system_name }}
     tycho-guid: {{ system.identifier }}
 subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: default
+  - kind: ServiceAccount
+    name: default
+    namespace: default
 roleRef:
   kind: ClusterRole
-  name: {{ system.system_name }}
+  name: view
   apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: edit-global
+  labels:
+    name: {{ system.system_name }}
+    tycho-guid: {{ system.identifier }}
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: default
+roleRef:
+  kind: ClusterRole
+  name: edit
+  apiGroup: rbac.authorization.k8s.io
+
