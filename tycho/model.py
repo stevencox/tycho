@@ -203,7 +203,7 @@ class System:
                 "name"    : cname,
                 "image"   : spec['image'],
                 "command" : entrypoint,
-                "env"     : spec.get ('environment', []),
+                "env"     : spec.get ('env', []),
                 "limits"  : spec.get ('deploy',{}).get('resources',{}).get('limits',{}),
                 "requests"  : spec.get ('deploy',{}).get('resources',{}).get('reservations',{}),
                 "ports"   : [{
