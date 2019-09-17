@@ -60,6 +60,7 @@ spec:
       {% if container.limits.gpus != None %}
       limits:
         nvidia.com/gpu: {{ container.limits.gpus }}
+        memory: {{ container.limits.memory }}
       {% endif %}
 {% endif %}
     volumeMounts:
