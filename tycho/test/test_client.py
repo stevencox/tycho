@@ -35,5 +35,5 @@ def test_client_start (mocker, system_request, client, request):
         assert tycho_system.name == result['name']
         assert tycho_system.identifier == result['sid']
         assert tycho_system.services[0].ip_address == jupyter['ip_address']
-        assert tycho_system.services[0].port == jupyter['port']
+        assert tycho_system.services[0].port == jupyter['port-1']
         assert tycho_system.message == response['message']
