@@ -127,6 +127,7 @@ class KubernetesCompute(Compute):
                                 "ip_address" : ip_address if ip_address else '--',
                                 port.name : port.node_port 
                             }
+                            break
             
             try:
                 api_response = self.rbac_api.list_cluster_role(label_selector=f"name={system.system_name}")

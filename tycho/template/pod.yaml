@@ -32,24 +32,34 @@ spec:
       value : "{{ e[1] }}"
     {% endfor %}
 {% endif %}
-{% if container.ports %}     
+{% if container.ports %}
     ports:
-       - containerPort: {{ container.ports[0]['containerPort'] }}
-         protocol: TCP
+{% for port in container.expose %}
+    - containerPort: {{ container.expose[loop.index-1]['containerPort'] }}
+      protocol: TCP
+{% endfor %}     
 {% endif %} # ports
 {% if container.limits or container.requests %}
     resources:
       {% if container.limits %}
+      {% if container.limits.cpus != None %}
       limits:
         cpu: "{{ container.limits.cpus }}"
         # https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/
-        nvidia.com/gpu: "{{ container.limits.gpus }}"
+        #nvidia.com/gpu: "{{ container.limits.gpus }}"
         memory: "{{ container.limits.memory }}"
       {% endif %}
-      {% if container.requests %}
+      {% endif %}
+      {% if container.requests  %}
+      {% if container.requests.cpus != None %}
       requests:
         cpu: "{{ container.requests.cpus }}"
         memory: "{{ container.requests.memory }}"
+      {% endif %}
+      {% endif %}
+      {% if container.limits.gpus != None %}
+      limits:
+        nvidia.com/gpu: {{ container.limits.gpus }}
       {% endif %}
 {% endif %}
     volumeMounts:

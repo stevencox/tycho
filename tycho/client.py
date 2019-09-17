@@ -34,8 +34,9 @@ class TychoSystem:
         self.status = status
         self.name = result['name']
         self.identifier = result['sid']
+        print(f'~~~~RESULT CONTAINERS~~~~', result['containers'].items())
         self.services = [
-            TychoService(name=k, ip_address=v['ip_address'], port=v['port'])
+            TychoService(name=k, ip_address=v['ip_address'], port=v['port-1'])
             for k, v in result['containers'].items ()
         ]
         self.message = message

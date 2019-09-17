@@ -12,9 +12,9 @@ logger = logging.getLogger (__name__)
 class Limits:
     """ Abstraction of resource limits on a container in a system. """
     def __init__(self,
-                 cpus="0.1",
-                 gpus="0",
-                 memory="128M"):
+                 cpus=None,
+                 gpus=None,
+                 memory=None):
         """ Create limits.
             
             :param cpus: Number of CPUs. May be a fraction.
@@ -43,7 +43,13 @@ class Volumes:
             for index, volume in enumerate(self.containers[0]['volumes']):
                 volume_name = f"{self.name}-{index}"
                 claim_name = f"pvc-for-{volume_name}"
-                disk_name = f"{self.name_noiden}-{index}-disk"
+                try:
+                  if 'gpus' in self.containers[0]['limits'].keys():
+                    disk_name = f"{self.name_noiden}-{index}-gpu-disk"
+                  else:
+                    disk_name = f"{self.name_noiden}-{index}-default-disk"
+                except Exception as e:
+                  print(f"resource limits have to be specified: {e}")
                 mount_path = volume.split(":")[1]
                 host_path = volume.split(":")[0]
                 if "TYCHO_ON_MINIKUBE" in os.environ:
@@ -81,6 +87,7 @@ class Container:
                  limits=None,
                  requests=None,
                  ports=[],
+                 expose=[],
                  volumes=None):
         """ Construct a container.
         
@@ -108,6 +115,7 @@ class Container:
         if isinstance(self.limits, list):
             self.limits = self.limits[0] # TODO - not sure why this is a list.
         self.ports = ports
+        self.expose = expose
         self.command = command
         self.env = \
                    list(map(lambda v : list(map(lambda r: str(r), v.split('='))), env)) \
@@ -195,10 +203,25 @@ class System:
         """ Model each service. """
         logger.debug (f"compose {system}")
         for cname, spec in system.get('services', {}).items ():
-            """ Entrypoint may be a string or an array. Deal with either case."""            
+            """ Entrypoint may be a string or an array. Deal with either case."""
+            ports = []
+            expose = []
             entrypoint = spec.get ('entrypoint', '')
             if isinstance(entrypoint, str):
                 entrypoint = entrypoint.split ()
+            for p in spec.get('ports', []):
+              if ':' in p:
+                ports.append({
+                  'containerPort': p.split(':')[1]
+                })
+              else:
+                ports.append({
+                  'containerPort': p
+                })
+            for e in spec.get('expose', []):
+              expose.append({
+                'containerPort': e
+              })
             containers.append ({
                 "name"    : cname,
                 "image"   : spec['image'],
@@ -206,10 +229,8 @@ class System:
                 "env"     : spec.get ('env', []),
                 "limits"  : spec.get ('deploy',{}).get('resources',{}).get('limits',{}),
                 "requests"  : spec.get ('deploy',{}).get('resources',{}).get('reservations',{}),
-                "ports"   : [{
-                    "containerPort" : p.split(':')[1] if ':' in p else p
-                    for p in spec.get ("ports", [])
-                }],
+                "ports"   : ports,
+                "expose"  : expose,
                 "volumes"  : [ v for v in spec.get("volumes", []) ]
             })
         system_specification = {
