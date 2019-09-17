@@ -21,7 +21,7 @@ def test_client_start (mocker, system_request, client, request):
             "containers": {
                 "jupyter-datascience": {
                     "ip_address": "127.0.0.1",
-                    "port": 32661
+                    "port-1": 32661
                 }
             }
         },
