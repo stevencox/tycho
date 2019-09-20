@@ -1,4 +1,5 @@
 {% for volume in system.volumes %}
+{% if volume["requires_nfs"] == "no" %}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -17,4 +18,5 @@ spec:
       storage: 2Gi
   volumeName: {{ volume['volume_name'] }}
 status: {}
+{% endif %}
 {% endfor %}

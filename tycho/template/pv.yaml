@@ -1,5 +1,5 @@
 {% for volume in system.volumes %}
-{% if volume["claim_name"] != "nfs" %}
+{% if volume["requires_nfs"] == "no" %}
 ---
 apiVersion: v1
 kind: PersistentVolume

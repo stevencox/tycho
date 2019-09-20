@@ -52,6 +52,7 @@ class Volumes:
                   print(f"resource limits have to be specified: {e}")
                 mount_path = volume.split(":")[1]
                 host_path = volume.split(":")[0]
+                requires_nfs = "no"
                 if "TYCHO_ON_MINIKUBE" in os.environ:
                     if os.environ['TYCHO_ON_MINIKUBE'] == "True":
                         if host_path == "TYCHO_NFS":
@@ -64,13 +65,21 @@ class Volumes:
                                 "host_path": host_path
                             })
                 else:
-                    if host_path == "TYCHO_NFS":
-                        claim_name = "nfs" 
+                    try:
+                       if host_path == "TYCHO_NFS":
+                          host_path = "nfs"
+                          requires_nfs = "yes"
+                       if host_path.split("/")[0] == "TYCHO_NFS":
+                           host_path = host_path.split('/')[1]
+                           requires_nfs = "yes"
+                    except Exception as e:
+                       print(f"Requires NFS ----> {requires_nfs}") 
                     self.volumes.append({
+                        "requires_nfs": requires_nfs,
                         "volume_name": volume_name,
-                        "claim_name": claim_name, 
+                        "claim_name": host_path, 
                         "disk_name": disk_name,
-                        "mount_path": mount_path
+                        "mount_path": mount_path,
                     })
             return self.volumes
         except Exception as e:
