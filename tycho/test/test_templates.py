@@ -56,13 +56,27 @@ def test_service_template (system, request):
                     labels = pod_spec.get('metadata',{}).get('labels',{})
                     assert labels['name'] == service_manifest['spec']['selector']['name']
 
-def test_pvc (system, request):
+def test_pvc_template (system, request):
     print (f"{request.node.name}")
     pvcs = system.render ("pvc.yaml")
-    for pvc in pvcs:
-        print (pvc)
+    for index, pvc in enumerate(pvcs):
         assert pvc.get('spec',{}).get('storageClassName',None) == 'manual'
         assert pvc['spec']['resources']['requests']['storage'] == '2Gi'
+        assert pvc['metadata']['labels']['name'] == system.name # Label: Same as the name of the pod.
+        assert pvc['metadata']['labels']['tycho-guid'] == system.identifier # Label: Should be same as the pod.
+        assert pvc['spec']['volumeName'] == system.volumes[index]['volume_name']
+
+def test_pv_template(system, request):
+    print(f"request.node.name")
+    pvs = system.render("pv.yaml")
+    pvcs = system.render("pvc.yaml")
+    for pv_index, pv in enumerate(pvs):
+        for pvc_index, pvc in enumerate(pvcs):
+            if pv_index == pvc_index:
+                assert pv.get("metadata",{}).get("name",None) == pvc.get("spec",{}).get("volumeName",None)
+        assert pv.get("metadata",{}).get("name",None) == system.volumes[pv_index]["volume_name"]
+        assert pv.get("spec",{}).get("storageClassName",None) == 'manual'
+        assert pv.get("spec",{}).get("gcePersistentDisk",{}).get("pdName",None) == system.volumes[pv_index]["disk_name"]
     
 def test_networkpolicy (system, request):
     """ Verify the network policy selects our pod, allows our ports, and IP blocks. """
