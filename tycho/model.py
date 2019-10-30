@@ -32,22 +32,26 @@ class Limits:
         return f"cpus:{self.cpus} gpus:{self.gpus} mem:{self.memory}"
 
 class Volumes:
-    def __init__(self, name, name_noiden, containers):
+    def __init__(self, name, name_noiden, identifier, containers):
         self.name = name
         self.name_noiden = name_noiden
+        self.identifier = identifier
         self.containers = containers
         self.volumes = []
 
     def process_volumes(self):
+        nfs_other_count = 0
         try:
-            for index, volume in enumerate(self.containers[0]['volumes']):
-                volume_name = f"{self.name}-{index}"
+            for i in range(0, len(self.containers)):
+              for index, volume in enumerate(self.containers[i]['volumes']):
+                container_name = self.containers[i]['name']
+                volume_name = f"{container_name}-{self.identifier}-{index}"
                 claim_name = f"pvc-for-{volume_name}"
                 try:
                   if 'gpus' in self.containers[0]['limits'].keys():
-                    disk_name = f"{self.name_noiden}-{index}-gpu-disk"
+                    disk_name = f"{container_name}-{index}-gpu-disk"
                   else:
-                    disk_name = f"{self.name_noiden}-{index}-default-disk"
+                    disk_name = f"{container_name}-{index}-default-disk"
                 except Exception as e:
                   print(f"resource limits have to be specified: {e}")
                 mount_path = volume.split(":")[1]
@@ -59,6 +63,7 @@ class Volumes:
                             continue
                         else:
                             self.volumes.append({
+                                "container_name": container_name,
                                 "volume_name": volume_name,
                                 "claim_name": claim_name, 
                                 "mount_path": mount_path,
@@ -70,12 +75,17 @@ class Volumes:
                           host_path = "nfs"
                           requires_nfs = "yes"
                        if host_path.split("/")[0] == "TYCHO_NFS":
-                           host_path = host_path.split('/')[1]
-                           requires_nfs = "yes"
+                          nfs_other_count += 1
+                          host_path = host_path.split('/')[1]
+                          volume_name = host_path
+                          if nfs_other_count > 1:
+                            host_path = "NA"
+                          requires_nfs = "yes"
                     except Exception as e:
                        print(f"Requires NFS ----> {requires_nfs}") 
                     self.volumes.append({
                         "requires_nfs": requires_nfs,
+                        "container_name": container_name,
                         "volume_name": volume_name,
                         "claim_name": host_path, 
                         "disk_name": disk_name,
@@ -97,6 +107,7 @@ class Container:
                  requests=None,
                  ports=[],
                  expose=[],
+                 depends_on=None,
                  volumes=None):
         """ Construct a container.
         
@@ -125,6 +136,7 @@ class Container:
             self.limits = self.limits[0] # TODO - not sure why this is a list.
         self.ports = ports
         self.expose = expose
+        self.depends_on = depends_on
         self.command = command
         self.env = \
                    list(map(lambda v : list(map(lambda r: str(r), v.split('='))), env)) \
@@ -167,7 +179,8 @@ class System:
         }
         for name, service in self.services.items ():
             service.name = f"{name}-{self.identifier}"
-        self.volumes = Volumes(self.name, name, containers).process_volumes()    
+            service.name_noid =  name
+        self.volumes = Volumes(self.name, name, self.identifier, containers).process_volumes()    
         self.source_text = None
 
     def requires_network_policy (self):
@@ -235,11 +248,12 @@ class System:
                 "name"    : cname,
                 "image"   : spec['image'],
                 "command" : entrypoint,
-                "env"     : spec.get ('env', []),
+                "env"     : spec.get ('env', []) or spec.get('environment', []),
                 "limits"  : spec.get ('deploy',{}).get('resources',{}).get('limits',{}),
                 "requests"  : spec.get ('deploy',{}).get('resources',{}).get('reservations',{}),
                 "ports"   : ports,
                 "expose"  : expose,
+                "depends_on": spec.get("depends_on", []),
                 "volumes"  : [ v for v in spec.get("volumes", []) ]
             })
         system_specification = {
@@ -263,6 +277,7 @@ class Service:
         self.port = port
         self.clients = list(map(lambda v: str(ipaddress.ip_network (v)), clients))
         self.name = None
+        self.name_noid = None
         
     def __repr__(self):
         return json.dumps (

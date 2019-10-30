@@ -16,8 +16,16 @@ metadata:
     executor: tycho
     tycho-guid: {{ system.identifier }}
 spec:
-#  nodeSelector:
-#    pool-name: medium
+  initContainers:
+{% for container in system.containers %}
+  {% if container.depends_on|length > 0 %}
+  {% for d in container.depends_on %}
+  - name: init-{{ container.name}}-{{loop.index}}
+    image: busybox:1.28
+    command: ['sh', '-c', 'until nslookup {{d}}-{{system.identifier}}; do echo waiting for mydb; sleep 2; done;']
+  {% endfor %}
+  {% endif %}
+{% endfor %}
   containers:
 {% for container in system.containers %}    
   - name: {{ container.name }}
@@ -31,8 +39,15 @@ spec:
     - name : {{ e[0] }}
       value : "{{ e[1] }}"
     {% endfor %}
+    - name : GUID
+      value: {{ system.identifier }}
 {% endif %}
-{% if container.ports %}
+{% if not container.env %}
+    env:
+    - name : GUID
+      value: {{ system.identifier }}
+{% endif %}
+{% if container.expose|length > 0 %}
     ports:
 {% for port in container.expose %}
     - containerPort: {{ container.expose[loop.index-1]['containerPort'] }}
@@ -66,15 +81,28 @@ spec:
     volumeMounts:
 {% if container.volumes %}
 {% for volume in system.volumes %}
+  {% if container.name == volume['container_name'] %}
     - name: {{ volume["volume_name"] }}
       mountPath: {{ volume["mount_path"] }}
       readOnly: false
-  {% endfor %}
-  volumes:
-{% for volume in system.volumes %}
-    - name: {{ volume["volume_name"] }}
-      persistentVolumeClaim:
-        claimName: {{ volume["claim_name"] }}      
+  {% endif %}
   {% endfor %}
   {% endif %}
-{% endfor %}   
+{% endfor %}
+
+  volumes:
+# Changes
+{% for container in system.containers %}
+{% if container.volumes %}
+{% for volume in system.volumes %}
+  {% if container.name == volume['container_name']%}
+  {% if volume["claim_name"] != "NA" %}
+    - name: {{ volume["volume_name"] }}
+      persistentVolumeClaim:
+        claimName: {{ volume["claim_name"] }}
+  {% endif %}
+  {% endif %}
+  {% endfor %}
+  {% endif %}
+  {% endfor %}
+
