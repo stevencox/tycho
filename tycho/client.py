@@ -261,6 +261,7 @@ class TychoClient:
                     TemplateUtils.trunc (response.identifier, max_len=33),
                     service.ip_address,
                     service.port))
+                break
 
     def list (self, name, terse=False):
         """ List status of executing systems.

@@ -94,6 +94,7 @@ class KubernetesCompute(Compute):
 
             """ Create service endpoints. """
             container_map = {}
+            counter = 0
             for container in system.containers:
                 """ Determine if a service is configured for this container. """
                 service = system.services.get (container.name, None)
@@ -102,22 +103,24 @@ class KubernetesCompute(Compute):
                     service_manifests = system.render (template="service.yaml",
                                                        context={"service":service})
                     for service_manifest in service_manifests:
+                        counter += 1
                         logger.debug (f"creating service for container {container.name}")
                         response = self.api.create_namespaced_service(
                             body=service_manifest,
                             namespace=namespace)
-
-                        """ Get IP address of allocated ingress (or minikube). """
-                        for i in range(0, 200):
-                            status_response = self.api.read_namespaced_service_status(name=response.metadata.name, namespace=namespace)
-                            if status_response.status.load_balancer.ingress is None:
-                                sleep(1)
-                                continue
-                            elif "TYCHO_ON_MINIKUBE" in os.environ:
-                                break
-                            else:
-                                response = status_response
-                                break
+                        
+                        if counter == 1:
+                            """ Get IP address of allocated ingress (or minikube). """
+                            for i in range(0, 200):
+                                status_response = self.api.read_namespaced_service_status(name=response.metadata.name, namespace=namespace)
+                                if status_response.status.load_balancer.ingress is None:
+                                    sleep(1)
+                                    continue
+                                elif "TYCHO_ON_MINIKUBE" in os.environ:
+                                    break
+                                else:
+                                    response = status_response
+                                    break
                         ip_address = self.get_service_ip_address (response)
                         logger.debug (f"service {container.name} ingress ip: {ip_address}")
                     
@@ -128,6 +131,7 @@ class KubernetesCompute(Compute):
                                 port.name : port.node_port 
                             }
                             break
+
             
             try:
                 api_response = self.rbac_api.list_cluster_role(label_selector=f"name={system.system_name}")
