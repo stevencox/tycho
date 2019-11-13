@@ -357,6 +357,14 @@ class TychoClientFactory:
             :param namespace: The namespace the service is deployed to.
             :type namespace: str
         """
+        try:
+           with open("/var/run/secrets/kubernetes.io/serviceaccount/namespace", "r") as secrets:
+               for line in secrets:
+                   namespace = line
+                   break
+        except Exception as e:
+            print(f"Exception: {e}")
+
         url = None
         client = None
         try:

@@ -41,6 +41,16 @@ class KubernetesCompute(Compute):
         self.rbac_api = k8s_client.RbacAuthorizationV1Api(api_client)
         self.extensions_api = k8s_client.ExtensionsV1beta1Api(api_client)
         self.networking_api = k8s_client.NetworkingV1Api(api_client)
+    
+    def get_namespace(self, namespace="default"):
+        try:
+           with open("/var/run/secrets/kubernetes.io/serviceaccount/namespace", "r") as secrets:
+               for line in secrets:
+                   namespace = line
+                   break
+        except Exception as e:
+            print(f"Exception: {e}")
+        return namespace
 
     def start (self, system, namespace="default"):
         """ Start an abstractly described distributed system on the cluster.
@@ -53,6 +63,7 @@ class KubernetesCompute(Compute):
             :param namespace: Namespace to run the system in.
             :type namespace: str
         """
+        namespace = system.get_namespace()
         try:
 
             """ Turn an abstract system model into a cluster specific representation. """
@@ -199,6 +210,7 @@ class KubernetesCompute(Compute):
             :param namepsace: Namespace to run the pod in.
             :type namespace: str
         """
+        namespace = self.get_namespace()
         deployment_spec = k8s_client.ExtensionsV1beta1DeploymentSpec(
             replicas=1,
             template=template)
@@ -227,6 +239,7 @@ class KubernetesCompute(Compute):
             :param namespace: Namespace the system runs in.
             :type namespace: str
         """
+        namespace = self.get_namespace()
         try: 
             """ todo: kubectl delete pv,pvc,deployment,pod,svc,networkpolicy -l executor=tycho """
             """ Delete the service. No obvious collection based api for service deletion. """
@@ -301,6 +314,7 @@ class KubernetesCompute(Compute):
             :param namespace: Namespace the system runs in.
             :type namespace: str
         """
+        namespace = self.get_namespace()
         result = []
         """ Find all our generated deployments. """
         label = f"tycho-guid={name}" if name else f"executor=tycho"

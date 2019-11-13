@@ -183,6 +183,16 @@ class System:
         self.volumes = Volumes(self.name, name, self.identifier, containers).process_volumes()    
         self.source_text = None
 
+    def get_namespace(self, namespace="default"):
+        try:
+           with open("/var/run/secrets/kubernetes.io/serviceaccount/namespace", "r") as secrets:
+               for line in secrets:
+                   namespace = line
+                   break
+        except Exception as e:
+            print(f"Exception: {e}")
+        return namespace
+
     def requires_network_policy (self):
         return any ([ len(svc.clients) > 0 for name, svc in self.services.items () ])
     
