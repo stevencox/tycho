@@ -363,7 +363,7 @@ class TychoClientFactory:
                    namespace = line
                    break
         except Exception as e:
-            print(f"Exception: {e}")
+            pass
 
         url = None
         client = None

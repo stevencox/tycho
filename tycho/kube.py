@@ -49,7 +49,7 @@ class KubernetesCompute(Compute):
                    namespace = line
                    break
         except Exception as e:
-            print(f"Exception: {e}")
+            pass
         return namespace
 
     def start (self, system, namespace="default"):

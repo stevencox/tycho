@@ -190,7 +190,7 @@ class System:
                    namespace = line
                    break
         except Exception as e:
-            print(f"Exception: {e}")
+            pass
         return namespace
 
     def requires_network_policy (self):
