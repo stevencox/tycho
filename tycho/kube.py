@@ -332,12 +332,15 @@ class KubernetesCompute(Compute):
                     namespace=namespace)
                 """ Inspect and report each service connected to this element separately. """
                 for service in services.items:
+                    creation_time = service.metadata.creation_timestamp
+                    time = creation_time.isoformat()
                     ip_address = self.get_service_ip_address (service)
                     port = service.spec.ports[0].node_port
                     result.append ({
                         "name"       : service.metadata.name,
                         "sid"        : item_guid,
                         "ip_address" : ip_address,
-                        "port"       : str(port)
+                        "port"       : str(port),
+                        "creation_time": time
                     })
         return result

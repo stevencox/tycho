@@ -15,11 +15,12 @@ logger = logging.getLogger (__name__)
 
 class TychoService:
     """ Represent a service endpoint. """
-    def __init__(self, name, ip_address, port, sid=None):
+    def __init__(self, name, ip_address, port, sid=None, creation_time=None):
         self.name = name
         self.ip_address = ip_address
         self.port = port
         self.identifier = sid
+        self.creation_time = creation_time
 
 class TychoStatus:
     """ A response from a status request. """ 
@@ -287,14 +288,15 @@ class TychoClient:
                 elif len(response.services) == 0:
                     print ('None running')
                 else:
-                    format_string = '{:<30} {:<35} {:<15} {:<7}'
-                    print (format_string.format("SYSTEM", "GUID", "IP_ADDRESS", "PORT"))
+                    format_string = '{:<30} {:<35} {:<15} {:<7} {:<1}'
+                    print (format_string.format("SYSTEM", "GUID", "IP_ADDRESS", "PORT", "CREATION_TIME"))
                     for service in response.services:
                         print (format_string.format (
                             TemplateUtils.trunc (service.name, max_len=28),
                             TemplateUtils.trunc (service.identifier, max_len=33),
                             service.ip_address,
-                            service.port))
+                            service.port,
+                            service.creation_time))
             elif response.status == 'error':
                 print (response)
         except Exception as e:
