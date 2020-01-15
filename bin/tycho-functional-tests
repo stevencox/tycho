@@ -37,7 +37,7 @@ test_tag=nginx
 echo --launching $instances instances
 for i in $(seq 0 $(($instances-1))); do
     #tycho up -f sample/jupyter-ds/docker-compose.yaml
-    tycho up -f sample/nginx/docker-compose.yaml
+    tycho up -a nginx
     #kubectl get svc | grep jupyter
     kubectl get svc | grep $test_tag
 done

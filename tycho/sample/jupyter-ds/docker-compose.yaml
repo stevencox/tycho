@@ -2,7 +2,7 @@
 # Docker compose formatted system.
 version: "3"
 services:
-  jupyter-datascience:
+  jupyter-ds:
     image: jupyter/datascience-notebook
     entrypoint: start.sh jupyter lab --LabApp.token=
     ports:

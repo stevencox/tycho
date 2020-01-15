@@ -3,6 +3,8 @@ import ipaddress
 import json
 import logging
 import os
+import git
+import shutil
 import sys
 import traceback
 import argparse
@@ -401,7 +403,43 @@ class TychoClientFactory:
             logger.info (f"did not find {name} in namespace {namespace}")
 
         logger.info (f"creating tycho client with url: {url}")
-        return TychoClient (url=url) 
+        return TychoClient (url=url)
+
+class TychoApps:
+    def __init__(self, app):
+        self.app = app
+        self.repo_url = 'https://github.com/heliumplusdatastage/app-support-prototype.git'
+        self.repo_name = 'app-support-prototype'
+        self.apps_dir = 'dockstore-yaml-proposals'
+        self.source_file = 'docker-compose.yaml'
+        self.env = '.env'
+        self.metadata = {}
+
+    def deleterepo(self, repo_path):
+        shutil.rmtree(repo_path)
+
+    def getmetadata(self):
+        base_dir = os.path.dirname(os.path.abspath(__file__))
+        try:
+            git.Git(base_dir).clone(self.repo_url)
+        except Exception as e:
+            print(f"Exception: {e}")
+        repo_path = os.path.join(base_dir, self.repo_name)
+        apps_path = os.path.join(repo_path, self.apps_dir)
+        for _, dnames, _ in os.walk(apps_path):
+            if self.app in dnames:
+                system_path = os.path.join(apps_path, self.app, self.source_file)
+                env_path = os.path.join(apps_path, self.app, self.env)
+                with open(system_path, "r") as stream:
+                    system = yaml.safe_load(stream)
+                    self.metadata['System'] = system
+                if os.path.exists(env_path):
+                    with open(env_path, 'r') as stream:
+                        settings = stream.read()
+                        self.metadata['Settings'] = settings
+            break
+        self.deleterepo(repo_path)
+        return self.metadata
 
 if __name__ == "__main__":
     """ A CLI for Tycho. """
@@ -418,6 +456,7 @@ if __name__ == "__main__":
     parser.add_argument('--command', help="Container command", default=None)
     parser.add_argument('--settings', help="Environment settings", default=None)
     parser.add_argument('-f', '--file', help="A docker compose (subset) formatted system spec.")
+    parser.add_argument('-a', '--app', help="Name of the app. Should be one of the apps available in app-support-prototype repo")
     parser.add_argument('-t', '--trace', help="Trace (debug) logging", action='store_true', default=False)
     parser.add_argument('--terse', help="Keep status short", action='store_true', default=False)
     parser.add_argument('-v', '--volumes', help="Mounts a volume", default=None)
@@ -435,7 +474,20 @@ if __name__ == "__main__":
 
     name=args.name
     system=None
-    if args.file:
+    if args.app:
+        """Name for the app"""
+        name = args.app
+
+        """ Apply settings. """
+        tychoapps = TychoApps(args.app)
+        metadata = tychoapps.getmetadata()
+
+        if 'System' in metadata.keys():
+            system = metadata['System']
+        if 'Settings' in metadata.keys():
+            settings = metadata['Settings']
+
+    elif args.file:
         if not args.name:
             """ We've been given a docker-compose.yaml. Come up with a name for the app 
             based on the containing directory if none has been otherwise supplied. """

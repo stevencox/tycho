@@ -16,6 +16,18 @@ metadata:
     executor: tycho
     tycho-guid: {{ system.identifier }}
 spec:
+{% for container in system.containers %}
+  {% if container.limits or container.requests %}
+  {% if container.limits.gpus != None and loop.first %}
+  nodeSelector:
+    nvidia.com/gpu: "true"
+  tolerations:
+  - key: "nvidia.com/gpu"
+    operator: "Exists"
+    effect: "NoSchedule"
+  {% endif %}
+  {% endif %}
+{% endfor %}
   initContainers:
 {% for container in system.containers %}
   {% if container.depends_on|length > 0 %}

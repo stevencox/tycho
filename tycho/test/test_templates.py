@@ -25,7 +25,7 @@ def test_pod (system, request):
         assert pod_name.endswith (tycho_guid)
 
         containers = output.get('spec',{}).get('containers',{})
-        assert containers[0]['name'] == 'jupyter-datascience'
+        assert containers[0]['name'] == 'jupyter-ds'
         assert containers[0]['image'] == "jupyter/datascience-notebook"
     
 def test_service_template (system, request):

@@ -43,7 +43,7 @@ def test_system_parser (request):
 
         print (f"{system}")
         assert system.name.startswith ('jupyter-ds')
-        assert system.containers[0].name == 'jupyter-datascience'
+        assert system.containers[0].name == 'jupyter-ds'
         assert system.containers[0].image == 'jupyter/datascience-notebook'
         assert system.containers[0].limits.cpus == '0.01'
         assert system.containers[0].limits.memory == '50M'
