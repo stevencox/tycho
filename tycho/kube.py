@@ -65,6 +65,16 @@ class KubernetesCompute(Compute):
         """
         namespace = system.get_namespace()
         try:
+            try:
+                api_response = self.api.list_config_map_for_all_namespaces()
+                for item in api_response.items:
+                    if item.metadata.name == f"{system.system_name}-env":
+                        for key, value in item.data.items():
+                            for container in system.containers:
+                                container.env.append([key, value])
+                        break
+            except ApiException as e:
+                print("Exception when calling CoreV1Api->list_secret_for_all_namespaces: %s\n" % e)
 
             """ Turn an abstract system model into a cluster specific representation. """
             pod_manifests = system.render ("pod.yaml")
