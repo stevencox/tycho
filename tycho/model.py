@@ -190,7 +190,7 @@ class System:
                    namespace = line
                    break
         except Exception as e:
-            pass
+            logger.warning(f"error getting namespace from file: {e}")
         return namespace
 
     def requires_network_policy (self):
