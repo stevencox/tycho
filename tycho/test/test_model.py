@@ -19,7 +19,8 @@ def test_system_model (request):
                 "limits" : [{
                     "cpus" : "0.5",
                     "memory" : "512M"
-                }]
+                }],
+                "volumes": [],
             }
         ]
     }) 
