@@ -9,8 +9,8 @@ services:
       - AMB=False
     ports:
       - 8888:8888
-#    volumes:
-#      - pvc://cloud-top/projects:/work/data 
+    volumes:
+      - pvc://cloud-top/projects:/work/data 
 #      - ./:/mydata1
 #      - ./home:/mydata2
     deploy:
