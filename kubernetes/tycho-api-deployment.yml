@@ -1,0 +1,31 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  annotations:
+  labels:
+    service: tycho-api
+  name: tycho-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      service: tycho-api
+  template:
+    metadata:
+      labels:
+        service: tycho-api
+    spec:
+      containers:
+      - command:
+        - /usr/local/bin/gunicorn
+        - --workers=2
+        - --name=tycho
+        - --timeout=600
+        - tycho.api:app
+        image: heliumdatastage/tycho-api:latest
+        imagePullPolicy: "Always"
+        name: tycho-api
+        ports:
+        - containerPort: 8099
+          protocol: TCP
+      restartPolicy: Always

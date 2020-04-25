@@ -1,0 +1,103 @@
+Traceback (most recent call last):
+  File "/home/muralikarthik_k123/tycho/tycho/kube.py", line 182, in start
+    cluster_role_binding_manifests = system.render(template=f"{system.system_name}/clusterrolebinding.yaml")
+  File "/home/muralikarthik_k123/tycho/tycho/model.py", line 209, in render
+    template = generator.render (template, context=final_context)
+  File "/home/muralikarthik_k123/tycho/tycho/tycho_utils.py", line 45, in render
+    f"No template {template} found in default location or in {alternate_paths}")
+ValueError: No template imagej/clusterrolebinding.yaml found in default location or in []
+Traceback (most recent call last):
+  File "/home/muralikarthik_k123/tycho/tycho/kube.py", line 182, in start
+    cluster_role_binding_manifests = system.render(template=f"{system.system_name}/clusterrolebinding.yaml")
+  File "/home/muralikarthik_k123/tycho/tycho/model.py", line 209, in render
+    template = generator.render (template, context=final_context)
+  File "/home/muralikarthik_k123/tycho/tycho/tycho_utils.py", line 45, in render
+    f"No template {template} found in default location or in {alternate_paths}")
+ValueError: No template cloud-top/clusterrolebinding.yaml found in default location or in []
+Traceback (most recent call last):
+  File "/home/muralikarthik_k123/tycho/tycho/kube.py", line 182, in start
+    cluster_role_binding_manifests = system.render(template=f"{system.system_name}/clusterrolebinding.yaml")
+  File "/home/muralikarthik_k123/tycho/tycho/model.py", line 209, in render
+    template = generator.render (template, context=final_context)
+  File "/home/muralikarthik_k123/tycho/tycho/tycho_utils.py", line 45, in render
+    f"No template {template} found in default location or in {alternate_paths}")
+ValueError: No template cloud-top/clusterrolebinding.yaml found in default location or in []
+Traceback (most recent call last):
+  File "/home/muralikarthik_k123/tycho/tycho/kube.py", line 182, in start
+    cluster_role_binding_manifests = system.render(template=f"{system.system_name}/clusterrolebinding.yaml")
+  File "/home/muralikarthik_k123/tycho/tycho/model.py", line 209, in render
+    template = generator.render (template, context=final_context)
+  File "/home/muralikarthik_k123/tycho/tycho/tycho_utils.py", line 45, in render
+    f"No template {template} found in default location or in {alternate_paths}")
+ValueError: No template cloud-top/clusterrolebinding.yaml found in default location or in []
+Traceback (most recent call last):
+  File "/home/muralikarthik_k123/tycho/tycho/kube.py", line 182, in start
+    cluster_role_binding_manifests = system.render(template=f"{system.system_name}/clusterrolebinding.yaml")
+  File "/home/muralikarthik_k123/tycho/tycho/model.py", line 209, in render
+    template = generator.render (template, context=final_context)
+  File "/home/muralikarthik_k123/tycho/tycho/tycho_utils.py", line 45, in render
+    f"No template {template} found in default location or in {alternate_paths}")
+ValueError: No template cloud-top/clusterrolebinding.yaml found in default location or in []
+Traceback (most recent call last):
+  File "/home/muralikarthik_k123/tycho/tycho/kube.py", line 183, in start
+    cluster_role_binding_manifests = system.render(template=f"{system.system_name}/clusterrolebinding.yaml")
+  File "/home/muralikarthik_k123/tycho/tycho/model.py", line 209, in render
+    template = generator.render (template, context=final_context)
+  File "/home/muralikarthik_k123/tycho/tycho/tycho_utils.py", line 45, in render
+    f"No template {template} found in default location or in {alternate_paths}")
+ValueError: No template cloud-top/clusterrolebinding.yaml found in default location or in []
+Traceback (most recent call last):
+  File "/home/muralikarthik_k123/tycho/tycho/kube.py", line 185, in start
+    cluster_role_binding_manifests = system.render(template=f"{system.system_name}/clusterrolebinding.yaml")
+  File "/home/muralikarthik_k123/tycho/tycho/model.py", line 210, in render
+    template = generator.render (template, context=final_context)
+  File "/home/muralikarthik_k123/tycho/tycho/tycho_utils.py", line 45, in render
+    f"No template {template} found in default location or in {alternate_paths}")
+ValueError: No template cloud-top/clusterrolebinding.yaml found in default location or in []
+Traceback (most recent call last):
+  File "/home/muralikarthik_k123/tycho/tycho/kube.py", line 186, in start
+    cluster_role_binding_manifests = system.render(template=f"{system.system_name}/clusterrolebinding.yaml")
+  File "/home/muralikarthik_k123/tycho/tycho/model.py", line 211, in render
+    template = generator.render (template, context=final_context)
+  File "/home/muralikarthik_k123/tycho/tycho/tycho_utils.py", line 45, in render
+    f"No template {template} found in default location or in {alternate_paths}")
+ValueError: No template cloud-top/clusterrolebinding.yaml found in default location or in []
+Traceback (most recent call last):
+  File "/home/muralikarthik_k123/tycho/tycho/kube.py", line 187, in start
+    cluster_role_binding_manifests = system.render(template=f"{system.system_name}/clusterrolebinding.yaml")
+  File "/home/muralikarthik_k123/tycho/tycho/model.py", line 211, in render
+    template = generator.render (template, context=final_context)
+  File "/home/muralikarthik_k123/tycho/tycho/tycho_utils.py", line 45, in render
+    f"No template {template} found in default location or in {alternate_paths}")
+ValueError: No template cloud-top/clusterrolebinding.yaml found in default location or in []
+Traceback (most recent call last):
+  File "/home/muralikarthik_k123/tycho/tycho/kube.py", line 188, in start
+    cluster_role_binding_manifests = system.render(template=f"{system.system_name}/clusterrolebinding.yaml")
+  File "/home/muralikarthik_k123/tycho/tycho/model.py", line 211, in render
+    template = generator.render (template, context=final_context)
+  File "/home/muralikarthik_k123/tycho/tycho/tycho_utils.py", line 45, in render
+    f"No template {template} found in default location or in {alternate_paths}")
+ValueError: No template cloud-top/clusterrolebinding.yaml found in default location or in []
+Traceback (most recent call last):
+  File "/home/muralikarthik_k123/tycho/tycho/kube.py", line 191, in start
+    api_response = self.rbac_api.create_cluster_role_binding(body=cluster_role_binding_manifest)
+  File "/home/muralikarthik_k123/venv/tycho/lib/python3.7/site-packages/kubernetes/client/apis/rbac_authorization_v1_api.py", line 167, in create_cluster_role_binding
+    (data) = self.create_cluster_role_binding_with_http_info(body, **kwargs)
+  File "/home/muralikarthik_k123/venv/tycho/lib/python3.7/site-packages/kubernetes/client/apis/rbac_authorization_v1_api.py", line 252, in create_cluster_role_binding_with_http_info
+    collection_formats=collection_formats)
+  File "/home/muralikarthik_k123/venv/tycho/lib/python3.7/site-packages/kubernetes/client/api_client.py", line 321, in call_api
+    _return_http_data_only, collection_formats, _preload_content, _request_timeout)
+  File "/home/muralikarthik_k123/venv/tycho/lib/python3.7/site-packages/kubernetes/client/api_client.py", line 155, in __call_api
+    _request_timeout=_request_timeout)
+  File "/home/muralikarthik_k123/venv/tycho/lib/python3.7/site-packages/kubernetes/client/api_client.py", line 364, in request
+    body=body)
+  File "/home/muralikarthik_k123/venv/tycho/lib/python3.7/site-packages/kubernetes/client/rest.py", line 266, in POST
+    body=body)
+  File "/home/muralikarthik_k123/venv/tycho/lib/python3.7/site-packages/kubernetes/client/rest.py", line 222, in request
+    raise ApiException(http_resp=r)
+kubernetes.client.rest.ApiException: (409)
+Reason: Conflict
+HTTP response headers: HTTPHeaderDict({'Audit-Id': '4a895ce7-96c8-44ae-819e-259c920f5e79', 'Content-Type': 'application/json', 'Date': 'Mon, 10 Feb 2020 00:40:48 GMT', 'Content-Length': '308'})
+HTTP response body: {"kind":"Status","apiVersion":"v1","metadata":{},"status":"Failure","message":"clusterrolebindings.rbac.authorization.k8s.io \"jupyter-ds-global-2\" already exists","reason":"AlreadyExists","details":{"name":"jupyter-ds-global-2","group":"rbac.authorization.k8s.io","kind":"clusterrolebindings"},"code":409}
+
+

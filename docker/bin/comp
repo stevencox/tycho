@@ -1,0 +1,46 @@
+#!/bin/bash
+
+build () {
+    local mod=$1
+    if [ -z "$mod" ]; then
+        echo module name required
+    fi
+    docker build --no-cache $mod -t heliumdatastage/$mod
+}
+push () {
+    local mod=$1
+    if [ -z "$mod" ]; then
+        echo module name required
+    fi
+    docker push heliumdatastage/$mod
+}
+clean () {
+    images () {
+        pat=$1
+        if [ -z "$pat" ]; then
+            pat=tranql
+        fi
+        echo $pat
+        for i in $(sudo docker images | grep $pat | awk '{ print $3 }' | grep -vi image ); do echo $i; sudo docker rmi -f $i; done
+    }
+    $*
+}
+all () {
+    echo none yet
+}
+kill () {
+    local mod=$1
+    if [ -z "$mod" ]; then
+        echo module name required
+    fi
+    docker kill -s 9 $mod
+}
+shell () {
+        local mod=$1
+    if [ -z "$mod" ]; then
+        echo module name required
+    fi
+    docker exec -it $mod bash
+}
+
+$*

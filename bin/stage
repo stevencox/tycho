@@ -1,0 +1,158 @@
+
+dev_env () {
+
+    # Install a development environment for OS X
+    brew cask install virtualbox kubernetes-cli minikube
+    
+    # versions:
+    #   virtualbox: 6.0
+    #   minikube: v0.34.1
+    #   kubectl: v1.13.3
+    # python 3.7.x
+    #   python -m venv venv/stage
+    #   pip install -r requirements.txt
+}
+
+# common
+kps () { # list pod status
+    local term=$1
+    if [ -z "$term" ]; then
+        echo usage kps term
+        exit 1
+    fi
+    kubectl get po | grep $term
+}
+kpid () { # search for pod ids
+    local term=$1
+    if [ -z "$term" ]; then
+        echo usage kpid term
+        exit 1
+    fi
+    kubectl get po | grep $term | awk '{ print $1 }'
+}
+kkill () { # kill a pod
+    local term=$1
+    if [ -z "$term" ]; then
+        echo usage kkill term
+        exit 1
+    fi
+    for p in $(kpid $term); do
+        kubectl delete deployment $p
+    done
+}
+kdep () { # get deployment info
+    local term=$1
+    if [ -z "$term" ]; then
+        echo usage kdep term
+        exit 1
+    fi
+    kubectl get deployment $term
+}
+kdeldep () { # delete a deployment
+    local term=$1
+    if [ -z "$term" ]; then
+        echo usage kdeldep term
+        exit 1
+    fi
+    kubectl delete deployment $term
+}
+klog () { # view pod logs
+    local term=$1
+    if [ -z "$term" ]; then
+        echo usage klog term
+        exit 1
+    fi
+    kubectl logs -f $(kpid $term)
+}
+
+# stage - cover stage specific things here.
+
+# https://jupyter-docker-stacks.readthedocs.io/en/latest/using/running.html#using-binder
+# https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html#core-stacks
+# conda: https://jupyter-docker-stacks.readthedocs.io/en/latest/using/common.html#conda-environments
+jupyter_lab=
+jupyter () { # manage jupyter
+    # NB_USER=<username>
+    # NB_GROUP=<group>
+    run () { # Run a jupyter docker image on kube.
+        image=$1
+        if [ "$2" == 'lab' ]; then
+            jupyter_lab=--env="JUPYTER_ENABLE_LAB=yes"
+        fi
+        # Run an image. Include the lab env var.
+        kubectl run \
+                --image=jupyter/$image-notebook \
+                jupyter-$image \
+                --port=8888 \
+                $jupyter_lab
+        pid=$(kpid jupyter-$image)
+        echo $pid
+        # Expose deployment.
+        kubectl expose deployment \
+                jupyter-$image \
+                --port=8888 \
+                --type=NodePort \
+                --target-port=8888
+    }
+    stop () { # Stop a container.
+        image=$1
+        kubectl delete service jupyter-$image
+        kubectl delete deployment jupyter-$image
+    }
+    $*
+}
+
+# https://hub.docker.com/r/rocker/rstudio/
+rstudio () { # manage rstudio
+    stop () { # Stop r studio
+        image=$1
+        kubectl delete service rstudio
+        kubectl delete deployment rstudio
+    }
+    run () { # run r studio
+        # Run an image with a custom password
+        kubectl run \
+                --image=rocker/rstudio rstudio \
+                --port=8787 \
+                --env="PASSWORD=rstudiox"
+        pid=$(kpid rstudio)
+        echo $pid
+        # Create a deployment
+        kubectl expose deployment \
+                rstudio \
+                --port=8787 \
+                --type=NodePort \
+                --target-port=8787
+    }        
+    $*
+}
+
+pod () { # Manipulate pods.
+    add () {
+        # Add a pod to kube
+        name=$1
+        kubectl create -f $name.yaml
+    }
+    shell () {
+        # Get a shell to a container in the pod
+        local pod=$1
+        local container=$2
+        kubectl exec -it $pod -c $container -- /bin/bash
+    }
+    status () {
+        # Get pod status
+        local pod=$1
+        kubectl get pod $pod --output=yaml
+    }
+    $*
+}
+
+# GBDB: https://github.com/icebert/docker_ucsc_genome_browser
+del_pod_dep_svc () {
+    local name=$1
+    kubectl delete deployments $name
+    kubectl delete pods $name
+    kubectl delete service $name
+}
+
+$*

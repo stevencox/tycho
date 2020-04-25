@@ -1,0 +1,70 @@
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: tycho-api-access
+  #namespace: helx
+rules:
+- apiGroups:
+  - "*"
+  # added pvc resource
+  resources:
+  - pods
+  - services
+  - persistentvolumeclaims
+  - persistentvolumes
+  - deployments/rollback
+  - deployments/scale
+  - ingresses
+  - replicasets
+  - replicasets/scale
+  - clusterrole
+  - clusterrolebinding
+  verbs:
+  - '*'
+- apiGroups:
+  - extensions
+  - apps
+  - networking.k8s.io
+  resources:
+  - deployments
+  - replicasets
+  verbs:
+  - '*' 
+- apiGroups:
+  - networking.k8s.io
+  resources:
+  - ingresses
+  - networkpolicies
+  verbs:
+  - create
+  - delete
+  - deletecollection
+  - patch
+  - update
+#- apiGroups:
+#  - rbac.authorization.k8s.io/v1
+#  resources:
+#  - persistentvolumeclaims
+#  - clusterrole
+#  - clusterrolebinding
+#  verbs:
+#  - list
+#  - create
+#  - delete
+#  - deletecollection
+#  - patch
+#  - update
+---
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: tycho-api-access
+  namespace: default
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: tycho-api-access
+  apiGroup: rbac.authorization.k8s.io

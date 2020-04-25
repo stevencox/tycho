@@ -1,0 +1,23 @@
+---
+# Docker compose formatted system.
+version: "3"
+services:
+  jupyter-ds:
+    image: jupyter/datascience-notebook
+    entrypoint: start.sh jupyter lab --LabApp.token=
+    env:
+      - AMB=False
+    ports:
+      - 8888:8888
+#    volumes:
+#      - pvc://cloud-top/projects:/work/data 
+#      - ./:/mydata1
+#      - ./home:/mydata2
+    deploy:
+      resources:
+        limits:
+          cpus: '0.01'
+          memory: 50M
+        reservations:
+          cpus: '0.01'
+          memory: 20M

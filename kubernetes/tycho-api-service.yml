@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+  labels:
+    service: tycho-api
+  name: tycho-api
+spec:
+  type: LoadBalancer
+  selector:
+    app: tycho-api
+  ports:
+  - name: http
+    port: 8099
+    protocol: TCP
+    targetPort: 8099

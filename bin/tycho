@@ -1,0 +1,95 @@
+#!/bin/bash
+
+################################################################
+##
+## Tycho compiles and runs docker-compose distributed systems
+## in orchestrator backplanes like Kubernetes.
+##
+##   This is the Bash command line interface (CLI) for Tycho.
+##   
+##   author: steven cox
+##   version: 0.1
+##   usage:
+##      
+##     up: 
+##      
+##       tycho up -f <docker-compose>
+##       ex: tycho up -f tycho/samples/jupyter-ds/docker-compose.yaml
+##      
+##     status:
+##      
+##       tycho status [--terse] [--trace]
+##       ex: tycho status
+##      
+##     down:
+##      
+##       tycho down <GUID>
+##       ex: tycho down $(tycho status --terse)
+##   
+################################################################
+set -e
+
+##
+## Get our location and configure the path.
+##
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+TYCHO_ROOT=$( dirname $DIR )
+export PYTHONPATH=$TYCHO_ROOT
+export TYCHO=$TYCHO_ROOT/tycho
+
+config=~/.tycho
+if [[ ! -e $config ]]; then
+    echo "unset TYCHO_ON_MINIKUBE" > $config
+    # If the minikube executable exists and the system is running,
+    # configure the app to use minikube.
+    which minikube >> /dev/null && \
+        minikube status | grep -c "apiserver: Running" >> /dev/null && \
+        echo "export TYCHO_ON_MINIKUBE=True" > $config
+fi 
+source $config
+#echo TYCHO_ON_MINIKUBE : $TYCHO_ON_MINIKUBE
+
+##
+## Run the API. 
+##
+api () {
+    python $TYCHO/api.py $*
+}
+
+##
+## Bring a service up.
+##
+up () {
+    python $TYCHO/client.py --up $*
+}
+
+##
+## Shut a service down.
+##
+down () {
+    python $TYCHO/client.py --down $*
+}
+
+##
+## Get status for a service.
+##
+status () {
+    python $TYCHO/client.py --status $*
+}
+
+##
+## Run unit tests.
+##
+test () {
+    pytest $TYCHO/test $* #--log-format="%(asctime)s %(levelname)s %(message)s" $*
+}
+##
+## Run tests.
+##
+test_functional () {
+    $DIR/tycho-functional-tests
+}
+
+$*
+
+exit 0
