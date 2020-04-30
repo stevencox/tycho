@@ -68,14 +68,13 @@ class KubernetesCompute(Compute):
                             break
                 if notExists and volume["volume_name"] != 'stdnfs':
                     raise Exception(f"Cannot create system. PVC {volume['pvc_name']} does not exist. Create it.")
-        except:
+        except Exception as e:
             logger.debug(f"Raising persistent volume claim exception. {e}")
             raise
 
     def checkamb(self, namespace):
         try:
             api_response = self.api.list_namespaced_service(field_selector="metadata.name=ambassador", namespace=namespace)
-            print(f"~~~~~~`API RESPONSE: {len(api_response.items)}")
             if len(api_response.items) > 0:
                 return True
             else:
@@ -100,7 +99,6 @@ class KubernetesCompute(Compute):
             amb_status = self.checkamb(namespace)
             if amb_status:
                 system.amb = True
-            print(f"~~~~~~~~~SYSTEM AMB: {system.amb}")
             #api_response = self.api.list_namespace()
             #notExists = True
             #for item in api_response.items:

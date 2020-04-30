@@ -55,7 +55,7 @@ class Volumes:
                    self.volume(container['name'], pvc_name, volume_name, path, subpath)
                else:
                    logger.debug(f"Only NFS PVCs are supported. Specify pvc, to mount a pvc storage.")
-                   traceback.print_exc()
+                   raise Exception(f"Cannot create system.")
        return self.volumes
 
 class Container:
