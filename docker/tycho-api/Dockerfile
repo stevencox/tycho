@@ -9,7 +9,7 @@ RUN pip install --upgrade pip
 #COPY requirements.txt ./
 
 RUN apk add git
-RUN git clone https://github.com/muralikarthikk/tycho.git --branch amb-helx-test-v1.0
+RUN git clone https://github.com/helxplatform/tycho.git --branch development
 RUN pip install --no-cache-dir -r tycho/requirements.txt
 #COPY . /tycho
 

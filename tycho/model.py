@@ -54,7 +54,7 @@ class Volumes:
                    subpath = "/".join(parts[1].split("/")[3:]) if len(parts) is 3 else None
                    self.volume(container['name'], pvc_name, volume_name, path, subpath)
                else:
-                   logger.debug(f"PVCs are not specified.")
+                   logger.debug(f"Only NFS PVCs are supported. Specify pvc, to mount a pvc storage.")
                    traceback.print_exc()
        return self.volumes
 

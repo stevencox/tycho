@@ -379,10 +379,8 @@ class TychoClientFactory:
                 namespace=namespace)
             if not service:
                 url = default_url
-            elif service.status and service.status.load_balancer and \
-                 service.status.load_balancer.ingress:
-                logger.debug ("--looking in kube for an ingress based service.")
-                ip_address = service.status.load_balancer.ingress[0].ip
+            elif service.status and service.status.load_balancer:
+                ip_address = "tycho-api"
                 port = service.spec.ports[0].port
                 logger.debug (f"located tycho api instance in kube")
                 url = f"http://{ip_address}:{port}"
@@ -399,8 +397,10 @@ class TychoClientFactory:
                     except ValueError as e:
                         logger.error ("unable to get minikube ip address")
                         traceback.print_exc (e)
+            print(f"URL: {url}")
         except Exception as e:
             url = default_url
+            print(f"url: {url}")
             logger.info (f"cannot find {name} in namespace {namespace}")
 
         logger.info (f"creating tycho client with url: {url}")

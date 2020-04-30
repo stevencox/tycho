@@ -68,8 +68,9 @@ class KubernetesCompute(Compute):
                             break
                 if notExists and volume["volume_name"] != 'stdnfs':
                     raise Exception(f"Cannot create system. PVC {volume['pvc_name']} does not exist. Create it.")
-        except Exception as e:
-            traceback.print_exc(e)
+        except:
+            logger.debug(f"Raising persistent volume claim exception. {e}")
+            raise
 
     def checkamb(self, namespace):
         try:
