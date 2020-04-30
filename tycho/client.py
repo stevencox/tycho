@@ -246,7 +246,7 @@ class TychoClient:
                     
         request = {
             "name"   : self.format_name (name),
-            "username" : "MuraliKarthik",
+            "username" : "admin",
             "env"    : self.parse_env (settings),
             "system" : system,
             "services" : services
@@ -282,7 +282,7 @@ class TychoClient:
         """
         try:
             request = { "name" : self.format_name (name) } if name else {}
-            request['username'] = 'MuraliKarthik'
+            request['username'] = 'admin'
             response = self.status (request)
             logger.debug (response)
             if response.status  == 'success':
