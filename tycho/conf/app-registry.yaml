@@ -1,0 +1,85 @@
+api: Tycho
+version: 0.1
+metadata:
+  id: helx-app-registry
+  name: HeLx Application Registry
+  author: HeLx Dev
+  description: An alpha metadata registry for HeLx applications.
+repositories:
+  - id: catalyst_apps
+    description: Main repository for Catalyst Apps and Tools
+    url: https://github.com/helxplatform/app-support-prototype/raw/develop/dockstore-yaml-proposals
+registries:
+  - id: common
+    name: HeLx Common App Registry
+    apps:
+      - id:   cloudtop
+        name: CloudTop
+        spec: ${catalyst_apps}/cloudtop/docker-compose.yaml
+        icon: http://someplace/cloudtop/icon.png
+        descripton: CloudTop is a cloud native, browser accessible Linux desktop.
+        docs: https://helxplatform.github.io/cloudtop-docs/
+      - id:   jupyter
+        name: Jupyter Notebook
+        spec: ${catalyst_apps}/jupyter/docker-compose.yaml
+        icon: http://someplace/jupyter/icon.png
+        descripton: A Jupyter notebook.
+        docs: https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html#jupyter-base-notebook
+      - id:   jupyter-datascience
+        name: Jupyter Data Science
+        spec: ${catalyst_apps}/jupyter-datascience/docker-compose.yaml
+        icon: http://someplace/jupyter/basic/icon.png
+        descripton: A Jupyter data science notebook.
+        docs: https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html#jupyter-datascience-notebook
+      - id:   r-studio-server
+        name: R Studio Server
+        spec: ${catalyst_apps}/rstudio-server/docker-compose.yaml
+        icon: http://someplace/jupyter/basic/icon.png
+        descripton: R Studio Server is a web based notebook environment for R development.
+        docs: https://rstudio.com/products/rstudio/
+  - id: braini
+    name: BRAIN-I App Registry
+    apps:
+      - id:   imagej
+        name: ImageJ Viewer
+        spec: ${catalyst_apps}/imagej/docker-compose.yaml
+        icon: http://someplace/jupyter/basic/icon.png
+        descripton: ImageJ is a public domain Java image processing program inspired by NIH Image for the Macintosh.
+        docs: https://imagej.nih.gov/ij/
+      - id:   napari
+        name: Napari Image Viewer
+        spec: ${catalyst_apps}/imagej/docker-compose.yaml
+        icon: http://someplace/jupyter/basic/icon.png
+        descripton: Napari is a fast, interactive, multi-dimensional image viewer for browsing, annotating, and analyzing large multi-dimensional images.
+        docs: https://napari.org/
+  - id: catalyst
+    name: BioData Catalyst App Registry
+    apps:
+      - id:   dicom-viewer
+        name: DICOM Viewer
+        spec: ${catalyst_apps}/dicom-cloudtop/docker-compose.yaml
+        icon: http://someplace/jupyter/basic/icon.png
+        descripton: CloudTop is also pretty nifty ......
+        docs: https://helxplatform.github.io/cloudtop-docs/ # TODO: Dicom specific docs
+      - id:   autoencoder-notebook
+        name: Autoencoder Notebook
+        spec: ${catalyst_apps}/helx-autoencoder/docker-compose.yaml
+        icon: http://someplace/jupyter/basic/icon.png
+        descripton: CloudTop is also pretty nifty .......
+        docs: http://we.need.autoencoder.docs/doc.html # TODO: need these
+  - id: scidas
+    name: SciDAS App Registry
+    apps:
+      - id:   nextflow-api
+        name: Nextflow API
+        spec: ${catalyst_apps}/nextflow-api/docker-compose.yaml
+        icon: http://someplace/nextflow/icon.png
+        descripton: A cloud native workspace for executing Nextflow workflows.
+        docs: https://github.com/SciDAS/nextflow-api
+      - id:   gsforge
+        name: GSForge
+        spec: ${catalyst_apps}/gsforge/docker-compose.yaml
+        icon: http://someplace/jupyter/basic/icon.png
+        descripton: GSForge is a Python software package that assists researchers in the selection of gene sets with potential association to an experimental condition or phenotypic trait, which offers new potential hypotheses for gene-trait causality.
+        docs: https://systemsgenetics.github.io/GSForge/
+        
