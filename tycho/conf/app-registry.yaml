@@ -93,15 +93,6 @@ registries:
         docs: https://github.com/helxplatform/helx-hail # TODO: Better docs.
         services:
           jupyter : 8888
-        args: # Metadata the UX can use to allow users to customize an app before launch.
-          cores:
-            name: Cores
-            type: integer
-            description: Number of CPUs
-          memory:
-            name: Memory
-            type: integer
-            description: Memory required in MB
   - id: scidas
     name: SciDAS App Registry
     apps:
