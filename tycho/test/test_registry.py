@@ -67,7 +67,7 @@ def __test_context ():
                     continue
                 seen [app_id] = app_id
                 system = tc.start (principal=principal, app_id=app_id)
-                logger.debug (f"{system}")
+                #logger.debug (f"{system}")
                 logger.info (f"  --https://<UX_URL>/private/{app_id}/{principal.username}/{system.identifier}/")
                 successful_count = successful_count + 1
             except Exception as e:

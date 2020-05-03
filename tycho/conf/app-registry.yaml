@@ -18,10 +18,11 @@
 ##   numbers. The service and port name must match the name of a container
 ##   in the docker-compose specification and its exposed port respectively.
 ##
-##   For now, there is a common sub-registry which all others extend. Apps in the
-##   common sub-registry will be included in each product.
+##   Contexts implement a simple form of inheritance. Each context may speicify
+##   a list of contexts it extends. Apps from extended contexts will be added
+##   to the extending context's apps.
 ##
-##   This is alpha and we expect many changes to modularity, inheritance,
+##   This is alpha. Expect significant changes to modularity, inheritance,
 ##   and naming coming soon.
 ##
 ################################################################################
@@ -33,14 +34,14 @@ metadata:
   author: HeLx Dev
   description: An alpha metadata registry for HeLx applications.
 repositories:
-  - id: catalyst_apps
+  catalyst_apps:
     description: Main repository for Catalyst Apps and Tools
     url: https://github.com/helxplatform/app-support-prototype/raw/develop/dockstore-yaml-proposals
-registries:
-  - id: common
+contexts:
+  common:
     name: HeLx Common App Registry
     apps:
-      - id:   cloudtop
+      cloudtop:
         name: CloudTop
         spec: ${catalyst_apps}/cloudtop/docker-compose.yaml
         icon: ${catalyst_apps}/cloudtop/icon.png
@@ -48,7 +49,7 @@ registries:
         docs: https://helxplatform.github.io/cloudtop-docs/
         services:
           cloudtop : 8080
-      - id:   jupyter-datascience
+      jupyter-datascience:
         name: Jupyter Data Science
         spec: ${catalyst_apps}/jupyter-ds/docker-compose.yaml
         icon: ${catalyst_apps}/jupyter-ds/icon.png
@@ -56,7 +57,7 @@ registries:
         docs: https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html#jupyter-datascience-notebook
         services:
           jupyter-datascience : 8888
-      - id:   rstudio-server
+      rstudio-server:
         name: R Studio Server
         spec: ${catalyst_apps}/rstudio-server/docker-compose.yaml
         icon: ${catalyst_apps}/rstudio-server/icon.png
@@ -64,10 +65,12 @@ registries:
         docs: https://rstudio.com/products/rstudio/
         services:
           rstudio-server : 8787
-  - id: braini
+  braini:
+    extends:
+      - common
     name: BRAIN-I App Registry
     apps:
-      - id:   imagej
+      imagej:
         name: ImageJ Viewer
         spec: ${catalyst_apps}/imagej/docker-compose.yaml
         icon: ${catalyst_apps}/imagej/icon.png
@@ -76,18 +79,22 @@ registries:
         services:
           imagej: 8080
       # TODO: separate napari and imagej, updating these appropriately.
-      - id:   napari
+      napari:
         name: Napari Image Viewer
         spec: ${catalyst_apps}/imagej/docker-compose.yaml
         icon: ${catalyst_apps}/imagej/icon.png
-        descripton: Napari is a fast, interactive, multi-dimensional image viewer for browsing, annotating, and analyzing large multi-dimensional images.
+        descripton: >
+          Napari is a fast, interactive, multi-dimensional image viewer for browsing,
+          annotating, and analyzing large multi-dimensional images.
         docs: https://napari.org/
         services:
           napari : 8080            
-  - id: catalyst
+  catalyst:
+    extends:
+      - common
     name: BioData Catalyst App Registry
     apps:
-      - id:   dicom-viewer
+      dicom-viewer:
         name: DICOM Viewer
         spec: ${catalyst_apps}/dicom-cloudtop/docker-compose.yaml
         icon: ${catalyst_apps}/dicom-cloudtop/icon.png
@@ -97,7 +104,7 @@ registries:
         services:
           cloudtop : 8080
       # TODO: is this just jupyter-ds with access to autoencoder python modules? If so, delete.
-      - id:   autoencoder-notebook
+      autoencoder-notebook:
         name: Autoencoder Notebook
         spec: ${catalyst_apps}/helx-autoencoder/docker-compose.yaml
         icon: ${catalyst_apps}/helx-autoencoder/icon.png
@@ -105,7 +112,7 @@ registries:
         docs: http://we.need.autoencoder.docs/doc.html # TODO: need these
         services:
           jupyter : 8888          
-      - id:   hail
+      hail:
         name: Hail / Jupyter Workspace
         spec: ${catalyst_apps}/hail/docker-compose.yaml
         icon: ${catalyst_apps}/hail/icon.png
@@ -113,10 +120,12 @@ registries:
         docs: https://github.com/helxplatform/helx-hail # TODO: Better docs.
         services:
           jupyter : 8888
-  - id: scidas
+  scidas:
+    extends:
+      - common
     name: SciDAS App Registry
     apps:
-      - id:   nextflow-api
+      nextflow-api:
         name: Nextflow API
         spec: ${catalyst_apps}/nextflow/docker-compose.yaml
         icon: ${catalyst_apps}/nextflow/icon.png
@@ -124,18 +133,23 @@ registries:
         docs: https://github.com/SciDAS/nextflow-api
         services:
           nextflow : 8080
-      - id:   gsforge
+      gsforge:
         name: GSForge
         spec: ${catalyst_apps}/gsforge/docker-compose.yaml
         icon: ${catalyst_apps}/gsforge/icon.png
-        descripton: GSForge is a Python package that assists researchers in the selection of gene sets with potential association to an experimental condition or phenotypic trait, which offers new potential hypotheses for gene-trait causality.
+        descripton: >
+          GSForge is a Python package that assists researchers in the selection of gene sets with
+          potential association to an experimental condition or phenotypic trait, which offers new
+          potential hypotheses for gene-trait causality.
         docs: https://systemsgenetics.github.io/GSForge/
         services:
           jupyter : 8888
-  - id: blackbalsam
+  blackbalsam:
+    extends:
+      - common
     name: RENCI Blackbalsam Registry
     apps:
-      - id:   blackbalsam
+      blackbalsam:
         name: Blackbalsam
         spec: ${catalyst_apps}/blackbalsam/docker-compose.yaml
         icon: ${catalyst_apps}/blackbalsam/icon.png

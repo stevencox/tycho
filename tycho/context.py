@@ -8,6 +8,7 @@ import yaml
 from requests_cache import CachedSession
 from string import Template
 from tycho.client import TychoClientFactory
+from tycho.exceptions import ContextException
 
 logger = logging.getLogger (__name__)
 
@@ -57,22 +58,34 @@ class TychoContext:
 
     def _grok (self):
         """ Compile the registry, resolving text substituations, etc. """
-        repository_context = {
-            r['id'] : r['url'] for r in self.registry.get('repositories', [])
-        }
-        registries = self.registry.get ('registries', [])
         apps = {}
-        for registry in registries:
-            registry_id = registry['id']
-            """ Load app definitions for matching registries. """
-            if registry_id == self.product or registry_id == 'common':
-                logger.info (f"--load-registry: id:{registry_id} name:{registry['name']}")
-                for app in registry.get ('apps', []):
-                    apps [app['id']] = app
-                    """ Compile URLs to resolve repository variables. """
-                    for key in [ 'spec', 'icon', 'docs' ]:
-                        url = app [key]
-                        app[key] = Template(url).safe_substitute (repository_context)
+        contexts = self.registry.get ('contexts', {})
+        if not self.product in contexts:
+            raise ContextException (f"undefined product {self.product} not found in contexts.")
+        logger.info (f"-- load-context: id:{self.product}")
+        context = contexts[self.product]
+        apps = context.get ('apps', {})
+        """ Resolve context inheritance. """
+        for base_name in context.get ('extends', []):
+            if not base_name in contexts:
+                raise ContextException (f"base {base_name} of context {self.product} not found in registry.")
+            logger.debug (f"resolving inheritance of base {base_name} by context {self.product}")
+            apps.update (contexts[base_name].get('apps'))
+            new_apps = contexts[base_name].get ('apps', {})
+            new_apps.update (apps)
+            apps = new_apps
+
+        """ Load the repository map to enable string interpolation. """
+        repository_map = {
+            key : value['url']
+            for key, value in self.registry.get ('repositories', {}).items ()
+        }
+        """ Compile URLs to resolve repository variables. """
+        for name, app in context.get('apps',{}).items ():
+            for key in [ 'spec', 'icon', 'docs' ]:
+                url = app[key]
+                app[key] = Template(url).safe_substitute (repository_map)
+        logger.debug (f"-- product {self.product} resolution => apps: {apps.keys()}")
         return apps
     
     def get_spec (self, app_id):
@@ -82,19 +95,19 @@ class TychoContext:
             url = None
             response = None
             try:
-                logger.debug (f"--resolving specification for app: {app_id}")
+                logger.debug (f"-- resolving specification for app: {app_id}")
                 url = self.apps[app_id]['spec']
                 response = self.http_session.get (url)
                 if response.status_code != 200:
-                    raise ValueError (f"--app {app_id}. failed to parse spec. code:{response.status_code}")
+                    raise ValueError (f"-- app {app_id}. failed to parse spec. code:{response.status_code}")
                 spec = yaml.safe_load (response.text)
                 self.apps[app_id]['spec_obj'] = spec
             except Exception as e:
                 traceback.print_exc ()
                 if response:
-                    logger.error (f"--app {app_id}. failed to parse spec. code:{response.status_code}")
+                    logger.error (f"-- app {app_id}. failed to parse spec. code:{response.status_code}")
                 else:
-                    logger.error (f"--app {app_id}. failed to parse spec.")
+                    logger.error (f"-- app {app_id}. failed to parse spec.")
                 raise e
         return spec
     
@@ -104,13 +117,13 @@ class TychoContext:
         if not env:
             url = self.apps[app_id]['spec']
             env_url = os.path.join (os.path.dirname (url), ".env")
-            logger.debug (f"--resolving settings for app: {app_id}")
+            logger.debug (f"-- resolving settings for app: {app_id}")
             response = self.http_session.get (env_url)
             if response.status_code == 200:
-                logger.debug (f"--got settings for {app_id}")
+                logger.debug (f"-- got settings for {app_id}")
                 env = response.text
             else:
-                logger.debug (f"--using empty settings for {app_id}")
+                logger.debug (f"-- using empty settings for {app_id}")
                 env = ""
             self.apps[app_id]['env_obj'] = env
         return env
@@ -136,7 +149,7 @@ class TychoContext:
             for name, port in services.items ():
                 assert name in running, f"Svc {name} expected but {services.keys()} actually running."            
             logger.info (
-                f"  --started app id:{app_id} user:{principal.username} id:{system.identifier} services:{list(running.items ())}")
+                f"  -- started app id:{app_id} user:{principal.username} id:{system.identifier} services:{list(running.items ())}")
         return system
     
     def _start (self, request):
