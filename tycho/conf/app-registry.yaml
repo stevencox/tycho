@@ -1,5 +1,7 @@
 api: Tycho
-version: 0.1
+version: 0.0.1
+author: scox@renci.org
+description: Metadata for HeLx app registry.
 metadata:
   id: helx-app-registry
   name: HeLx Application Registry
@@ -16,70 +18,107 @@ registries:
       - id:   cloudtop
         name: CloudTop
         spec: ${catalyst_apps}/cloudtop/docker-compose.yaml
-        icon: http://someplace/cloudtop/icon.png
+        icon: ${catalyst_apps}/cloudtop/icon.png
         descripton: CloudTop is a cloud native, browser accessible Linux desktop.
         docs: https://helxplatform.github.io/cloudtop-docs/
+        services:
+          cloudtop : 8080
       - id:   jupyter
         name: Jupyter Notebook
         spec: ${catalyst_apps}/jupyter/docker-compose.yaml
-        icon: http://someplace/jupyter/icon.png
+        icon: ${catalyst_apps}/jupyter/icon.png
         descripton: A Jupyter notebook.
         docs: https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html#jupyter-base-notebook
+        services:
+          jupyter-datascience : 8888
       - id:   jupyter-datascience
         name: Jupyter Data Science
-        spec: ${catalyst_apps}/jupyter-datascience/docker-compose.yaml
-        icon: http://someplace/jupyter/basic/icon.png
+        spec: ${catalyst_apps}/jupyter-ds/docker-compose.yaml
+        icon: ${catalyst_apps}/jupyter-ds/icon.png
         descripton: A Jupyter data science notebook.
         docs: https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html#jupyter-datascience-notebook
-      - id:   r-studio-server
+        services:
+          jupyter-datascience : 8888
+      - id:   rstudio-server
         name: R Studio Server
         spec: ${catalyst_apps}/rstudio-server/docker-compose.yaml
-        icon: http://someplace/jupyter/basic/icon.png
+        icon: ${catalyst_apps}/rstudio-server/icon.png
         descripton: R Studio Server is a web based notebook environment for R development.
         docs: https://rstudio.com/products/rstudio/
+        services:
+          rstudio-server : 8787
   - id: braini
     name: BRAIN-I App Registry
     apps:
       - id:   imagej
         name: ImageJ Viewer
         spec: ${catalyst_apps}/imagej/docker-compose.yaml
-        icon: http://someplace/jupyter/basic/icon.png
+        icon: ${catalyst_apps}/imagej/icon.png
         descripton: ImageJ is a public domain Java image processing program inspired by NIH Image for the Macintosh.
         docs: https://imagej.nih.gov/ij/
-      - id:   napari
+        services:
+          imagej: 8080            
+      - id:   napari # TODO: separate napari and imagej, updating these appropriately.
         name: Napari Image Viewer
         spec: ${catalyst_apps}/imagej/docker-compose.yaml
-        icon: http://someplace/jupyter/basic/icon.png
+        icon: ${catalyst_apps}/imagej/icon.png
         descripton: Napari is a fast, interactive, multi-dimensional image viewer for browsing, annotating, and analyzing large multi-dimensional images.
         docs: https://napari.org/
+        services:
+          napari : 8080            
   - id: catalyst
     name: BioData Catalyst App Registry
     apps:
       - id:   dicom-viewer
         name: DICOM Viewer
         spec: ${catalyst_apps}/dicom-cloudtop/docker-compose.yaml
-        icon: http://someplace/jupyter/basic/icon.png
-        descripton: CloudTop is also pretty nifty ......
+        icon: ${catalyst_apps}/dicom-cloudtop/icon.png
+        descripton: ___________________________________________________
         docs: https://helxplatform.github.io/cloudtop-docs/ # TODO: Dicom specific docs
-      - id:   autoencoder-notebook
+        services:
+          cloudtop : 8080
+      - id:   autoencoder-notebook # TODO: is this just jupyter-ds with access to autoencoder python modules? If so, delete.
         name: Autoencoder Notebook
         spec: ${catalyst_apps}/helx-autoencoder/docker-compose.yaml
-        icon: http://someplace/jupyter/basic/icon.png
-        descripton: CloudTop is also pretty nifty .......
+        icon: ${catalyst_apps}/helx-autoencoder/icon.png
+        descripton: ___________________________________________________
         docs: http://we.need.autoencoder.docs/doc.html # TODO: need these
+        services:
+          cloudtop : 8080            
+      - id:   hail
+        name: Hail / Jupyter Workspace
+        spec: ${catalyst_apps}/hail/docker-compose.yaml
+        icon: ${catalyst_apps}/hail/icon.png
+        description: A notebook computing interface to a large single node Hail genomics workspace.
+        docs: https://github.com/helxplatform/helx-hail # TODO: Better docs.
+        services:
+          jupyter : 8888
+        args: # Metadata the UX can use to allow users to customize an app before launch.
+          cores:
+            name: Cores
+            type: integer
+            description: Number of CPUs
+          memory:
+            name: Memory
+            type: integer
+            description: Memory required in MB
   - id: scidas
     name: SciDAS App Registry
     apps:
       - id:   nextflow-api
         name: Nextflow API
-        spec: ${catalyst_apps}/nextflow-api/docker-compose.yaml
-        icon: http://someplace/nextflow/icon.png
+        spec: ${catalyst_apps}/nextflow/docker-compose.yaml
+        icon: ${catalyst_apps}/nextflow/icon.png
         descripton: A cloud native workspace for executing Nextflow workflows.
         docs: https://github.com/SciDAS/nextflow-api
+        services:
+          nextflow : 8080
       - id:   gsforge
         name: GSForge
         spec: ${catalyst_apps}/gsforge/docker-compose.yaml
-        icon: http://someplace/jupyter/basic/icon.png
+        icon: ${catalyst_apps}/gsforge/icon.png
         descripton: GSForge is a Python software package that assists researchers in the selection of gene sets with potential association to an experimental condition or phenotypic trait, which offers new potential hypotheses for gene-trait causality.
         docs: https://systemsgenetics.github.io/GSForge/
+        services:
+          jupyter : 8888
         

@@ -374,7 +374,8 @@ class TychoClientFactory:
         try:
             service = self.api.read_namespaced_service(
                 name=name,
-                namespace=namespace)
+                namespace=namespace,
+                _request_timeout=(5,5))
             if not service:
                 url = default_url
             elif service.status and service.status.load_balancer and \

@@ -3,11 +3,13 @@ import json
 import logging
 import pytest
 import requests
+import traceback
 import yaml
 from string import Template
+from tycho.context import Principal, TychoContext
 
 logger = logging.getLogger (__name__)
-logger.setLevel (logging.INFO)
+#logger.setLevel (logging.INFO)
 
 def get_registry (file_name):
     registry = {}
@@ -50,3 +52,33 @@ def test_registry (caplog):
                             logger.info (f"  ++ unable to get {key} for {app_id}; status: {response.status_code} for {url}")
                     else:
                         logger.error (f"  ++ unable to get {key} for {app_id} at {url}")
+
+#def test_context (caplog):
+def test_context ():
+#    caplog.set_level(logging.INFO, __name__)
+    principal = Principal (username="test_user")
+    seen = {}
+    failed = []
+    for product in [ "braini", "catalyst", "scidas" ]:
+        tc = TychoContext (product=product)
+        #logger.info (f"--tycho-context.apps: {json.dumps(tc.apps, indent=2)}")
+        apps = list(tc.apps.items ())
+        for app_id, app in apps:
+            try:
+                if app_id in seen:
+                    logger.info (f"-- skipping seen app {app_id}")
+                    continue
+                seen [app_id] = app_id
+                system = tc.start (principal=principal,
+                                   app_id=app_id)
+                logger.info (f""">> f"https://<UX_URL>/private/{app_id}/{principal.username}/{system.identifier}/ """)
+            except Exception as e:
+                logger.error (f"App {app_id} failed. {e}")
+                traceback.print_exc ()
+                failed.append (app_id)
+    fail_list = "\n==    * ".join (failed)
+    logger.error (f"""
+=================================
+== The following apps failed:
+==    * {fail_list}
+=================================""")
