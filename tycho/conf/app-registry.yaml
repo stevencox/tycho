@@ -84,7 +84,7 @@ registries:
         descripton: ___________________________________________________
         docs: http://we.need.autoencoder.docs/doc.html # TODO: need these
         services:
-          cloudtop : 8080            
+          jupyter : 8888          
       - id:   hail
         name: Hail / Jupyter Workspace
         spec: ${catalyst_apps}/hail/docker-compose.yaml
