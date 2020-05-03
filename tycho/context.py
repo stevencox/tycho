@@ -23,10 +23,19 @@ class TychoContext:
     """ https://github.com/heliumdatacommons/CommonsShare_AppStore/blob/master/CS_AppsStore/cloudtop_imagej/deployment.py """
     def __init__(self, registry_config="app-registry.yaml", product="common"):
         self.registry = self._get_registry (registry_config, product=product)
-        self.client = TychoClientFactory().get_client()
+        """ Uncomment this and related lines when this code goes live,. 
+        Use a timeout on the API so the unit tests are not slowed down. """
+        #self.client = TychoClientFactory().get_client()
         self.product = product
         self.apps = self._grok ()
+
         
+    def _parse_env (self, environment):
+        return {
+            line.split("=", maxsplit=1)[0] : line.split("=", maxsplit=1)[1]
+            for line in environment.split ("\n") if '=' in line
+        }
+    
     def _get_registry (self, file_name, product="common"):
         """ Load the registry metadata. """
         registry = {}
@@ -103,8 +112,9 @@ class TychoContext:
     def start (self, principal, app_id):
         """ Get application metadata, docker-compose structure, settings, and compose API request. """
         logger.info (f"launching app: {app_id}")
-        spec = self.get_spec (app_id)        
-        settings = self.client.parse_env (self.get_settings (app_id))
+        spec = self.get_spec (app_id)
+        #settings = self.client.parse_env (self.get_settings (app_id))
+        settings = self._parse_env (self.get_settings (app_id))
         services = self.apps[app_id]['services']
         logger.debug (f"parsed {app_id} settings: {settings}")
         if spec is not None:
@@ -128,7 +138,8 @@ class TychoContext:
         """ Control low level application launching (start) logic. """
 
         """ For now, we provide a nominal response for testing. """
-        logger.info (f"start: {json.dumps (request, indent=2)}")
+        logger.info (f"start: {json.dumps (request['services'], indent=2)}")
+        #logger.info (f"start: {json.dumps (request, indent=2)}")
         services = { k : { 'ip_address' : 'x.y.z', 'port-1' : v }
                      for k, v in request['services'].items () }
         return TychoSystem (**{
