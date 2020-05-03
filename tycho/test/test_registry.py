@@ -4,62 +4,52 @@ import logging
 import pytest
 import requests
 import traceback
+import uuid
 import yaml
 from string import Template
 from tycho.context import Principal, TychoContext
+from tycho.client import TychoService, TychoSystem
+from unittest import mock
 
 logger = logging.getLogger (__name__)
-#logger.setLevel (logging.INFO)
 
-def get_registry (file_name):
-    registry = {}
-    registry_config = os.path.join (
-        os.path.dirname (os.path.dirname (__file__)),
-        "conf", file_name)
-    with open(registry_config, 'r') as stream:
-        registry = yaml.safe_load (stream)
-    return registry
-
-def test_registry (caplog):
-    caplog.set_level(logging.INFO, __name__)
-    registry = get_registry ("app-registry.yaml")
-    registry_id = registry.get('metadata',{}).get ('id', None)    
-    logger.info (f"processing app registry: {registry_id}")
-    
-    repository_context = { r['id'] : r['url'] for r in registry.get('repositories', []) }
-    logger.info (f"repository context: {repository_context}")
-
-    registries = registry.get ('registries', [])
-    for registry in registries:
-        registry_id = registry['id']
-        logger.info (f"--load: {registry_id}:{registry['name']}")
-        for app in registry.get ('apps', []):
-            app_id = app['id']
-            for key in [ 'spec', 'icon', 'docs' ]:
-                url = app [key]
-                url = Template(url).safe_substitute (repository_context)
-                response = None
-                try:
-                    response = requests.get (url)
-                    if response is not None:
-                        if response.status_code == 200:
-                            logger.info (f"  -- validated {key} for url {url}")
-                        else:
-                            logger.error (f"  ++ unable to get {key} for {app_id} at {url}")
-                except Exception as e:
-                    if response is not None:
-                        if response.status_code != 200:
-                            logger.info (f"  ++ unable to get {key} for {app_id}; status: {response.status_code} for {url}")
-                    else:
-                        logger.error (f"  ++ unable to get {key} for {app_id} at {url}")
+def __context_start_side_effect (request):    
+    """
+    This is a test mock. It returns a nominal response for a Tycho app launch (start) request.
+    This allows us to test all registry components and their interaction with the Tycho interface
+    without a running Tycho API endpoint.
+    """
+    return TychoSystem (**{
+        "status" : "ok",
+        "result" : {
+            "name"       : request['name'],
+            "sid"        : uuid.uuid4 (),
+            "containers" :  {
+                k : { 'ip_address' : 'x.y.z', 'port-1' : v }
+                for k, v in request['services'].items ()
+            }
+        },
+        "message" : "mock: testing..."
+    })
 
 def test_context ():
     """ 
     Test the TychoContext. It must be able to 
       * Load the application registry.
+      * Demonstrate the ability to scope apps to a product
       * Respond to requests to launch applications which entails
-        * Getting metadata for each app, formulating a request to Tycho, etc.
+        * Get metadata for each app, formulating a request to Tycho, etc.
+    The test reports each failed app launch.
+    It does not yet fail the build.
+    When we get the initial set of apps completed, failing apps
+    will fail the build.
+
+    Example Run:  PYTHONPATH=~/dev/tycho pytest --log-cli-level=INFO test/test_registry.py
+
     """
+    with mock.patch.object (TychoContext, '_start', side_effect=__context_start_side_effect):
+        __test_context ()
+def __test_context ():
     principal = Principal (username="test_user")
     seen = {}
     failed = []
@@ -67,7 +57,6 @@ def test_context ():
     failed_total = 0
     for product in [ "braini", "catalyst", "scidas", "blackbalsam" ]:
         tc = TychoContext (product=product)
-        #logger.info (f"--tycho-context.apps: {json.dumps(tc.apps, indent=2)}")
         apps = list(tc.apps.items ())
         successful_count = 0
         failed_count = 0
@@ -78,6 +67,7 @@ def test_context ():
                     continue
                 seen [app_id] = app_id
                 system = tc.start (principal=principal, app_id=app_id)
+                logger.debug (f"{system}")
                 logger.info (f"  --https://<UX_URL>/private/{app_id}/{principal.username}/{system.identifier}/")
                 successful_count = successful_count + 1
             except Exception as e:
@@ -88,10 +78,12 @@ def test_context ():
         logger.info (f"{product.upper()} had {successful_count} successful apps and {failed_count} failed apps.")
         successful_total = successful_total + successful_count
         failed_total = failed_total + failed_count
-    fail_list = "\n==    * ".join (failed)
-    logger.error (f"""
-=================================
-== The following apps failed:
-==    * {fail_list}
-=================================""")
     logger.info (f"total of {successful_total} successful apps and {failed_total} failed apps.")
+    failed_copy = failed.copy ()
+    failed_copy.insert (0, "")
+    fail_list = "\n==    * ".join (failed_copy)
+    if len(failed) > 0:
+        logger.error (f"""
+=======================================
+== Failed to launch the following apps:{fail_list}
+=======================================""")

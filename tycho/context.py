@@ -4,13 +4,10 @@ import os
 import requests
 import requests_cache
 import traceback
-import uuid
 import yaml
 from requests_cache import CachedSession
 from string import Template
 from tycho.client import TychoClientFactory
-from tycho.client import TychoService
-from tycho.client import TychoSystem
 
 logger = logging.getLogger (__name__)
 
@@ -20,7 +17,15 @@ class Principal:
         self.username=username
         
 class TychoContext:
-    """ Load, understand, and use the app registry. """
+    """
+    Load, understand, and use the app registry.
+
+    The app registry is a declarative metadata repository outlining apps available to 
+    the platform. Its YAML definition structure provides 
+      * Basic metadata about the registry itself including identifier, version, name, etc.
+      * A list of repositories or locations apps might reference for further metadata.
+      * 
+    """
     
     """ https://github.com/heliumdatacommons/CommonsShare_AppStore/blob/master/CS_AppsStore/cloudtop_imagej/deployment.py """
     def __init__(self, registry_config="app-registry.yaml", product="common"):
@@ -135,20 +140,8 @@ class TychoContext:
         return system
     
     def _start (self, request):
-        """ Control low level application launching (start) logic. """
-
-        """ For now, we provide a nominal response for testing. """
-        logger.info (f"app: {request['name']} services: {json.dumps (request['services'])}")
-        #logger.info (f"start: {json.dumps (request, indent=2)}")
-        services = { k : { 'ip_address' : 'x.y.z', 'port-1' : v }
-                     for k, v in request['services'].items () }
-        return TychoSystem (**{
-            "status" : "ok",
-            "result" : {
-                "name"       : request['name'],
-                "sid"        : uuid.uuid4 (),
-                "containers" : services
-            },
-            "message" : "testing..."
-        })
-        #return self.client.start (request)
+        """
+        Control low level application launching (start) logic. 
+        Also provides an anchor point to mock the service in unit tests.
+        """
+        return self.client.start (request)

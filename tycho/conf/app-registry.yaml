@@ -1,7 +1,32 @@
+################################################################################
+##
+## HeLx Application Registry
+##  
+##   The registry consolidates metadata links to application specifications.
+##   The registry's main components are:
+##     * Metadata about the registry itself
+##     * Repositories describing sources of application metadata.
+##     * Sub-Registries providing contexts for sets of applications.
+##
+##   Each application has an identifier, name, description, and a link to its 
+##   specification. Applications may currently be specified in the 
+##   docker-compose format though we also expect to broaden the scope of 
+##   apps to include launching websites and other methods.
+##
+##   When a platform launches an application, it needs to know what endpoints
+##   to present upstream. Apps can also specify a map of service names to port
+##   numbers. The service and port name must match the name of a container
+##   in the docker-compose specification and its exposed port respectively.
+##
+##   For now, there is a common sub-registry which all others extend. Apps in the
+##   common sub-registry will be included in each product.
+##
+##   This is alpha and we expect many changes to modularity, inheritance,
+##   and naming coming soon.
+##
+################################################################################
 api: Tycho
 version: 0.0.1
-author: scox@renci.org
-description: Metadata for HeLx app registry.
 metadata:
   id: helx-app-registry
   name: HeLx Application Registry
@@ -49,8 +74,9 @@ registries:
         descripton: ImageJ is a public domain Java image processing program inspired by NIH Image for the Macintosh.
         docs: https://imagej.nih.gov/ij/
         services:
-          imagej: 8080            
-      - id:   napari # TODO: separate napari and imagej, updating these appropriately.
+          imagej: 8080
+      # TODO: separate napari and imagej, updating these appropriately.
+      - id:   napari
         name: Napari Image Viewer
         spec: ${catalyst_apps}/imagej/docker-compose.yaml
         icon: ${catalyst_apps}/imagej/icon.png
@@ -66,10 +92,12 @@ registries:
         spec: ${catalyst_apps}/dicom-cloudtop/docker-compose.yaml
         icon: ${catalyst_apps}/dicom-cloudtop/icon.png
         descripton: ___________________________________________________
-        docs: https://helxplatform.github.io/cloudtop-docs/ # TODO: Dicom specific docs
+        # TODO: Dicom specific docs
+        docs: https://helxplatform.github.io/cloudtop-docs/
         services:
           cloudtop : 8080
-      - id:   autoencoder-notebook # TODO: is this just jupyter-ds with access to autoencoder python modules? If so, delete.
+      # TODO: is this just jupyter-ds with access to autoencoder python modules? If so, delete.
+      - id:   autoencoder-notebook
         name: Autoencoder Notebook
         spec: ${catalyst_apps}/helx-autoencoder/docker-compose.yaml
         icon: ${catalyst_apps}/helx-autoencoder/icon.png
