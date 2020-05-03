@@ -1,5 +1,5 @@
 # Tycho
-[![Build Status](https://travis-ci.org/heliumplusdatastage/tycho.svg?branch=master)](https://travis-ci.org/heliumplusdatastage/tycho)
+[![Build Status](https://travis-ci.org/helxplatform/tycho.svg?branch=master)](https://travis-ci.org/heliumplusdatastage/tycho)
 
 Tycho is an API, compiler, and executor for cloud native distributed systems.
 
