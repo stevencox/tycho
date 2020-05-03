@@ -2,9 +2,11 @@ import json
 import logging
 import os
 import requests
+import requests_cache
 import traceback
 import uuid
 import yaml
+from requests_cache import CachedSession
 from string import Template
 from tycho.client import TychoClientFactory
 from tycho.client import TychoService
@@ -28,8 +30,8 @@ class TychoContext:
         #self.client = TychoClientFactory().get_client()
         self.product = product
         self.apps = self._grok ()
+        self.http_session = CachedSession (cache_name='tycho-registry')
 
-        
     def _parse_env (self, environment):
         return {
             line.split("=", maxsplit=1)[0] : line.split("=", maxsplit=1)[1]
@@ -53,14 +55,13 @@ class TychoContext:
         repository_context = {
             r['id'] : r['url'] for r in self.registry.get('repositories', [])
         }
-        logger.info (f"repository context: {repository_context}")
         registries = self.registry.get ('registries', [])
         apps = {}
         for registry in registries:
             registry_id = registry['id']
             """ Load app definitions for matching registries. """
             if registry_id == self.product or registry_id == 'common':
-                logger.info (f"processing registry id:{registry_id} name:{registry['name']}")
+                logger.info (f"--load-registry: id:{registry_id} name:{registry['name']}")
                 for app in registry.get ('apps', []):
                     apps [app['id']] = app
                     """ Compile URLs to resolve repository variables. """
@@ -78,17 +79,17 @@ class TychoContext:
             try:
                 logger.debug (f"--resolving specification for app: {app_id}")
                 url = self.apps[app_id]['spec']
-                response = requests.get (url)
+                response = self.http_session.get (url)
                 if response.status_code != 200:
-                    raise ValueError (f"Failed to parse spec from {url}: code:{response.status_code}")
+                    raise ValueError (f"--app {app_id}. failed to parse spec. code:{response.status_code}")
                 spec = yaml.safe_load (response.text)
                 self.apps[app_id]['spec_obj'] = spec
             except Exception as e:
                 traceback.print_exc ()
                 if response:
-                    logger.error (f"Failed to parse spec from {url}: code:{response.status_code}")
+                    logger.error (f"--app {app_id}. failed to parse spec. code:{response.status_code}")
                 else:
-                    logger.error (f"Failed to parse spec from {url}.")
+                    logger.error (f"--app {app_id}. failed to parse spec.")
                 raise e
         return spec
     
@@ -99,7 +100,7 @@ class TychoContext:
             url = self.apps[app_id]['spec']
             env_url = os.path.join (os.path.dirname (url), ".env")
             logger.debug (f"--resolving settings for app: {app_id}")
-            response = requests.get (env_url)
+            response = self.http_session.get (env_url)
             if response.status_code == 200:
                 logger.debug (f"--got settings for {app_id}")
                 env = response.text
@@ -111,7 +112,6 @@ class TychoContext:
     
     def start (self, principal, app_id):
         """ Get application metadata, docker-compose structure, settings, and compose API request. """
-        logger.info (f"launching app: {app_id}")
         spec = self.get_spec (app_id)
         #settings = self.client.parse_env (self.get_settings (app_id))
         settings = self._parse_env (self.get_settings (app_id))
@@ -131,14 +131,14 @@ class TychoContext:
             for name, port in services.items ():
                 assert name in running, f"Svc {name} expected but {services.keys()} actually running."            
             logger.info (
-                f"--started app id:{app_id} user:{principal.username} id:{system.identifier} services:{list(running.items ())}")
+                f"  --started app id:{app_id} user:{principal.username} id:{system.identifier} services:{list(running.items ())}")
         return system
     
     def _start (self, request):
         """ Control low level application launching (start) logic. """
 
         """ For now, we provide a nominal response for testing. """
-        logger.info (f"start: {json.dumps (request['services'], indent=2)}")
+        logger.info (f"app: {request['name']} services: {json.dumps (request['services'])}")
         #logger.info (f"start: {json.dumps (request, indent=2)}")
         services = { k : { 'ip_address' : 'x.y.z', 'port-1' : v }
                      for k, v in request['services'].items () }

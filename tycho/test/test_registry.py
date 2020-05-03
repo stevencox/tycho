@@ -32,7 +32,7 @@ def test_registry (caplog):
     registries = registry.get ('registries', [])
     for registry in registries:
         registry_id = registry['id']
-        logger.info (f"processing registry id:{registry_id} name:{registry['name']}")
+        logger.info (f"--load: {registry_id}:{registry['name']}")
         for app in registry.get ('apps', []):
             app_id = app['id']
             for key in [ 'spec', 'icon', 'docs' ]:
@@ -53,32 +53,45 @@ def test_registry (caplog):
                     else:
                         logger.error (f"  ++ unable to get {key} for {app_id} at {url}")
 
-#def test_context (caplog):
 def test_context ():
-#    caplog.set_level(logging.INFO, __name__)
+    """ 
+    Test the TychoContext. It must be able to 
+      * Load the application registry.
+      * Respond to requests to launch applications which entails
+        * Getting metadata for each app, formulating a request to Tycho, etc.
+    """
     principal = Principal (username="test_user")
     seen = {}
     failed = []
-    for product in [ "braini", "catalyst", "scidas" ]:
+    successful_total = 0
+    failed_total = 0
+    for product in [ "braini", "catalyst", "scidas", "blackbalsam" ]:
         tc = TychoContext (product=product)
         #logger.info (f"--tycho-context.apps: {json.dumps(tc.apps, indent=2)}")
         apps = list(tc.apps.items ())
+        successful_count = 0
+        failed_count = 0
         for app_id, app in apps:
             try:
                 if app_id in seen:
-                    logger.info (f"-- skipping seen app {app_id}")
+                    logger.debug (f"-- skipping seen app {app_id}")
                     continue
                 seen [app_id] = app_id
-                system = tc.start (principal=principal,
-                                   app_id=app_id)
-                logger.info (f""">> f"https://<UX_URL>/private/{app_id}/{principal.username}/{system.identifier}/ """)
+                system = tc.start (principal=principal, app_id=app_id)
+                logger.info (f"  --https://<UX_URL>/private/{app_id}/{principal.username}/{system.identifier}/")
+                successful_count = successful_count + 1
             except Exception as e:
-                logger.error (f"App {app_id} failed. {e}")
+                logger.debug (f"App {app_id} failed. {e}")
                 traceback.print_exc ()
                 failed.append (app_id)
+                failed_count = failed_count + 1
+        logger.info (f"{product.upper()} had {successful_count} successful apps and {failed_count} failed apps.")
+        successful_total = successful_total + successful_count
+        failed_total = failed_total + failed_count
     fail_list = "\n==    * ".join (failed)
     logger.error (f"""
 =================================
 == The following apps failed:
 ==    * {fail_list}
 =================================""")
+    logger.info (f"total of {successful_total} successful apps and {failed_total} failed apps.")
