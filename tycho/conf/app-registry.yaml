@@ -36,6 +36,8 @@ metadata:
 repositories:
   catalyst_apps:
     description: Main repository for Catalyst Apps and Tools
+    # This is a link to a fork of the Dockstore GitHub repo.
+    # Perhaps a more interesting direction might be to make a GA4GH TRS endpoint the repo.
     url: https://github.com/helxplatform/app-support-prototype/raw/develop/dockstore-yaml-proposals
 contexts:
   common:
