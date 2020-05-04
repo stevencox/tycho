@@ -29,16 +29,16 @@ spec:
   {% endif %}
   {% endif %}
 {% endfor %}
-  initContainers:
-{% for container in system.containers %}
-  {% if container.depends_on|length > 0 %}
-  {% for d in container.depends_on %}
-  - name: init-{{ container.name}}-{{loop.index}}
-    image: busybox:1.28
-    command: ['sh', '-c', 'until nslookup {{d}}-{{system.identifier}}; do echo waiting for mydb; sleep 2; done;']
-  {% endfor %}
-  {% endif %}
-{% endfor %}
+#  initContainers:
+#{% for container in system.containers %}
+#  {% if container.depends_on|length > 0 %}
+#  {% for d in container.depends_on %}
+#  - name: init-{{ container.name}}-{{loop.index}}
+#    image: busybox:1.28
+#    command: ['sh', '-c', 'until nslookup {{d}}-{{system.identifier}}; do echo waiting for mydb; sleep 2; done;']
+#  {% endfor %}
+#  {% endif %}
+#{% endfor %}
   containers:
 {% for container in system.containers %}    
   - name: {{ container.name }}
