@@ -45,6 +45,9 @@ contexts:
     apps:
       cloudtop:
         name: CloudTop
+        # The naming convention ${repo]/${context_id}/docker-compose.yaml means we can elide this feature.
+        # The same goes for icon. It's not needed unless it's custom.
+        # Similarly, we generate ${repo]/${context_id}/.env as the compose settings.
         spec: ${catalyst_apps}/cloudtop/docker-compose.yaml
         icon: ${catalyst_apps}/cloudtop/icon.png
         descripton: CloudTop is a cloud native, browser accessible Linux desktop.
