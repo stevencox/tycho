@@ -236,13 +236,14 @@ class TychoClient:
         """
         services = {}
         for container_name, container in system['services'].items ():
-            ports = container['ports']
-            for port in ports:
-                port_num = int(port.split(':')[1] if ':' in port else port)
-                services[container_name] = {
-                    "port" : port_num
-                    #"clients" : [ "192.16.1.179" ]
-                }
+            if 'ports' in container.keys():
+                ports = container['ports']
+                for port in ports:
+                    port_num = int(port.split(':')[1] if ':' in port else port)
+                    services[container_name] = {
+                        "port" : port_num
+                        #"clients" : [ "192.16.1.179" ]
+                    }
                     
         request = {
             "name"   : self.format_name (name),
