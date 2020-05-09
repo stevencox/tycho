@@ -418,7 +418,7 @@ class KubernetesCompute(Compute):
         result = []
         """ Find all our generated deployments. """
         label = f"tycho-guid={name}" if name else f"executor=tycho"
-        if username and not username.empty ():
+        if username:
             label = f"username={username}" if username else f"executor=tycho"
         logger.debug (f"-- status label: {label}")                
         response = self.extensions_api.list_namespaced_deployment (
