@@ -25,7 +25,7 @@ class Config(dict):
 
         """ Determine if we're on minikube. If so, share its ip address via
         the config. """
-        logger.debug (f"loaded config: {json.dumps(self.conf,indent=2)}")
+        #logger.debug (f"loaded config: {json.dumps(self.conf,indent=2)}")
         if 'TYCHO_ON_MINIKUBE' in os.environ:
             ip = os.popen('minikube ip').read().strip ()
             if len(ip) > 0:

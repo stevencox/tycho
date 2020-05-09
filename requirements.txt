@@ -48,3 +48,4 @@ pytest-mock==1.10.4
 netifaces==0.10.9
 gunicorn==19.9.0
 gitpython
+requests-cache==0.5.2

@@ -175,7 +175,7 @@ class DeleteSystemResource(TychoResource):
         response = {}
         system_name=None
         try:
-            logging.debug (f"delete-request: {json.dumps(request.json, indent=2)}")
+            logger.debug (f"delete-request: {json.dumps(request.json, indent=2)}")
             self.validate (request, component="DeleteRequest")
             system_name = request.json['name']
             response = self.create_response (
@@ -257,5 +257,4 @@ if __name__ == "__main__":
    if args.debug:
        debug = True
        logging.basicConfig(level=logging.DEBUG)
-   app.run(debug=args.debug)
-   app.run(host='0.0.0.0', port=args.port, debug=True, threaded=True)
+   app.run(host='0.0.0.0', port=args.port, threaded=True, debug=args.debug)

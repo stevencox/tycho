@@ -15,14 +15,43 @@ from kubernetes import client as k8s_client, config as k8s_config
 
 logger = logging.getLogger (__name__)
 
+mem_converter = {
+    'M' : lambda v : v * 10 ** 6,
+    'G' : lambda v : v * 10 ** 9,
+    'T' : lambda v : v * 10 ** 12,
+    'P' : lambda v : v * 10 ** 15,
+    'E' : lambda v : v * 10 ** 18
+}
 class TychoService:
     """ Represent a service endpoint. """
-    def __init__(self, name, ip_address, port, sid=None, creation_time=None):
+    try_minikube = True
+    def __init__(self, name, ip_address, port, sid=None, creation_time=None, utilization={}):
         self.name = name
         self.ip_address = ip_address
         self.port = port
         self.identifier = sid
         self.creation_time = creation_time
+        self.utilization = utilization
+        self.total_util = self.get_utilization (utilization)
+            
+    def get_utilization (self, utilization):
+        total = {
+            "cpu" : 0,
+            "memory" : 0
+        }
+        for key, val in utilization.items ():
+            total['cpu'] = total['cpu'] + int(val['cpu'].replace ('m', ''))
+            mem = val['memory'].replace ("i", "")
+            """ Run the conversion function designated by the last character of the value on the integer value """
+            mem_val = mem_converter[mem[-1]] (int(mem[:-1]))            
+            total['memory'] = total['memory'] + mem_val
+        total['memory'] = f"{total['memory'] / (10 ** 9)}"
+        return total
+
+    
+    def __repr__(self):
+        b = f"id: {self.identifier} time: {self.creation_time} util: {self.utilization}"
+        return f"name: {self.name} ip: {self.ip_address} port: {self.port} {b}"
 
 class TychoStatus:
     """ A response from a status request. """ 
@@ -30,6 +59,9 @@ class TychoStatus:
         self.status = status
         self.services = list(map(lambda v: TychoService (**v), result))
         self.message = message
+
+    def __repr__(self):
+        return f"status: {self.status} svcs: {[ str(s) for s in self.services ]} msg: {self.message}"
 
 class TychoSystem:
     """ Represents a running system. """
@@ -82,22 +114,6 @@ class TychoClient:
             for line in environment.split ("\n") if '=' in line
         }
         
-    def start0 (self, request):
-        """ Start a service. 
-        
-            The general format of a start request is::
-
-                {
-                   "name"   : <name of the system>,
-                   "env"    : <JSON dict created from .env environment variables>,
-                   "system" : <JSON of a docker-compose yaml>
-                }
-
-            :param request: A request object formatted as above.
-            :type request: JSON
-        """
-        return self.request ("start", request)
-        
     def start (self, request):
         """ Start a service. 
         
@@ -134,23 +150,11 @@ class TychoClient:
             :param request: A request formatted as above.
             :type request: JSON
         """
+        logger.error (f"-- delete: {json.dumps(request, indent=2)}")
+        print (f"-- delete: {json.dumps(request, indent=2)}")
         return self.request ("delete", request)
     
-    def status0 (self, request):
-        """ Get status of running systems.
-        
-            Get the status of a system by GUID or across systems.
-
-            The format of a request is::
- 
-                {}
-
-            :param request: Request formatted as above.
-            :type request: JSON
-        """
-        return self.request ("status", request)
-    
-    def status (self, request):
+    def status (self, request): 
         """ Get status of running systems.
         
             Get the status of a system by GUID or across systems.
@@ -164,61 +168,6 @@ class TychoClient:
         """
         response = self.request ("status", request)
         return TychoStatus (**response)
-            
-    def up0 (self, name, system, settings=""):
-        """ Bring a service up starting with a docker-compose spec. 
-        
-            CLI endpoint to start a service on the Tycho compute fabric.::
-
-                tycho up -f path/to/docker-compose.yaml
-
-            :param name: Name of the system.
-            :type name: str
-            :param system: Docker-compose JSON structure.
-            :type system: JSON
-            :param settings: The textual contents of a .env file.
-            :type settings: str
-        """
-        services = {}
-        for container_name, container in system['services'].items ():
-            if 'ports' in container.keys():
-                ports = container['ports']
-                for port in ports:
-                    port_num = int(port.split(':')[1] if ':' in port else port)
-                    services[container_name] = {
-                        "port" : port_num
-                        #"clients" : [ "192.16.1.179" ]
-                    }
-                    
-        request = {
-            "name"   : self.format_name (name),
-            "env"    : self.parse_env (settings),
-            "system" : system,
-            "services" : services
-        }
-        logger.debug (f"request: {json.dumps(request, indent=2)}")
-        response = self.start (request)
-        logger.debug (json.dumps(response,indent=2))
-        error = response.get('result',{}).get('error', None)
-        if error:
-            print (''.join (error))
-        else:
-            format_string = '{:<30} {:<35} {:<15} {:<7}'
-            print (format_string.format("SYSTEM", "GUID", "IP_ADDRESS", "PORT"))
-            result = response.get('result',{})
-            port='--'
-            ip_address='--'
-            for process, host_port in result.get('containers',{}).items ():
-                ip_address = host_port['ip_address']
-                port = host_port['port']
-            sid = result.get ('sid',  None)
-            item_name = result.get ('name', 'unknown').replace (f"-{sid}", "")
-            print (format_string.format (
-                TemplateUtils.trunc (item_name, max_len=28),
-                TemplateUtils.trunc (sid, max_len=33),
-                ip_address if ip_address else '--',
-                port))
-                #print (f"(minikube)=> http://192.168.99.111:{port}")
 
     def up (self, name, system, settings=""):
         """ Bring a service up starting with a docker-compose spec. 

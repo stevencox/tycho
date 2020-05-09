@@ -41,8 +41,9 @@ class KubernetesCompute(Compute):
         self.api = k8s_client.CoreV1Api(api_client)
         self.rbac_api = k8s_client.RbacAuthorizationV1Api(api_client)
         self.extensions_api = k8s_client.ExtensionsV1beta1Api(api_client)
-        self.networking_api = k8s_client.NetworkingV1Api(api_client)
-    
+        self.networking_api = k8s_client.NetworkingV1Api(api_client)        
+        self.try_minikube = True
+        
     def get_namespace(self, namespace="default"):
         try:
            with open("/var/run/secrets/kubernetes.io/serviceaccount/namespace", "r") as secrets:
@@ -194,6 +195,7 @@ class KubernetesCompute(Compute):
                             namespace=namespace)
                         
                         if not system.amb:
+                            '''
                             if counter == 1:
                                 """ Get IP address of allocated ingress (or minikube). """
                                 for i in range(0, 200):
@@ -206,6 +208,7 @@ class KubernetesCompute(Compute):
                                     else:
                                         response = status_response
                                         break
+                            '''
                             ip_address = self.get_service_ip_address (response)
                             logger.debug (f"service {container.name} ingress ip: {ip_address}")
                         else:
@@ -273,7 +276,13 @@ class KubernetesCompute(Compute):
            len(service_metadata.status.load_balancer.ingress) > 0:
             ip_address = service_metadata.status.load_balancer.ingress[0].ip
         if not ip_address:
-            ip_address = self.config['tycho']['compute']['platform']['kube']['ip']
+            if self.try_minikube:
+                try:
+                    ip_address = os.popen ("minikube ip").read ().strip ()
+                    logger.info (f"-------> ip addr: {ip_address}")
+                except Exception as e:
+                    self.try_minikube = False
+                    # otherwise not an error, just means we're not using minikube.
         return ip_address
     
     def pod_to_deployment (self, name, template, namespace="default"):
@@ -389,19 +398,26 @@ class KubernetesCompute(Compute):
             :type name: str
             :param namespace: Namespace the system runs in.
             :type namespace: str
-        """
+        """            
         namespace = self.get_namespace()
         result = []
         """ Find all our generated deployments. """
         label = f"tycho-guid={name}" if name else f"executor=tycho"
         label = f"username={username}" if username else f"executor=tycho"
-        logger.debug (f"getting status using label: {label}")
+        logger.debug (f"-- status label: {label}")                
         response = self.extensions_api.list_namespaced_deployment (
             namespace,
             label_selector=label)
-
         if response:
             for item in response.items:
+                
+                """ Collect pod metrics for this deployment. """
+                pod_resources = {
+                    container.name : container.resources.limits
+                    for container in item.spec.template.spec.containers
+                }
+                logger.debug(f"-- pod-resources {json.dumps(pod_resources, indent=2)}")
+                
                 item_guid = item.metadata.labels.get ("tycho-guid", None)
                 """ List all services with this guid. """
                 services = self.api.list_namespaced_service(
@@ -414,10 +430,11 @@ class KubernetesCompute(Compute):
                     ip_address = self.get_service_ip_address (service)
                     port = service.spec.ports[0].node_port
                     result.append ({
-                        "name"       : service.metadata.name,
-                        "sid"        : item_guid,
-                        "ip_address" : ip_address,
-                        "port"       : str(port),
-                        "creation_time": time
+                        "name"          : service.metadata.name,
+                        "sid"           : item_guid,
+                        "ip_address"    : ip_address,
+                        "port"          : str(port),
+                        "creation_time" : time,
+                        "utilization"   : pod_resources
                     })
         return result
