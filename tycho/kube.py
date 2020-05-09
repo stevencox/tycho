@@ -40,7 +40,8 @@ class KubernetesCompute(Compute):
         api_client = k8s_client.ApiClient()
         self.api = k8s_client.CoreV1Api(api_client)
         self.rbac_api = k8s_client.RbacAuthorizationV1Api(api_client)
-        self.extensions_api = k8s_client.ExtensionsV1beta1Api(api_client)
+#        self.extensions_api = k8s_client.ExtensionsV1beta1Api(api_client) 
+        self.extensions_api = k8s_client.AppsV1Api(api_client)
         self.networking_api = k8s_client.NetworkingV1Api(api_client)        
         self.try_minikube = True
         
@@ -163,6 +164,7 @@ class KubernetesCompute(Compute):
             for pod_manifest in pod_manifests:
                 deployment = self.pod_to_deployment (
                     name=system.name,
+                    identifier=system.identifier,
                     template=pod_manifest,
                     namespace=namespace)
 
@@ -279,33 +281,46 @@ class KubernetesCompute(Compute):
             if self.try_minikube:
                 try:
                     ip_address = os.popen ("minikube ip").read ().strip ()
-                    logger.info (f"-------> ip addr: {ip_address}")
                 except Exception as e:
                     self.try_minikube = False
                     # otherwise not an error, just means we're not using minikube.
         return ip_address
     
-    def pod_to_deployment (self, name, template, namespace="default"):
+    def pod_to_deployment (self, name, identifier, template, namespace="default"):
         """ Create a deployment specification based on a pod template.
             
             :param name: Name of the system.
             :type name: str
             :param template: Relative path to the template to use.
             :type template: str
+            :param identifier: Unique key to this system.
+            :type identifier: str
             :param namepsace: Namespace to run the pod in.
             :type namespace: str
         """
         namespace = self.get_namespace()
-        deployment_spec = k8s_client.ExtensionsV1beta1DeploymentSpec(
+#        deployment_spec = k8s_client.ExtensionsV1beta1DeploymentSpec(
+        deployment_spec = k8s_client.V1DeploymentSpec(
             replicas=1,
-            template=template)
+            template=template,
+            selector=k8s_client.V1LabelSelector (
+                match_labels = {
+                    "tycho-guid" : identifier
+                }))
         
         """ Instantiate the deployment object """
         logger.debug (f"creating deployment specification {template}")
-        deployment = k8s_client.ExtensionsV1beta1Deployment(
-            api_version="extensions/v1beta1",
+#        deployment = k8s_client.ExtensionsV1beta1Deployment(
+        deployment = k8s_client.V1Deployment(
+#            api_version="extensions/v1beta1",
+            api_version="apps/v1",
             kind="Deployment",
-            metadata=k8s_client.V1ObjectMeta(name=name),
+            metadata=k8s_client.V1ObjectMeta(
+                name=name,
+                labels={
+                    "tycho-guid" : identifier,
+                    "executor" : "tycho"
+                }),
             spec=deployment_spec)
 
         """ Create the deployment. """
@@ -403,12 +418,14 @@ class KubernetesCompute(Compute):
         result = []
         """ Find all our generated deployments. """
         label = f"tycho-guid={name}" if name else f"executor=tycho"
-        label = f"username={username}" if username else f"executor=tycho"
+        if username and not username.empty ():
+            label = f"username={username}" if username else f"executor=tycho"
         logger.debug (f"-- status label: {label}")                
         response = self.extensions_api.list_namespaced_deployment (
             namespace,
             label_selector=label)
-        if response:
+        logger.debug (f"-- deployment list: {response}")
+        if response is not None:
             for item in response.items:
                 
                 """ Collect pod metrics for this deployment. """

@@ -16,6 +16,7 @@ metadata:
     username: {{ system.username }}
     executor: tycho
     tycho-guid: {{ system.identifier }}
+    tycho-app-id: {{ system.app_id }}
 spec:
 {% for container in system.containers %}
   {% if container.limits or container.requests %}
