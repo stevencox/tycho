@@ -1,0 +1,173 @@
+################################################################################
+##
+## HeLx Application Registry
+##  
+##   The registry consolidates metadata links to application specifications.
+##   The registry's main components are:
+##     * Metadata about the registry itself
+##     * Repositories describing sources of application metadata.
+##     * Sub-Registries providing contexts for sets of applications.
+##
+##   Each application has an identifier, name, description, and a link to its 
+##   specification. Applications may currently be specified in the 
+##   docker-compose format though we also expect to broaden the scope of 
+##   apps to include launching websites and other methods.
+##
+##   When a platform launches an application, it needs to know what endpoints
+##   to present upstream. Apps can also specify a map of service names to port
+##   numbers. The service and port name must match the name of a container
+##   in the docker-compose specification and its exposed port respectively.
+##
+##   Contexts implement a simple form of inheritance. Each context may speicify
+##   a list of contexts it extends. Apps from extended contexts will be added
+##   to the extending context's apps.
+##
+##   This is alpha. Expect significant changes to modularity, inheritance,
+##   and naming coming soon.
+##
+################################################################################
+api: Tycho
+version: 0.0.1
+metadata:
+  id: helx-app-registry
+  name: HeLx Application Registry
+  author: HeLx Dev
+  description: An alpha metadata registry for HeLx applications.
+repositories:
+  # App repository location.
+  catalyst_apps:
+    # This is the Dockstore app prototype repository. GA4GH TRS in future?
+    description: Main repository for Catalyst Apps and Tools
+    url: https://github.com/helxplatform/app-support-prototype/raw/develop/dockstore-yaml-proposals
+contexts:
+  # The common context provides a convenient base set of applications.
+  # Other contexts can extend it to include these apps.
+  common: 
+    name: HeLx Common App Registry
+    apps:
+      # Each app has an identifier and designates a set of properties.
+      cloud-top:
+        # User readable short name for the system.
+        name: Cloud Top
+        # The spec field points to a docker-compose YAML document. The naming convention will use the identifier
+        # of the app, cloud-top in this case, to build a directory path, then append "docker-compose.yaml" as the
+        # specification name. This field, if ommitted, will be automatically inferred. 
+        spec: ${catalyst_apps}/cloud-top/docker-compose.yaml
+        # The icon field specifies an image for the app. Like spec, it may be omitted. The inferred file name will
+        # be icon.png.
+        icon: ${catalyst_apps}/cloud-top/icon.png
+        # Description provides a textual description presented to users.
+        description: CloudTop is a cloud native, browser accessible Linux desktop.
+        # Details provides additional context.
+        details: A Ubuntu graphical desktop environment for experimenting with native applications in the cloud.
+        # Web accessible, application specific user documentation.
+        docs: https://helxplatform.github.io/cloudtop-docs/
+        # Docker compose systems contain multiple containers.
+        # Something must tell the launcher which containers present external services.
+        # In a Kubernetes context, a service will be created to map these containers as external endpoints for the app.
+        services:
+          # The key must be the name of a "service" within the docker-compose.yaml 
+          # and the port must be an exposed port of that container.
+          cloudtop : 8080
+      jupyter-ds:
+        name: Jupyter Data Science
+        description: Jupyter DataScience - A Jupyter notebook for exploring and visualizing data.
+        details: Includes R, Julia, and Python.
+        docs: https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html#jupyter-datascience-notebook
+        services:
+          jupyter-ds : "8888"
+      rstudio-server:
+        name: R Studio Server
+        description: R Studio Server is a web based notebook environment for R development.
+        details: Provides notebook computing experience with the R Studio development environment.
+        docs: https://rstudio.com/products/rstudio/
+        services:
+          rstudio-server : 8787
+      blackbalsam:
+        name: Blackbalsam
+        description: Blackbalsam is a notebook AI, visualization, and parallel computing environment.
+        details: Provides AI(Tensorflow,PyTorch) Vis(Plotly,Bokeh,Seaborn) Compute(Apache Spark) and Minio S3 interfaces.
+        docs: https://github.com/stevencox/blackbalsam
+        services:
+          jupyter : 8888
+  braini:
+    extends:
+      - common
+    name: BRAIN-I App Registry
+    apps:
+      imagej:
+        name: ImageJ Viewer
+        description: Imagej is an image processor developed at NIH/LOCI.
+        details: can display, edit, analyze, process, save and print 8-bit, 16-bit and 32-bit images. It can read many image formats.
+        docs: https://imagej.nih.gov/ij/
+        services:
+          imagej: 8080
+      # TODO: separate napari and imagej, updating these appropriately.
+      napari:
+        name: Napari Image Viewer
+        description: Napari is a fast, interactive, multi-dimensional image viewer.
+        details: It enables browsing, annotating, and analyzing large multi-dimensional images.
+        docs: https://napari.org/
+        services:
+          napari : 8080            
+  catalyst:
+    extends:
+      - common
+    name: BioData Catalyst App Registry
+    apps:
+      dicom-viewer:
+        name: DICOM Viewer
+        description: OHIF is a framework for building medical imaging web applications.
+        details: Uses the OrthaNC DICOM service for indexing image data.
+        docs: https://ohif.org/
+        services:
+          cloudtop : 8080
+      # TODO: is this just jupyter-ds with access to autoencoder python modules? If so, delete this app.
+      autoencoder-notebook:
+        name: Autoencoder Notebook
+        description: ___________________________________________________
+        details: ___________________________________________________
+        docs: http://we.need.autoencoder.docs/doc.html # TODO: need these
+        services:
+          jupyter : 8888          
+      hail:
+        name: Hail / Jupyter Workspace
+        description: A notebook computing interface to a large single node Hail genomics workspace.
+        details: Insantiates Apache Spark on a single cloud node for small to medium scale exploration.
+        docs: https://github.com/helxplatform/helx-hail # TODO: Make proper docs.
+        services:
+          jupyter : 8888
+  scidas:
+    extends:
+      - common
+    name: SciDAS App Registry
+    apps:
+      nextflow:
+        name: Nextflow API
+        description: Nextflow - A scalable workflow computational pipeline workspace.
+        details: Orchestrate Docker containers into reproducible workflows.
+        docs: https://github.com/SciDAS/nextflow-api
+        services:
+          nextflow : 8080
+      gsforge:
+        name: GSForge
+        description: >
+          GSForge is a Python package that assists researchers in the selection of gene sets with
+          potential association to an experimental condition or phenotypic trait.
+        details: Offers new potential hypotheses for gene-trait causality.
+        docs: https://systemsgenetics.github.io/GSForge/
+        services:
+          jupyter : 8888
+  blackbalsam:
+    extends:
+      - common
+    name: RENCI Blackbalsam Registry
+    apps:
+      blackbalsam:
+        name: Blackbalsam
+        description: Blackbalsam is a notebook AI, visualization, and parallel computing environment.
+        details: Provides AI(Tensorflow,PyTorch) Vis(Plotly,Bokeh,Seaborn) Compute(Apache Spark) and Minio S3 interfaces.
+        docs: https://github.com/stevencox/blackbalsam
+        services:
+          jupyter : 8888
+                

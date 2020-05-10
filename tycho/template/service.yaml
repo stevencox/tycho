@@ -6,6 +6,7 @@ metadata:
     name: {{ service.name }}
     username: {{ system.username }}
     executor: tycho
+    tycho-app: {{ system.name }}
     tycho-guid: {{ system.identifier }}
   name: {{ service.name }}
   {% if system.amb %}

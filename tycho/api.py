@@ -82,9 +82,11 @@ class TychoResource(Resource):
             traceback.print_exc ()
             status='error'
             exc_type, exc_value, exc_traceback = sys.exc_info()
+            message = f"{exception.args[0]} {''.join (exception.args[1])}"
             result = {
-                'error' : repr(traceback.format_exception(exc_type, exc_value, exc_traceback))
+                'error' : message #str(exception) #repr(traceback.format_exception(exc_type, exc_value, exc_traceback))
             }
+            print (json.dumps(result, indent=2))
         return {
             'status'  : status,
             'result'  : result,

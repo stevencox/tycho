@@ -11,6 +11,7 @@ import argparse
 import yaml
 from tycho.tycho_utils import TemplateUtils
 from tycho.config import Config
+from tycho.exceptions import TychoException
 from kubernetes import client as k8s_client, config as k8s_config
 
 logger = logging.getLogger (__name__)
@@ -25,8 +26,9 @@ mem_converter = {
 class TychoService:
     """ Represent a service endpoint. """
     try_minikube = True
-    def __init__(self, name, ip_address, port, sid=None, creation_time=None, utilization={}):
+    def __init__(self, name, app_id, ip_address, port, sid=None, creation_time=None, utilization={}):
         self.name = name
+        self.app_id = app_id
         self.ip_address = ip_address
         self.port = port
         self.identifier = sid
@@ -48,7 +50,6 @@ class TychoService:
         total['memory'] = f"{total['memory'] / (10 ** 9)}"
         return total
 
-    
     def __repr__(self):
         b = f"id: {self.identifier} time: {self.creation_time} util: {self.utilization}"
         return f"name: {self.name} ip: {self.ip_address} port: {self.port} {b}"
@@ -67,10 +68,12 @@ class TychoSystem:
     """ Represents a running system. """
     def __init__(self, status, result, message):
         self.status = status
+        if status == 'error':
+            raise TychoException (f"status:{status} result:{result} message:{message}")
         self.name = result['name']
         self.identifier = result['sid']
         self.services = [
-            TychoService(name=k, ip_address=v['ip_address'], port=v['port-1'])
+            TychoService(name=k, app_id=result['name'], ip_address=v['ip_address'], port=v['port-1'])
             for k, v in result['containers'].items ()
         ]
         self.message = message

@@ -2,6 +2,8 @@ import argparse
 import json
 import logging
 import os
+import shutil
+import subprocess
 import sys
 import traceback
 import yaml
@@ -42,15 +44,18 @@ class KubernetesCompute(Compute):
         self.rbac_api = k8s_client.RbacAuthorizationV1Api(api_client)
 #        self.extensions_api = k8s_client.ExtensionsV1beta1Api(api_client) 
         self.extensions_api = k8s_client.AppsV1Api(api_client)
-        self.networking_api = k8s_client.NetworkingV1Api(api_client)        
+        self.networking_api = k8s_client.NetworkingV1Api(api_client)
         self.try_minikube = True
+        self.namespace = self.get_namespace (
+            namespace=os.environ.get("NAMESPACE", "default"))
+        logger.debug (f"-- using namespace: {self.namespace}")
         
     def get_namespace(self, namespace="default"):
         try:
-           with open("/var/run/secrets/kubernetes.io/serviceaccount/namespace", "r") as secrets:
-               for line in secrets:
-                   namespace = line
-                   break
+            with open("/var/run/secrets/kubernetes.io/serviceaccount/namespace", "r") as secrets:
+                for line in secrets:
+                    namespace = line
+                    break
         except Exception as e:
             logger.warning(f"error getting namespace from file: {e}")
         return namespace
@@ -74,7 +79,7 @@ class KubernetesCompute(Compute):
             logger.debug(f"Raising persistent volume claim exception. {e}")
             raise
 
-    def checkamb(self, namespace):
+    def is_ambassador_context(self, namespace):
         try:
             api_response = self.api.list_namespaced_service(field_selector="metadata.name=ambassador", namespace=namespace)
             if len(api_response.items) > 0:
@@ -98,7 +103,7 @@ class KubernetesCompute(Compute):
         namespace = system.get_namespace()
         try:
             self.check_volumes(system.volumes, namespace)
-            amb_status = self.checkamb(namespace)
+            amb_status = self.is_ambassador_context(namespace)
             if amb_status:
                 system.amb = True
             #api_response = self.api.list_namespace()
@@ -126,6 +131,8 @@ class KubernetesCompute(Compute):
                         break
             except ApiException as e:
                 logger.debug(f"App requires {system.system_name}-env configmap with envs: {e}")
+                ## TODO: Swallows exception.
+                
             try:
                 for container in system.containers:
                     if container.name == system.system_name:
@@ -141,7 +148,8 @@ class KubernetesCompute(Compute):
                 raise TychoException (
                     message=f"Failed to get system port:",
                     details=text)
-
+                ## TODO: Why not catch at the end?
+                
             """ Turn an abstract system model into a cluster specific representation. """
             pod_manifests = system.render ("pod.yaml")
 
@@ -187,66 +195,27 @@ class KubernetesCompute(Compute):
                 service = system.services.get (container.name, None)
                 if service:
                     logger.debug (f"generating service for container {container.name}")
-                    service_manifests = system.render (template="service.yaml",
-                                                       context={"service":service})
+                    service_manifests = system.render (
+                        template = "service.yaml",
+                        context = {
+                            "service" : service
+                        })
                     for service_manifest in service_manifests:
-                        counter += 1
-                        logger.debug (f"creating service for container {container.name}")
+                        logger.debug (f"-- creating service for container {container.name}")                        
                         response = self.api.create_namespaced_service(
                             body=service_manifest,
                             namespace=namespace)
-                        
+
                         if not system.amb:
-                            '''
-                            if counter == 1:
-                                """ Get IP address of allocated ingress (or minikube). """
-                                for i in range(0, 200):
-                                    status_response = self.api.read_namespaced_service_status(name=response.metadata.name, namespace=namespace)
-                                    if status_response.status.load_balancer.ingress is None:
-                                        sleep(1)
-                                        continue
-                                    elif "TYCHO_ON_MINIKUBE" in os.environ:
-                                        break
-                                    else:
-                                        response = status_response
-                                        break
-                            '''
                             ip_address = self.get_service_ip_address (response)
-                            logger.debug (f"service {container.name} ingress ip: {ip_address}")
-                        else:
-                            ip_address = "--"
-                    
+
                         """ Return generated node ports to caller. """
                         for port in response.spec.ports:
                             container_map[container.name] = {
-                                "ip_address" : ip_address if ip_address else '--',
-                                port.name : port.node_port if port.node_port else '--'
+                                "ip_address" : ip_address,
+                                port.name    : port.node_port
                             }
                             break
-
-            
-            #try:
-            #    api_response = self.rbac_api.list_cluster_role(label_selector=f"name={system.system_name}")
-            #    if len(api_response.items) == 0:
-            #        logger.debug("creating cluster role")
-            #        cluster_role_manifests = system.render(f"cluster/{system.system_name}/clusterrole.yaml")
-            #        for cluster_role_manifest in cluster_role_manifests:
-            #            logger.debug(f"applying cluster role: {cluster_role_manifest}")
-            #            api_response = self.rbac_api.create_cluster_role(body=cluster_role_manifest)
-            #except Exception as e:
-            #    logger.error(f"cannot create cluster role: {e}")
-            #    traceback.print_exc (file=open("clusterrolelogs.txt", "a"))
-            
-            #try:
-            #    logger.debug("creating cluster role binding")
-            #    cluster_role_binding_manifests = system.render(template=f"{system.system_name}/clusterrolebinding.yaml")
-            #    for cluster_role_binding_manifest in cluster_role_binding_manifests:
-            #        logger.debug(f"applying cluster role binding: {cluster_role_binding_manifest}")
-            #        api_response = self.rbac_api.create_cluster_role_binding(body=cluster_role_binding_manifest)
-            #except Exception as e:
-            #    logger.error(f"cannot create cluster role binding: {e}")
-            #    traceback.print_exc (file=open("clusterrolebindinglogs.txt", "a"))
-            
             result = {
                 'name'       : system.name,
                 'sid'        : system.identifier,
@@ -270,13 +239,27 @@ class KubernetesCompute(Compute):
             that will be in the service status' load balancer section. On minikube,
             we use the minikube IP address which is in the system config. 
 
-            :param service_metadata: Service metadata.
+            :param service: Service metadata.
             :returns: ip_address IP Address of the service.
             """
         ip_address = None
-        if service_metadata.status.load_balancer.ingress and \
-           len(service_metadata.status.load_balancer.ingress) > 0:
-            ip_address = service_metadata.status.load_balancer.ingress[0].ip
+        try:
+            sleep (3)
+            port = service_metadata.spec.ports[0].port
+            node_port = service_metadata.spec.ports[0].node_port
+            exe = shutil.which ('kubectl')
+            app_id = service_metadata.metadata.labels["tycho-app"]
+            command = f"{exe} port-forward --pod-running-timeout=1m0s deployment/{app_id} {node_port}:{port}"
+            logger.debug (f"-- port-forward: {command}")
+            process = subprocess.Popen (command,
+                                        shell=True,
+                                        stderr=subprocess.STDOUT)
+            """ process dies when the other end disconnects so no need to clean up in delete. """
+            ip_address = "127.0.0.1"
+        except Exception as e:
+            traceback.print_exc ()
+        logger.debug (f"service {service_metadata.metadata.name} ingress ip: {ip_address}")
+        '''
         if not ip_address:
             if self.try_minikube:
                 try:
@@ -284,8 +267,9 @@ class KubernetesCompute(Compute):
                 except Exception as e:
                     self.try_minikube = False
                     # otherwise not an error, just means we're not using minikube.
+        '''
         return ip_address
-    
+
     def pod_to_deployment (self, name, identifier, template, namespace="default"):
         """ Create a deployment specification based on a pod template.
             
@@ -448,6 +432,7 @@ class KubernetesCompute(Compute):
                     port = service.spec.ports[0].node_port
                     result.append ({
                         "name"          : service.metadata.name,
+                        "app_id"        : service.metadata.labels.get ('tycho-app', None),
                         "sid"           : item_guid,
                         "ip_address"    : ip_address,
                         "port"          : str(port),
