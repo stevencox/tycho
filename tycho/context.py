@@ -51,6 +51,12 @@ class TychoContext:
             registry = yaml.safe_load (stream)
         return registry
 
+    def inherit (self, contexts, context, apps={}):
+        for base in context.get ("extends", []):
+            self.inherit (contexts, contexts[base], apps)
+        apps.update (context.get ("apps", {}))
+        return apps
+    
     def _grok (self):
         """ Compile the registry, resolving text substituations, etc. """
         apps = {}
@@ -58,6 +64,7 @@ class TychoContext:
         if not self.product in contexts:
             raise ContextException (f"undefined product {self.product} not found in contexts.")
         logger.info (f"-- load-context: id:{self.product}")
+        '''
         context = contexts[self.product]
         apps = context.get ('apps', {})
         """ Resolve context inheritance. """
@@ -69,14 +76,18 @@ class TychoContext:
             new_apps = contexts[base_name].get ('apps', {})
             new_apps.update (apps)
             apps = new_apps
-
+        '''
+        context = contexts[self.product]
+        logger.debug (f"---------------> {context}")
+        apps = self.inherit (contexts=contexts, context=context)
+        
         """ Load the repository map to enable string interpolation. """
         repository_map = {
             key : value['url']
             for key, value in self.registry.get ('repositories', {}).items ()
         }
         """ Compile URLs to resolve repository variables. """
-        for name, app in context.get('apps',{}).items ():
+        for name, app in apps.items (): #context.get('apps',{}).items ():
             if not 'spec' in app:
                 repos = list(repository_map.items())
                 if len(repos) == 0:

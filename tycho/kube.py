@@ -20,6 +20,8 @@ from kubernetes.client.rest import ApiException
 
 logger = logging.getLogger (__name__)
 
+port_forwards = {}
+
 class KubernetesCompute(Compute):
     """ A Kubernetes orchestrator implementation.
 
@@ -47,7 +49,7 @@ class KubernetesCompute(Compute):
         self.networking_api = k8s_client.NetworkingV1Api(api_client)
         self.try_minikube = True
         self.namespace = self.get_namespace (
-            namespace=os.environ.get("NAMESPACE", "default"))
+            namespace=os.environ.get("NAMESPACE", self.get_namespace ()))
         logger.debug (f"-- using namespace: {self.namespace}")
         
     def get_namespace(self, namespace="default"):
@@ -57,7 +59,7 @@ class KubernetesCompute(Compute):
                     namespace = line
                     break
         except Exception as e:
-            logger.warning(f"error getting namespace from file: {e}")
+            logger.debug(f"-- downward api namespace lookup failed.")
         return namespace
 
     def check_volumes(self, volumes, namespace):
@@ -100,7 +102,7 @@ class KubernetesCompute(Compute):
             :param namespace: Namespace to run the system in.
             :type namespace: str
         """
-        namespace = system.get_namespace()
+        namespace = self.namespace #system.get_namespace()
         try:
             self.check_volumes(system.volumes, namespace)
             amb_status = self.is_ambassador_context(namespace)
@@ -206,6 +208,7 @@ class KubernetesCompute(Compute):
                             body=service_manifest,
                             namespace=namespace)
 
+                        ip_address = None
                         if not system.amb:
                             ip_address = self.get_service_ip_address (response)
 
@@ -244,17 +247,23 @@ class KubernetesCompute(Compute):
             """
         ip_address = None
         try:
-            sleep (3)
-            port = service_metadata.spec.ports[0].port
-            node_port = service_metadata.spec.ports[0].node_port
-            exe = shutil.which ('kubectl')
             app_id = service_metadata.metadata.labels["tycho-app"]
-            command = f"{exe} port-forward --pod-running-timeout=1m0s deployment/{app_id} {node_port}:{port}"
-            logger.debug (f"-- port-forward: {command}")
-            process = subprocess.Popen (command,
-                                        shell=True,
-                                        stderr=subprocess.STDOUT)
-            """ process dies when the other end disconnects so no need to clean up in delete. """
+            logger.info (f"-================================> *** {app_id}")
+            if not app_id in port_forwards:
+                port_forwards[app_id] = app_id #process.pid
+                sleep (3)
+                logger.debug (f"--------------> {service_metadata.spec.ports}")
+                port = service_metadata.spec.ports[0].port
+                node_port = service_metadata.spec.ports[0].node_port
+                if node_port is None:
+                    node_port = service_metadata.spec.ports[0].target_port
+                exe = shutil.which ('kubectl')
+                command = f"{exe} port-forward --pod-running-timeout=1m0s deployment/{app_id} {node_port}:{port}"
+                logger.debug (f"-- port-forward: {command}")
+                process = subprocess.Popen (command,
+                                            shell=True,
+                                            stderr=subprocess.STDOUT)
+                """ process dies when the other end disconnects so no need to clean up in delete. """
             ip_address = "127.0.0.1"
         except Exception as e:
             traceback.print_exc ()
@@ -282,7 +291,7 @@ class KubernetesCompute(Compute):
             :param namepsace: Namespace to run the pod in.
             :type namespace: str
         """
-        namespace = self.get_namespace()
+        namespace = self.namespace #self.get_namespace()
 #        deployment_spec = k8s_client.ExtensionsV1beta1DeploymentSpec(
         deployment_spec = k8s_client.V1DeploymentSpec(
             replicas=1,
@@ -323,7 +332,7 @@ class KubernetesCompute(Compute):
             :param namespace: Namespace the system runs in.
             :type namespace: str
         """
-        namespace = self.get_namespace()
+        namespace = self.namespace #self.get_namespace()
         try: 
             """ todo: kubectl delete pv,pvc,deployment,pod,svc,networkpolicy -l executor=tycho """
             """ Delete the service. No obvious collection based api for service deletion. """
@@ -398,17 +407,17 @@ class KubernetesCompute(Compute):
             :param namespace: Namespace the system runs in.
             :type namespace: str
         """            
-        namespace = self.get_namespace()
+        namespace = self.namespace # self.get_namespace()
         result = []
         """ Find all our generated deployments. """
         label = f"tycho-guid={name}" if name else f"executor=tycho"
-        if username:
-            label = f"username={username}" if username else f"executor=tycho"
+#        if username:
+#            label = f"username={username}" if username else f"executor=tycho"
         logger.debug (f"-- status label: {label}")                
         response = self.extensions_api.list_namespaced_deployment (
             namespace,
             label_selector=label)
-        logger.debug (f"-- deployment list: {response}")
+        #logger.trace (f"-- deployment list: {response}")
         if response is not None:
             for item in response.items:
                 
@@ -417,7 +426,7 @@ class KubernetesCompute(Compute):
                     container.name : container.resources.limits
                     for container in item.spec.template.spec.containers
                 }
-                logger.debug(f"-- pod-resources {json.dumps(pod_resources, indent=2)}")
+                logger.debug(f"-- pod-resources {pod_resources}")
                 
                 item_guid = item.metadata.labels.get ("tycho-guid", None)
                 """ List all services with this guid. """

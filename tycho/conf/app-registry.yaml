@@ -83,16 +83,10 @@ contexts:
         docs: https://rstudio.com/products/rstudio/
         services:
           rstudio-server : 8787
-      blackbalsam:
-        name: Blackbalsam
-        description: Blackbalsam is a notebook AI, visualization, and parallel computing environment.
-        details: Provides AI(Tensorflow,PyTorch) Vis(Plotly,Bokeh,Seaborn) Compute(Apache Spark) and Minio S3 interfaces.
-        docs: https://github.com/stevencox/blackbalsam
-        services:
-          jupyter : 8888
   braini:
     extends:
       - common
+      - blackbalsam
     name: BRAIN-I App Registry
     apps:
       imagej:
@@ -165,9 +159,24 @@ contexts:
     apps:
       blackbalsam:
         name: Blackbalsam
-        description: Blackbalsam is a notebook AI, visualization, and parallel computing environment.
-        details: Provides AI(Tensorflow,PyTorch) Vis(Plotly,Bokeh,Seaborn) Compute(Apache Spark) and Minio S3 interfaces.
+        description: An A.I., visualization, and parallel computing environment.
+        details: A.I.(Tensorflow,Keras,PyTorch,Gensim) Vis(Plotly,Bokeh,Seaborn) Compute(Spark).
         docs: https://github.com/stevencox/blackbalsam
         services:
           jupyter : 8888
-                
+      rshiny:
+        name: R Shiny
+        description: Shiny is an R package that makes it easy to build interactive web apps straight from R.
+        details: You can host standalone apps on a webpage or embed them in R Markdown documents or build dashboards.
+        docs: https://shiny.rstudio.com/
+        services:
+          rshiny : 3838
+      gsforge:
+        name: GSForge
+        description: >
+          GSForge is a Python package that assists researchers in the selection of gene sets with
+          potential association to an experimental condition or phenotypic trait.
+        details: Offers new potential hypotheses for gene-trait causality.
+        docs: https://systemsgenetics.github.io/GSForge/
+        services:
+          jupyter : 8888                
