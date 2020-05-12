@@ -30,11 +30,12 @@ class TychoContext:
     """
     
     """ https://github.com/heliumdatacommons/CommonsShare_AppStore/blob/master/CS_AppsStore/cloudtop_imagej/deployment.py """
-    def __init__(self, registry_config="app-registry.yaml", product="common"):
+    def __init__(self, registry_config="app-registry.yaml", product="common", stub=False):
         self.registry = self._get_registry (registry_config, product=product)
         """ Uncomment this and related lines when this code goes live,. 
         Use a timeout on the API so the unit tests are not slowed down. """
-        self.client = TychoClientFactory().get_client()
+        if not stub:
+            self.client = TychoClientFactory().get_client()
         self.product = product
         self.apps = self._grok ()
         self.http_session = CachedSession (cache_name='tycho-registry')
@@ -194,7 +195,7 @@ class NullContext (TychoContext):
     A null context to facilitate client development.
     """
     def __init__(self, registry_config="app-registry.yaml", product="common"):
-        super ().__init__()
+        super ().__init__(stub=True)
     def status (self, request=None):
         """ Make up some rows. """
         identifier = uuid.uuid4 ()
@@ -203,6 +204,7 @@ class NullContext (TychoContext):
             "result" : [
                 {
                     "name"          : f"jupyter-ds-{str(identifier)}",
+                    "app_id"        : "jupyter-ds",
                     "sid"           : str(identifier),
                     "ip_address"    : 'x.y.z.m',
                     "port"          : "8080",

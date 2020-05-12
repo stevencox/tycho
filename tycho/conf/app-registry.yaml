@@ -25,6 +25,20 @@
 ##   This is alpha. Expect significant changes to modularity, inheritance,
 ##   and naming coming soon.
 ##
+##   Next steps:
+##     * Requirements: allow apps to specify that they require services including
+##        - A back end service like a database, spark, dicom api, etc.
+##        - A storage device like a pvc with a particular name or configuration.
+##     * Compilation: Compile the registry verifying
+##        - All required elements are either provided explicitly or can be
+##          inferred.
+##        - That designated network resources exist (200 http status).
+##        - That the docker-compose file is syntactically valid.
+##        - That the service name to export is in the docker-compose file and
+##          that one is specified.
+##     * Semantic annotation: Annotate apps with the Biolink model and EDAM
+##        ontology to enable semantic search.
+##
 ################################################################################
 api: Tycho
 version: 0.0.1
@@ -119,8 +133,8 @@ contexts:
       # TODO: is this just jupyter-ds with access to autoencoder python modules? If so, delete this app.
       autoencoder-notebook:
         name: Autoencoder Notebook
-        description: ___________________________________________________
-        details: ___________________________________________________
+        description: need description.
+        details: need details.
         docs: http://we.need.autoencoder.docs/doc.html # TODO: need these
         services:
           jupyter : 8888          
@@ -134,6 +148,7 @@ contexts:
   scidas:
     extends:
       - common
+      - blackbalsam
     name: SciDAS App Registry
     apps:
       nextflow:
@@ -164,6 +179,13 @@ contexts:
         docs: https://github.com/stevencox/blackbalsam
         services:
           jupyter : 8888
+      hail:
+        name: Hail
+        description: Hail is an open-source, general-purpose, Python-based data analysis library.
+        details: It provides additional data types and methods for working with genomic data.
+        docs: https://hail.is/
+        services:
+          hail : 8000
       rshiny:
         name: R Shiny
         description: Shiny is an R package that makes it easy to build interactive web apps straight from R.
@@ -171,12 +193,3 @@ contexts:
         docs: https://shiny.rstudio.com/
         services:
           rshiny : 3838
-      gsforge:
-        name: GSForge
-        description: >
-          GSForge is a Python package that assists researchers in the selection of gene sets with
-          potential association to an experimental condition or phenotypic trait.
-        details: Offers new potential hypotheses for gene-trait causality.
-        docs: https://systemsgenetics.github.io/GSForge/
-        services:
-          jupyter : 8888                
