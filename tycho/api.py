@@ -50,9 +50,17 @@ app.config['SWAGGER'] = {
 swagger = Swagger(app, template=template)
 
 backplane = None
+_tycho = Tycho(backplane=backplane)
+
 def tycho ():
-    if not hasattr(g, 'tycho'):
+    return _tycho
+#    if not hasattr(g, 'tycho'):
+    if not 'tycho' in g: #hasattr(g, 'tycho'):
+        logger.debug (f"-----------> {dir(g)}")
+        logger.debug (f"--------------------------------> creating tycho object.")
         g.tycho = Tycho (backplane=backplane)
+        logger.debug (f"-----------> {dir(g)}")
+        logger.debug (f"--------------------------------> creating tycho object.")
     return g.tycho
     
 class TychoResource(Resource):
@@ -82,7 +90,8 @@ class TychoResource(Resource):
             traceback.print_exc ()
             status='error'
             exc_type, exc_value, exc_traceback = sys.exc_info()
-            message = f"{exception.args[0]} {''.join (exception.args[1])}"
+            message = f"{exception.args[0]} {''.join (exception.args[1])}" \
+                if len(exception.args) == 2 else exception.args[0]
             result = {
                 'error' : message #str(exception) #repr(traceback.format_exception(exc_type, exc_value, exc_traceback))
             }

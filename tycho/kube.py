@@ -154,7 +154,8 @@ class KubernetesCompute(Compute):
                 
             """ Turn an abstract system model into a cluster specific representation. """
             pod_manifests = system.render ("pod.yaml")
-
+            #return {}
+            logger.info (f"=====================================> {pod_manifests}")
             #""" Render a persistent volume claim. """
             #pvc_manifests = system.render(template="pvc.yaml")
             #""" Create persistent volume claims. """
@@ -258,7 +259,7 @@ class KubernetesCompute(Compute):
                 if node_port is None:
                     node_port = service_metadata.spec.ports[0].target_port
                 exe = shutil.which ('kubectl')
-                command = f"{exe} port-forward --pod-running-timeout=1m0s deployment/{app_id} {node_port}:{port}"
+                command = f"{exe} port-forward --pod-running-timeout=3m0s deployment/{app_id} {node_port}:{port}"
                 logger.debug (f"-- port-forward: {command}")
                 process = subprocess.Popen (command,
                                             shell=True,
@@ -374,7 +375,7 @@ class KubernetesCompute(Compute):
                 "replica_set" : self.extensions_api.delete_collection_namespaced_replica_set,
                 "pod"         : self.api.delete_collection_namespaced_pod,
                 "persistentvolumeclaim" : self.api.delete_collection_namespaced_persistent_volume_claim,
-                "networkpolicy" : self.networking_api.delete_collection_namespaced_network_policy
+                #"networkpolicy" : self.networking_api.delete_collection_namespaced_network_policy
             }
             for object_type, finalizer in finalizers.items ():
                 logger.debug (f" --deleting {object_type} elements of {name} in namespace {namespace}")
@@ -449,3 +450,47 @@ class KubernetesCompute(Compute):
                         "utilization"   : pod_resources
                     })
         return result
+
+
+
+
+
+
+'''
+our-pvc:
+  - dicom images                    ro-sidecar
+  - nfsrods for napari and imagej   irods
+  - deepgtex                        rwm
+
+Given:
+==============================================================
+docker-compose.yaml:
+   ...
+   volumes:
+     pvc://deepgtex:/deepgtex:rw                    RW!
+     pvc://nfsrods:/nfsrods:rw                      RW?     
+--------------------------------------------------------------    
+every container
+*   pvc://stdnfs/home/${username} -> /home/${username}   RW
+*   pvc://stdnfs/data             -> /shared             R
+    sidecar?                      -> /data               R
+
+options
+   user provides a pvc  -> use that as pvc://stdnfs
+
+------
+
+cluster A:
+  my-pvc is a RWM pvc.
+  bin/tycho api --docker --pvc my-pvc
+
+cluster B:
+  pvc-2 is a RWM pvc
+  bin/tycho api --docker --pvc pvc-2
+
+------
+
+clusterA:
+  my-rwm-storage-class
+  bin/tycho api --docker --rwm-sc my-rwm-storage-class
+'''
