@@ -123,7 +123,6 @@ spec:
     - name: stdnfs
       mountPath: /data
       subPath: data
-      readOnly: true
 {% endfor %}
 
   volumes:
@@ -144,5 +143,4 @@ spec:
     - name:  stdnfs
       persistentVolumeClaim:
         claimName: stdnfs
-        readOnly: true
 
