@@ -64,8 +64,9 @@ class KubernetesCompute(Compute):
 
     def check_volumes(self, volumes, namespace):
         try:
+            volumesNA = []
             api_response = self.api.list_namespaced_persistent_volume_claim(namespace=namespace)
-            for volume in volumes:
+            for index, volume in enumerate(volumes):
                 notExists = True
                 if volume["volume_name"] != "stdnfs":
                     for item in api_response.items:
@@ -76,10 +77,12 @@ class KubernetesCompute(Compute):
                             logger.info(f"PVC {volume['volume_name']} exists.")
                             break
                 if notExists and volume["volume_name"] != 'stdnfs':
-                    raise Exception(f"Cannot create system. PVC {volume['pvc_name']} does not exist. Create it.")
+                    volumesNA.append(index)
+                    #raise Exception(f"Cannot create system. PVC {volume['pvc_name']} does not exist. Create it.")
+            return volumesNA 
         except Exception as e:
             logger.debug(f"Raising persistent volume claim exception. {e}")
-            raise
+            #raise
 
     def is_ambassador_context(self, namespace):
         try:
@@ -104,7 +107,11 @@ class KubernetesCompute(Compute):
         """
         namespace = self.namespace #system.get_namespace()
         try:
-            self.check_volumes(system.volumes, namespace)
+            """ Check volumes and remove them from the system. """
+            volumesNA = self.check_volumes(system.volumes, namespace)
+            for _ in range(0, len(volumesNA)):
+                system.volumes.pop(0)
+            """ Check the status of ambassador """
             amb_status = self.is_ambassador_context(namespace)
             if amb_status:
                 system.amb = True

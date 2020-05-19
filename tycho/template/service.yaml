@@ -19,8 +19,10 @@ metadata:
       #host: helx-app.amb-helx-dev.renci.org
       prefix: /private/{{system.system_name}}/{{system.username}}/{{system.identifier}}/
       service: {{system.name}}:{{system.system_port}}
+      {% if system.dev_phase != 'dev' %}
       headers:
           REMOTE_USER: {{system.username}}
+      {% endif %}
       {% if system.system_name == 'jupyter-ds' %}
       rewrite: /private/{{system.system_name}}/{{system.username}}/{{system.identifier}}/
       {% endif %}
