@@ -271,7 +271,7 @@ class KubernetesCompute(Compute):
                                             shell=True,
                                             stderr=subprocess.STDOUT)
                 """ process dies when the other end disconnects so no need to clean up in delete. """
-            ip_address = "127.0.0.1"
+            #ip_address = "127.0.0.1"
         except Exception as e:
             traceback.print_exc ()
         logger.debug (f"service {service_metadata.metadata.name} ingress ip: {ip_address}")
