@@ -181,6 +181,7 @@ class KubernetesCompute(Compute):
             for pod_manifest in pod_manifests:
                 deployment = self.pod_to_deployment (
                     name=system.name,
+                    username=system.username,
                     identifier=system.identifier,
                     template=pod_manifest,
                     namespace=namespace)
@@ -286,7 +287,7 @@ class KubernetesCompute(Compute):
         '''
         return ip_address
 
-    def pod_to_deployment (self, name, identifier, template, namespace="default"):
+    def pod_to_deployment (self, name, username, identifier, template, namespace="default"):
         """ Create a deployment specification based on a pod template.
             
             :param name: Name of the system.
@@ -305,7 +306,8 @@ class KubernetesCompute(Compute):
             template=template,
             selector=k8s_client.V1LabelSelector (
                 match_labels = {
-                    "tycho-guid" : identifier
+                    "tycho-guid" : identifier,
+                    "username"   : username
                 }))
         
         """ Instantiate the deployment object """
@@ -319,7 +321,8 @@ class KubernetesCompute(Compute):
                 name=name,
                 labels={
                     "tycho-guid" : identifier,
-                    "executor" : "tycho"
+                    "executor" : "tycho",
+                    "username" : username
                 }),
             spec=deployment_spec)
 
