@@ -34,8 +34,8 @@ class TychoContext:
         self.registry = self._get_registry (registry_config, product=product)
         """ Uncomment this and related lines when this code goes live,. 
         Use a timeout on the API so the unit tests are not slowed down. """
-        if not 'stub' == os.environ.get ('DEV_PHASE'):
-            self.client = TychoClientFactory().get_client()
+        if not os.environ.get ('DEV_PHASE') == 'stub':
+            self.client=TychoClient(url=os.environ.get('TYCHO_URL', "http://localhost:5000"))
         self.product = product
         self.apps = self._grok ()
         self.http_session = CachedSession (cache_name='tycho-registry')
