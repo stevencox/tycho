@@ -8,7 +8,7 @@ import uuid
 import yaml
 from requests_cache import CachedSession
 from string import Template
-from tycho.client import TychoClientFactory, TychoStatus, TychoSystem
+from tycho.client import TychoClientFactory, TychoStatus, TychoSystem, TychoClient
 from tycho.exceptions import ContextException
 
 logger = logging.getLogger (__name__)
