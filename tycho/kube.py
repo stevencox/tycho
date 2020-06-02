@@ -64,8 +64,9 @@ class KubernetesCompute(Compute):
 
     def check_volumes(self, volumes, namespace):
         try:
+            volumesNA = []
             api_response = self.api.list_namespaced_persistent_volume_claim(namespace=namespace)
-            for volume in volumes:
+            for index, volume in enumerate(volumes):
                 notExists = True
                 if volume["volume_name"] != "stdnfs":
                     for item in api_response.items:
@@ -76,10 +77,12 @@ class KubernetesCompute(Compute):
                             logger.info(f"PVC {volume['volume_name']} exists.")
                             break
                 if notExists and volume["volume_name"] != 'stdnfs':
-                    raise Exception(f"Cannot create system. PVC {volume['pvc_name']} does not exist. Create it.")
+                    volumesNA.append(index)
+                    #raise Exception(f"Cannot create system. PVC {volume['pvc_name']} does not exist. Create it.")
+            return volumesNA 
         except Exception as e:
             logger.debug(f"Raising persistent volume claim exception. {e}")
-            raise
+            #raise
 
     def is_ambassador_context(self, namespace):
         try:
@@ -104,7 +107,11 @@ class KubernetesCompute(Compute):
         """
         namespace = self.namespace #system.get_namespace()
         try:
-            self.check_volumes(system.volumes, namespace)
+            """ Check volumes and remove them from the system. """
+            volumesNA = self.check_volumes(system.volumes, namespace)
+            for _ in range(0, len(volumesNA)):
+                system.volumes.pop(0)
+            """ Check the status of ambassador """
             amb_status = self.is_ambassador_context(namespace)
             if amb_status:
                 system.amb = True
@@ -175,6 +182,7 @@ class KubernetesCompute(Compute):
             for pod_manifest in pod_manifests:
                 deployment = self.pod_to_deployment (
                     name=system.name,
+                    username=system.username,
                     identifier=system.identifier,
                     template=pod_manifest,
                     namespace=namespace)
@@ -265,7 +273,7 @@ class KubernetesCompute(Compute):
                                             shell=True,
                                             stderr=subprocess.STDOUT)
                 """ process dies when the other end disconnects so no need to clean up in delete. """
-            ip_address = "127.0.0.1"
+            #ip_address = "127.0.0.1"
         except Exception as e:
             traceback.print_exc ()
         logger.debug (f"service {service_metadata.metadata.name} ingress ip: {ip_address}")
@@ -280,7 +288,7 @@ class KubernetesCompute(Compute):
         '''
         return ip_address
 
-    def pod_to_deployment (self, name, identifier, template, namespace="default"):
+    def pod_to_deployment (self, name, username, identifier, template, namespace="default"):
         """ Create a deployment specification based on a pod template.
             
             :param name: Name of the system.
@@ -299,7 +307,8 @@ class KubernetesCompute(Compute):
             template=template,
             selector=k8s_client.V1LabelSelector (
                 match_labels = {
-                    "tycho-guid" : identifier
+                    "tycho-guid" : identifier,
+                    "username"   : username
                 }))
         
         """ Instantiate the deployment object """
@@ -313,7 +322,8 @@ class KubernetesCompute(Compute):
                 name=name,
                 labels={
                     "tycho-guid" : identifier,
-                    "executor" : "tycho"
+                    "executor" : "tycho",
+                    "username" : username
                 }),
             spec=deployment_spec)
 
@@ -412,14 +422,15 @@ class KubernetesCompute(Compute):
         result = []
         """ Find all our generated deployments. """
         label = f"tycho-guid={name}" if name else f"executor=tycho"
-#        if username:
-#            label = f"username={username}" if username else f"executor=tycho"
+        if username:
+            label = f"username={username}" if username else f"executor=tycho"
         logger.debug (f"-- status label: {label}")                
         response = self.extensions_api.list_namespaced_deployment (
             namespace,
             label_selector=label)
         #logger.trace (f"-- deployment list: {response}")
         if response is not None:
+            print(f"RESPONSE ITEMS:----------------> {response.items}")
             for item in response.items:
                 
                 """ Collect pod metrics for this deployment. """

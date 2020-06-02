@@ -117,12 +117,6 @@ spec:
   {% endif %}
   {% endfor %}
   {% endif %}
-    - name: stdnfs
-      mountPath: /home/{{ system.username }}
-      subPath: {{ system.username }}
-    - name: stdnfs
-      mountPath: /data
-      subPath: data
 {% endfor %}
 
   volumes:
@@ -140,7 +134,4 @@ spec:
   {% endfor %}
   {% endif %}
   {% endfor %}
-    - name:  stdnfs
-      persistentVolumeClaim:
-        claimName: stdnfs
 

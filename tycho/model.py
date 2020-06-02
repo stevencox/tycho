@@ -127,6 +127,8 @@ class System:
         self.identifier = uuid.uuid4().hex
         self.system_name = name
         self.amb = False
+        self.dev_phase = os.getenv('DEV_PHASE', "prod")
+        print(f"DEV PHASE ENVIRON----------------> {self.dev_phase}")
         self.name = f"{name}-{self.identifier}"
         assert self.name is not None, "System name is required."
         containers_exist = len(containers) > 0
@@ -206,6 +208,18 @@ class System:
             ports = []
             expose = []
             entrypoint = spec.get ('entrypoint', '')
+            """ Adding default volumes to the system containers """
+            print(f"Spec: {type(spec)}")
+            if spec.get('volumes') == None:
+                spec.update({'volumes': []})
+            for volume in config.get('tycho')['compute']['system']['volumes']:
+                volumeSub = volume.replace('username', username) if 'username' in volume else None
+                if spec.get('volumes') == None:
+                    spec.update({'volumes': []})
+                if volumeSub:
+                    spec.get('volumes', []).append(volumeSub)
+                else:
+                    spec.get('volumes', []).append(volume)
             if isinstance(entrypoint, str):
                 entrypoint = entrypoint.split ()
             for p in spec.get('ports', []):

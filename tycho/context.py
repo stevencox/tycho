@@ -8,7 +8,7 @@ import uuid
 import yaml
 from requests_cache import CachedSession
 from string import Template
-from tycho.client import TychoClientFactory, TychoStatus, TychoSystem ,TychoClient
+from tycho.client import TychoClientFactory, TychoStatus, TychoSystem, TychoClient
 from tycho.exceptions import ContextException
 
 logger = logging.getLogger (__name__)
@@ -35,7 +35,6 @@ class TychoContext:
         """ Uncomment this and related lines when this code goes live,. 
         Use a timeout on the API so the unit tests are not slowed down. """
         if not os.environ.get ('DEV_PHASE') == 'stub':
-            #self.client = TychoClientFactory().get_client()
             self.client=TychoClient(url=os.environ.get('TYCHO_URL', "http://localhost:5000"))
         self.product = product
         self.apps = self._grok ()
