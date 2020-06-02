@@ -111,7 +111,7 @@ class Container:
 
 class System:
     """ Distributed system of interacting containerized software. """
-    def __init__(self, config, name, username, containers, services={}):
+    def __init__(self, config, name, username, serviceAccount, containers, services={}):
         """ Construct a new abstract model of a system given a name and set of containers.
         
             Serves as context for the generation of compute cluster specific artifacts.
@@ -151,6 +151,7 @@ class System:
         self.username = username
         self.annotations = {}
         self.namespace = "default"
+        self.serviceaccount = serviceAccount
 
     def get_namespace(self, namespace="default"):
         try:
@@ -179,7 +180,7 @@ class System:
         return template
 
     @staticmethod
-    def parse (config, name, username, system, env={}, services={}):
+    def parse (config, name, username, system, serviceAccount, env={}, services={}):
         """ Construct a system model based on the input request.
 
             Parses a docker-compose spec into a system specification.
@@ -251,6 +252,7 @@ class System:
             "config"     : config,
             "name"       : name,
             "username"   : username,
+            "serviceAccount": serviceAccount,
             "containers" : containers
         }
         system_specification['services'] = services

@@ -162,9 +162,11 @@ class TychoContext:
           } for k, v in services.items ()
         }
         logger.debug (f"parsed {app_id} settings: {settings}")
+        serviceAccount = self.apps[app_id]['serviceAccount'] if 'serviceAccount' in self.apps[app_id].keys() else None
         if spec is not None:
             system = self._start ({
                 "name"       : app_id,
+                "serviceaccount": serviceAccount,
                 "env"        : settings,
                 "system"     : spec,
                 "username"   : principal.username,

@@ -177,6 +177,7 @@ contexts:
         description: An A.I., visualization, and parallel computing environment.
         details: A.I.(Tensorflow,Keras,PyTorch,Gensim) Vis(Plotly,Bokeh,Seaborn) Compute(Spark).
         docs: https://github.com/stevencox/blackbalsam
+        serviceAccount: spark
         services:
           jupyter : 8888
       hail:
