@@ -179,7 +179,7 @@ contexts:
         docs: https://github.com/stevencox/blackbalsam
         serviceAccount: spark
         services:
-          jupyter : 8888
+          blackbalsam : 8888
       hail:
         name: Hail
         description: Hail is an open-source, general-purpose, Python-based data analysis library.
