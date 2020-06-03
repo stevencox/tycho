@@ -18,6 +18,7 @@ metadata:
     tycho-guid: {{ system.identifier }}
     tycho-app-id: {{ system.app_id }}
 spec:
+  serviceAccountName: {{system.serviceaccount}}
 {% for container in system.containers %}
   {% if container.limits or container.requests %}
   {% if container.limits.gpus != None and loop.first %}
@@ -40,14 +41,14 @@ spec:
 #  {% endfor %}
 #  {% endif %}
 #{% endfor %}
-  initContainers:
-  - name: volume-permissions
-    image: busybox:1.28
-    command: ['sh', '-c', 'chmod 777 -R /home/{{system.username}} && echo OK']
-    volumeMounts:
-    - name: stdnfs
-      mountPath: /home/{{system.username}}
-      subPath: {{system.username}}
+#  initContainers:
+#  - name: volume-permissions
+#    image: busybox:1.28
+#    command: ['sh', '-c', 'chmod 777 -R /home/{{system.username}} && echo OK']
+#    volumeMounts:
+#    - name: stdnfs
+#      mountPath: /home/{{system.username}}
+#      subPath: {{system.username}}
   containers:
 {% for container in system.containers %}    
   - name: {{ container.name }}
