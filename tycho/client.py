@@ -11,18 +11,48 @@ import argparse
 import yaml
 from tycho.tycho_utils import TemplateUtils
 from tycho.config import Config
+from tycho.exceptions import TychoException
 from kubernetes import client as k8s_client, config as k8s_config
 
 logger = logging.getLogger (__name__)
 
+mem_converter = {
+    'M' : lambda v : v * 10 ** 6,
+    'G' : lambda v : v * 10 ** 9,
+    'T' : lambda v : v * 10 ** 12,
+    'P' : lambda v : v * 10 ** 15,
+    'E' : lambda v : v * 10 ** 18
+}
 class TychoService:
     """ Represent a service endpoint. """
-    def __init__(self, name, ip_address, port, sid=None, creation_time=None):
+    try_minikube = True
+    def __init__(self, name, app_id, ip_address, port, sid=None, creation_time=None, utilization={}):
         self.name = name
+        self.app_id = app_id
         self.ip_address = ip_address
         self.port = port
         self.identifier = sid
         self.creation_time = creation_time
+        self.utilization = utilization
+        self.total_util = self.get_utilization (utilization)
+            
+    def get_utilization (self, utilization):
+        total = {
+            "cpu" : 0,
+            "memory" : 0
+        }
+        for key, val in utilization.items ():
+            total['cpu'] = total['cpu'] + int(val['cpu'].replace ('m', ''))
+            mem = val['memory'].replace ("i", "")
+            """ Run the conversion function designated by the last character of the value on the integer value """
+            mem_val = mem_converter[mem[-1]] (int(mem[:-1]))            
+            total['memory'] = total['memory'] + mem_val
+        total['memory'] = f"{total['memory'] / (10 ** 9)}"
+        return total
+
+    def __repr__(self):
+        b = f"id: {self.identifier} time: {self.creation_time} util: {self.utilization}"
+        return f"name: {self.name} ip: {self.ip_address} port: {self.port} {b}"
 
 class TychoStatus:
     """ A response from a status request. """ 
@@ -31,14 +61,19 @@ class TychoStatus:
         self.services = list(map(lambda v: TychoService (**v), result))
         self.message = message
 
+    def __repr__(self):
+        return f"status: {self.status} svcs: {[ str(s) for s in self.services ]} msg: {self.message}"
+
 class TychoSystem:
     """ Represents a running system. """
     def __init__(self, status, result, message):
         self.status = status
+        if status == 'error':
+            raise TychoException (f"status:{status} result:{result} message:{message}")
         self.name = result['name']
         self.identifier = result['sid']
         self.services = [
-            TychoService(name=k, ip_address=v['ip_address'], port=v['port-1'])
+            TychoService(name=k, app_id=result['name'], ip_address=v['ip_address'], port=v['port-1'])
             for k, v in result['containers'].items ()
         ]
         self.message = message
@@ -82,22 +117,6 @@ class TychoClient:
             for line in environment.split ("\n") if '=' in line
         }
         
-    def start0 (self, request):
-        """ Start a service. 
-        
-            The general format of a start request is::
-
-                {
-                   "name"   : <name of the system>,
-                   "env"    : <JSON dict created from .env environment variables>,
-                   "system" : <JSON of a docker-compose yaml>
-                }
-
-            :param request: A request object formatted as above.
-            :type request: JSON
-        """
-        return self.request ("start", request)
-        
     def start (self, request):
         """ Start a service. 
         
@@ -134,23 +153,11 @@ class TychoClient:
             :param request: A request formatted as above.
             :type request: JSON
         """
+        logger.error (f"-- delete: {json.dumps(request, indent=2)}")
+        print (f"-- delete: {json.dumps(request, indent=2)}")
         return self.request ("delete", request)
     
-    def status0 (self, request):
-        """ Get status of running systems.
-        
-            Get the status of a system by GUID or across systems.
-
-            The format of a request is::
- 
-                {}
-
-            :param request: Request formatted as above.
-            :type request: JSON
-        """
-        return self.request ("status", request)
-    
-    def status (self, request):
+    def status (self, request): 
         """ Get status of running systems.
         
             Get the status of a system by GUID or across systems.
@@ -164,8 +171,8 @@ class TychoClient:
         """
         response = self.request ("status", request)
         return TychoStatus (**response)
-            
-    def up0 (self, name, system, settings=""):
+
+    def up (self, name, system, settings=""):
         """ Bring a service up starting with a docker-compose spec. 
         
             CLI endpoint to start a service on the Tycho compute fabric.::
@@ -192,60 +199,7 @@ class TychoClient:
                     
         request = {
             "name"   : self.format_name (name),
-            "env"    : self.parse_env (settings),
-            "system" : system,
-            "services" : services
-        }
-        logger.debug (f"request: {json.dumps(request, indent=2)}")
-        response = self.start (request)
-        logger.debug (json.dumps(response,indent=2))
-        error = response.get('result',{}).get('error', None)
-        if error:
-            print (''.join (error))
-        else:
-            format_string = '{:<30} {:<35} {:<15} {:<7}'
-            print (format_string.format("SYSTEM", "GUID", "IP_ADDRESS", "PORT"))
-            result = response.get('result',{})
-            port='--'
-            ip_address='--'
-            for process, host_port in result.get('containers',{}).items ():
-                ip_address = host_port['ip_address']
-                port = host_port['port']
-            sid = result.get ('sid',  None)
-            item_name = result.get ('name', 'unknown').replace (f"-{sid}", "")
-            print (format_string.format (
-                TemplateUtils.trunc (item_name, max_len=28),
-                TemplateUtils.trunc (sid, max_len=33),
-                ip_address if ip_address else '--',
-                port))
-                #print (f"(minikube)=> http://192.168.99.111:{port}")
-
-    def up (self, name, system, settings=""):
-        """ Bring a service up starting with a docker-compose spec. 
-        
-            CLI endpoint to start a service on the Tycho compute fabric.::
-
-                tycho up -f path/to/docker-compose.yaml
-
-            :param name: Name of the system.
-            :type name: str
-            :param system: Docker-compose JSON structure.
-            :type system: JSON
-            :param settings: The textual contents of a .env file.
-            :type settings: str
-        """
-        services = {}
-        for container_name, container in system['services'].items ():
-            ports = container['ports']
-            for port in ports:
-                port_num = int(port.split(':')[1] if ':' in port else port)
-                services[container_name] = {
-                    "port" : port_num
-                    #"clients" : [ "192.16.1.179" ]
-                }
-                    
-        request = {
-            "name"   : self.format_name (name),
+            "username" : "admin",
             "env"    : self.parse_env (settings),
             "system" : system,
             "services" : services
@@ -280,7 +234,8 @@ class TychoClient:
             :type terse: boolean
         """
         try:
-            request = { "name" : self.format_name (name) } if name else {}        
+            request = { "name" : self.format_name (name) } if name else {}
+            request['username'] = 'admin'
             response = self.status (request)
             logger.debug (response)
             if response.status  == 'success':
@@ -365,23 +320,20 @@ class TychoClientFactory:
            with open("/var/run/secrets/kubernetes.io/serviceaccount/namespace", "r") as secrets:
                for line in secrets:
                    namespace = line
-                   break
+                   raise Exception
         except Exception as e:
-            pass
+            logger.warning(f"cannot get namespace from file: {e}")
 
         url = None
         client = None
         try:
             service = self.api.read_namespaced_service(
                 name=name,
-                namespace=namespace,
-                _request_timeout=(5,5))
+                namespace=namespace)
             if not service:
                 url = default_url
-            elif service.status and service.status.load_balancer and \
-                 service.status.load_balancer.ingress:
-                logger.debug ("--looking in kube for an ingress based service.")
-                ip_address = service.status.load_balancer.ingress[0].ip
+            elif service.status and service.status.load_balancer:
+                ip_address = "tycho-api"
                 port = service.spec.ports[0].port
                 logger.debug (f"located tycho api instance in kube")
                 url = f"http://{ip_address}:{port}"
@@ -398,10 +350,11 @@ class TychoClientFactory:
                     except ValueError as e:
                         logger.error ("unable to get minikube ip address")
                         traceback.print_exc (e)
+            print(f"URL: {url}")
         except Exception as e:
             url = default_url
-            #traceback.print_exc (e)
-            logger.info (f"did not find {name} in namespace {namespace}")
+            print(f"url: {url}")
+            logger.info (f"cannot find {name} in namespace {namespace}")
 
         logger.info (f"creating tycho client with url: {url}")
         return TychoClient (url=url)
@@ -424,7 +377,7 @@ class TychoApps:
         try:
             git.Git(base_dir).clone(self.repo_url)
         except Exception as e:
-            print(f"Exception: {e}")
+            traceback.print_exc(e)
         repo_path = os.path.join(base_dir, self.repo_name)
         apps_path = os.path.join(repo_path, self.apps_dir)
         for _, dnames, _ in os.walk(apps_path):
@@ -487,6 +440,7 @@ if __name__ == "__main__":
             system = metadata['System']
         if 'Settings' in metadata.keys():
             settings = metadata['Settings']
+            print(f"settings: {settings}")
 
     elif args.file:
         if not args.name:

@@ -22,6 +22,7 @@ def make_request ():
     """ Create a Tycho request object to test with. """
     request = {
         "name"   : "test",
+        "username": "renci",
         "env"    : {},
         "system" : get_sample_spec ("jupyter-ds"),
         "services" : {

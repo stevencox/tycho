@@ -7,6 +7,7 @@ metadata:
   name: {{ volume["volume_name"] }}
   labels:
     executor: tycho
+    username: {{ system.username }}
     tycho-guid: {{ system.identifier }}
 spec:
   storageClassName: manual

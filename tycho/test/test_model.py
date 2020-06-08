@@ -11,6 +11,7 @@ def test_system_model (request):
     system = System (**{
         "config"     : Config (),
         "name"       : "test",
+        "username"   : "renci",
         "containers" : [
             {
                 "name"  : "nginx-container",
@@ -18,7 +19,8 @@ def test_system_model (request):
                 "limits" : [{
                     "cpus" : "0.5",
                     "memory" : "512M"
-                }]
+                }],
+                "volumes": [],
             }
         ]
     }) 
@@ -39,6 +41,7 @@ def test_system_parser (request):
         system =  System.parse (
             config = Config (),
             name   = "jupyter-ds",
+            username = "renci",
             system = structure)
 
         print (f"{system}")
@@ -50,7 +53,7 @@ def test_system_parser (request):
         assert system.containers[0].requests.cpus == '0.01'
         assert system.containers[0].requests.memory == '20M'
         assert system.containers[0].ports[0]['containerPort'] == '8888'
-        assert system.containers[0].volumes[0] == '$LOCAL_STORE:/mydata'
+        assert system.containers[0].volumes[0] == 'pvc://cloud-top/projects:/work/data'
 
 
 

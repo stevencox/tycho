@@ -25,6 +25,20 @@
 ##   This is alpha. Expect significant changes to modularity, inheritance,
 ##   and naming coming soon.
 ##
+##   Next steps:
+##     * Requirements: allow apps to specify that they require services including
+##        - A back end service like a database, spark, dicom api, etc.
+##        - A storage device like a pvc with a particular name or configuration.
+##     * Compilation: Compile the registry verifying
+##        - All required elements are either provided explicitly or can be
+##          inferred.
+##        - That designated network resources exist (200 http status).
+##        - That the docker-compose file is syntactically valid.
+##        - That the service name to export is in the docker-compose file and
+##          that one is specified.
+##     * Semantic annotation: Annotate apps with the Biolink model and EDAM
+##        ontology to enable semantic search.
+##
 ################################################################################
 api: Tycho
 version: 0.0.1
@@ -34,63 +48,73 @@ metadata:
   author: HeLx Dev
   description: An alpha metadata registry for HeLx applications.
 repositories:
+  # App repository location.
   catalyst_apps:
+    # This is the Dockstore app prototype repository. GA4GH TRS in future?
     description: Main repository for Catalyst Apps and Tools
-    # This is a link to a fork of the Dockstore GitHub repo.
-    # Perhaps a more interesting direction might be to make a GA4GH TRS endpoint the repo.
     url: https://github.com/helxplatform/app-support-prototype/raw/develop/dockstore-yaml-proposals
 contexts:
-  common:
+  # The common context provides a convenient base set of applications.
+  # Other contexts can extend it to include these apps.
+  common: 
     name: HeLx Common App Registry
     apps:
-      cloudtop:
-        name: CloudTop
-        # The naming convention ${repo]/${context_id}/docker-compose.yaml means we can elide this feature.
-        # The same goes for icon. It's not needed unless it's custom.
-        # Similarly, we generate ${repo]/${context_id}/.env as the compose settings.
-        spec: ${catalyst_apps}/cloudtop/docker-compose.yaml
-        icon: ${catalyst_apps}/cloudtop/icon.png
-        descripton: CloudTop is a cloud native, browser accessible Linux desktop.
+      # Each app has an identifier and designates a set of properties.
+      cloud-top:
+        # User readable short name for the system.
+        name: Cloud Top
+        # The spec field points to a docker-compose YAML document. The naming convention will use the identifier
+        # of the app, cloud-top in this case, to build a directory path, then append "docker-compose.yaml" as the
+        # specification name. This field, if ommitted, will be automatically inferred. 
+        spec: ${catalyst_apps}/cloud-top/docker-compose.yaml
+        # The icon field specifies an image for the app. Like spec, it may be omitted. The inferred file name will
+        # be icon.png.
+        icon: ${catalyst_apps}/cloud-top/icon.png
+        # Description provides a textual description presented to users.
+        description: CloudTop is a cloud native, browser accessible Linux desktop.
+        # Details provides additional context.
+        details: A Ubuntu graphical desktop environment for experimenting with native applications in the cloud.
+        # Web accessible, application specific user documentation.
         docs: https://helxplatform.github.io/cloudtop-docs/
+        # Docker compose systems contain multiple containers.
+        # Something must tell the launcher which containers present external services.
+        # In a Kubernetes context, a service will be created to map these containers as external endpoints for the app.
         services:
+          # The key must be the name of a "service" within the docker-compose.yaml 
+          # and the port must be an exposed port of that container.
           cloudtop : 8080
-      jupyter-datascience:
+      jupyter-ds:
         name: Jupyter Data Science
-        spec: ${catalyst_apps}/jupyter-ds/docker-compose.yaml
-        icon: ${catalyst_apps}/jupyter-ds/icon.png
-        descripton: A Jupyter data science notebook.
+        description: Jupyter DataScience - A Jupyter notebook for exploring and visualizing data.
+        details: Includes R, Julia, and Python.
         docs: https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html#jupyter-datascience-notebook
         services:
-          jupyter-datascience : 8888
+          jupyter-ds : "8888"
       rstudio-server:
         name: R Studio Server
-        spec: ${catalyst_apps}/rstudio-server/docker-compose.yaml
-        icon: ${catalyst_apps}/rstudio-server/icon.png
-        descripton: R Studio Server is a web based notebook environment for R development.
+        description: R Studio Server is a web based notebook environment for R development.
+        details: Provides notebook computing experience with the R Studio development environment.
         docs: https://rstudio.com/products/rstudio/
         services:
           rstudio-server : 8787
   braini:
     extends:
       - common
+      - blackbalsam
     name: BRAIN-I App Registry
     apps:
       imagej:
         name: ImageJ Viewer
-        spec: ${catalyst_apps}/imagej/docker-compose.yaml
-        icon: ${catalyst_apps}/imagej/icon.png
-        descripton: ImageJ is a public domain Java image processing program inspired by NIH Image for the Macintosh.
+        description: Imagej is an image processor developed at NIH/LOCI.
+        details: can display, edit, analyze, process, save and print 8-bit, 16-bit and 32-bit images. It can read many image formats.
         docs: https://imagej.nih.gov/ij/
         services:
           imagej: 8080
       # TODO: separate napari and imagej, updating these appropriately.
       napari:
         name: Napari Image Viewer
-        spec: ${catalyst_apps}/imagej/docker-compose.yaml
-        icon: ${catalyst_apps}/imagej/icon.png
-        descripton: >
-          Napari is a fast, interactive, multi-dimensional image viewer for browsing,
-          annotating, and analyzing large multi-dimensional images.
+        description: Napari is a fast, interactive, multi-dimensional image viewer.
+        details: It enables browsing, annotating, and analyzing large multi-dimensional images.
         docs: https://napari.org/
         services:
           napari : 8080            
@@ -101,51 +125,45 @@ contexts:
     apps:
       dicom-viewer:
         name: DICOM Viewer
-        spec: ${catalyst_apps}/dicom-cloudtop/docker-compose.yaml
-        icon: ${catalyst_apps}/dicom-cloudtop/icon.png
-        descripton: ___________________________________________________
-        # TODO: Dicom specific docs
-        docs: https://helxplatform.github.io/cloudtop-docs/
+        description: OHIF is a framework for building medical imaging web applications.
+        details: Uses the OrthaNC DICOM service for indexing image data.
+        docs: https://ohif.org/
         services:
           cloudtop : 8080
-      # TODO: is this just jupyter-ds with access to autoencoder python modules? If so, delete.
+      # TODO: is this just jupyter-ds with access to autoencoder python modules? If so, delete this app.
       autoencoder-notebook:
         name: Autoencoder Notebook
-        spec: ${catalyst_apps}/helx-autoencoder/docker-compose.yaml
-        icon: ${catalyst_apps}/helx-autoencoder/icon.png
-        descripton: ___________________________________________________
+        description: need description.
+        details: need details.
         docs: http://we.need.autoencoder.docs/doc.html # TODO: need these
         services:
           jupyter : 8888          
       hail:
         name: Hail / Jupyter Workspace
-        spec: ${catalyst_apps}/hail/docker-compose.yaml
-        icon: ${catalyst_apps}/hail/icon.png
         description: A notebook computing interface to a large single node Hail genomics workspace.
-        docs: https://github.com/helxplatform/helx-hail # TODO: Better docs.
+        details: Insantiates Apache Spark on a single cloud node for small to medium scale exploration.
+        docs: https://github.com/helxplatform/helx-hail # TODO: Make proper docs.
         services:
           jupyter : 8888
   scidas:
     extends:
       - common
+      - blackbalsam
     name: SciDAS App Registry
     apps:
-      nextflow-api:
+      nextflow:
         name: Nextflow API
-        spec: ${catalyst_apps}/nextflow/docker-compose.yaml
-        icon: ${catalyst_apps}/nextflow/icon.png
-        descripton: A cloud native workspace for executing Nextflow workflows.
+        description: Nextflow - A scalable workflow computational pipeline workspace.
+        details: Orchestrate Docker containers into reproducible workflows.
         docs: https://github.com/SciDAS/nextflow-api
         services:
           nextflow : 8080
       gsforge:
         name: GSForge
-        spec: ${catalyst_apps}/gsforge/docker-compose.yaml
-        icon: ${catalyst_apps}/gsforge/icon.png
-        descripton: >
+        description: >
           GSForge is a Python package that assists researchers in the selection of gene sets with
-          potential association to an experimental condition or phenotypic trait, which offers new
-          potential hypotheses for gene-trait causality.
+          potential association to an experimental condition or phenotypic trait.
+        details: Offers new potential hypotheses for gene-trait causality.
         docs: https://systemsgenetics.github.io/GSForge/
         services:
           jupyter : 8888
@@ -156,10 +174,23 @@ contexts:
     apps:
       blackbalsam:
         name: Blackbalsam
-        spec: ${catalyst_apps}/blackbalsam/docker-compose.yaml
-        icon: ${catalyst_apps}/blackbalsam/icon.png
-        descripton: Blackbalsam is a notebook AI, visualization, and parallel computing environment.
+        description: An A.I., visualization, and parallel computing environment.
+        details: A.I.(Tensorflow,Keras,PyTorch,Gensim) Vis(Plotly,Bokeh,Seaborn) Compute(Spark).
         docs: https://github.com/stevencox/blackbalsam
+        serviceAccount: spark
         services:
-          jupyter : 8888
-                
+          blackbalsam : 8888
+      hail:
+        name: Hail
+        description: Hail is an open-source, general-purpose, Python-based data analysis library.
+        details: It provides additional data types and methods for working with genomic data.
+        docs: https://hail.is/
+        services:
+          hail : 8000
+      rshiny:
+        name: R Shiny
+        description: Shiny is an R package that makes it easy to build interactive web apps straight from R.
+        details: You can host standalone apps on a webpage or embed them in R Markdown documents or build dashboards.
+        docs: https://shiny.rstudio.com/
+        services:
+          rshiny : 3838

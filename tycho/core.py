@@ -50,7 +50,9 @@ class Tycho:
         return System.parse (
             config=self.config,
             name=request['name'],
+            username=request['username'],
             system=request['system'],
+            serviceAccount=request['serviceaccount'],
             env=request.get ('env', {}),
             services=request.get ('services', {}))
     

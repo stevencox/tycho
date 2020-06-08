@@ -53,8 +53,8 @@ class TemplateUtils:
     @staticmethod
     def render_text (template_text, context):
         """ Render the text of a template given a context. """
-        logger.debug (template_text)
-        logger.debug (context)
+        #logger.debug (template_text)
+        #logger.debug (context)
         template = Template (template_text)
         template.globals['now'] = datetime.datetime.utcnow
         text = template.render (**context)

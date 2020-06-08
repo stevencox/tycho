@@ -1,0 +1,80 @@
+Traceback (most recent call last):
+  File "/home/muralikarthik_k123/tycho/tycho/kube.py", line 172, in start
+    cluster_role_manifests = system.render(f"cluster/{system.system_name}/clusterrole.yaml")
+  File "/home/muralikarthik_k123/tycho/tycho/model.py", line 209, in render
+    template = generator.render (template, context=final_context)
+  File "/home/muralikarthik_k123/tycho/tycho/tycho_utils.py", line 45, in render
+    f"No template {template} found in default location or in {alternate_paths}")
+ValueError: No template cluster/imagej/clusterrole.yaml found in default location or in []
+Traceback (most recent call last):
+  File "/home/muralikarthik_k123/tycho/tycho/kube.py", line 172, in start
+    cluster_role_manifests = system.render(f"cluster/{system.system_name}/clusterrole.yaml")
+  File "/home/muralikarthik_k123/tycho/tycho/model.py", line 209, in render
+    template = generator.render (template, context=final_context)
+  File "/home/muralikarthik_k123/tycho/tycho/tycho_utils.py", line 45, in render
+    f"No template {template} found in default location or in {alternate_paths}")
+ValueError: No template cluster/cloud-top/clusterrole.yaml found in default location or in []
+Traceback (most recent call last):
+  File "/home/muralikarthik_k123/tycho/tycho/kube.py", line 172, in start
+    cluster_role_manifests = system.render(f"cluster/{system.system_name}/clusterrole.yaml")
+  File "/home/muralikarthik_k123/tycho/tycho/model.py", line 209, in render
+    template = generator.render (template, context=final_context)
+  File "/home/muralikarthik_k123/tycho/tycho/tycho_utils.py", line 45, in render
+    f"No template {template} found in default location or in {alternate_paths}")
+ValueError: No template cluster/cloud-top/clusterrole.yaml found in default location or in []
+Traceback (most recent call last):
+  File "/home/muralikarthik_k123/tycho/tycho/kube.py", line 172, in start
+    cluster_role_manifests = system.render(f"cluster/{system.system_name}/clusterrole.yaml")
+  File "/home/muralikarthik_k123/tycho/tycho/model.py", line 209, in render
+    template = generator.render (template, context=final_context)
+  File "/home/muralikarthik_k123/tycho/tycho/tycho_utils.py", line 45, in render
+    f"No template {template} found in default location or in {alternate_paths}")
+ValueError: No template cluster/cloud-top/clusterrole.yaml found in default location or in []
+Traceback (most recent call last):
+  File "/home/muralikarthik_k123/tycho/tycho/kube.py", line 172, in start
+    cluster_role_manifests = system.render(f"cluster/{system.system_name}/clusterrole.yaml")
+  File "/home/muralikarthik_k123/tycho/tycho/model.py", line 209, in render
+    template = generator.render (template, context=final_context)
+  File "/home/muralikarthik_k123/tycho/tycho/tycho_utils.py", line 45, in render
+    f"No template {template} found in default location or in {alternate_paths}")
+ValueError: No template cluster/cloud-top/clusterrole.yaml found in default location or in []
+Traceback (most recent call last):
+  File "/home/muralikarthik_k123/tycho/tycho/kube.py", line 173, in start
+    cluster_role_manifests = system.render(f"cluster/{system.system_name}/clusterrole.yaml")
+  File "/home/muralikarthik_k123/tycho/tycho/model.py", line 209, in render
+    template = generator.render (template, context=final_context)
+  File "/home/muralikarthik_k123/tycho/tycho/tycho_utils.py", line 45, in render
+    f"No template {template} found in default location or in {alternate_paths}")
+ValueError: No template cluster/cloud-top/clusterrole.yaml found in default location or in []
+Traceback (most recent call last):
+  File "/home/muralikarthik_k123/tycho/tycho/kube.py", line 175, in start
+    cluster_role_manifests = system.render(f"cluster/{system.system_name}/clusterrole.yaml")
+  File "/home/muralikarthik_k123/tycho/tycho/model.py", line 210, in render
+    template = generator.render (template, context=final_context)
+  File "/home/muralikarthik_k123/tycho/tycho/tycho_utils.py", line 45, in render
+    f"No template {template} found in default location or in {alternate_paths}")
+ValueError: No template cluster/cloud-top/clusterrole.yaml found in default location or in []
+Traceback (most recent call last):
+  File "/home/muralikarthik_k123/tycho/tycho/kube.py", line 176, in start
+    cluster_role_manifests = system.render(f"cluster/{system.system_name}/clusterrole.yaml")
+  File "/home/muralikarthik_k123/tycho/tycho/model.py", line 211, in render
+    template = generator.render (template, context=final_context)
+  File "/home/muralikarthik_k123/tycho/tycho/tycho_utils.py", line 45, in render
+    f"No template {template} found in default location or in {alternate_paths}")
+ValueError: No template cluster/cloud-top/clusterrole.yaml found in default location or in []
+Traceback (most recent call last):
+  File "/home/muralikarthik_k123/tycho/tycho/kube.py", line 177, in start
+    cluster_role_manifests = system.render(f"cluster/{system.system_name}/clusterrole.yaml")
+  File "/home/muralikarthik_k123/tycho/tycho/model.py", line 211, in render
+    template = generator.render (template, context=final_context)
+  File "/home/muralikarthik_k123/tycho/tycho/tycho_utils.py", line 45, in render
+    f"No template {template} found in default location or in {alternate_paths}")
+ValueError: No template cluster/cloud-top/clusterrole.yaml found in default location or in []
+Traceback (most recent call last):
+  File "/home/muralikarthik_k123/tycho/tycho/kube.py", line 178, in start
+    cluster_role_manifests = system.render(f"cluster/{system.system_name}/clusterrole.yaml")
+  File "/home/muralikarthik_k123/tycho/tycho/model.py", line 211, in render
+    template = generator.render (template, context=final_context)
+  File "/home/muralikarthik_k123/tycho/tycho/tycho_utils.py", line 45, in render
+    f"No template {template} found in default location or in {alternate_paths}")
+ValueError: No template cluster/cloud-top/clusterrole.yaml found in default location or in []

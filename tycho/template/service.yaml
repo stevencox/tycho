@@ -4,12 +4,41 @@ kind: Service
 metadata:
   labels:
     name: {{ service.name }}
+    username: {{ system.username }}
     executor: tycho
+    tycho-app: {{ system.name }}
     tycho-guid: {{ system.identifier }}
   name: {{ service.name }}
+  {% if system.amb %}
+  annotations: 
+    getambassador.io/config: |
+      ---
+      apiVersion: ambassador/v1
+      kind:  Mapping
+      name: {{system.name}}-mapping
+      #host: helx-app.amb-helx-dev.renci.org
+      prefix: /private/{{system.system_name}}/{{system.username}}/{{system.identifier}}/
+      service: {{system.name}}:{{system.system_port}}
+      {% if system.dev_phase != 'dev' %}
+      headers:
+          REMOTE_USER: {{system.username}}
+      {% endif %}
+      {% if system.system_name == 'jupyter-ds' or system.system_name == 'blackbalsam'%}
+      rewrite: /private/{{system.system_name}}/{{system.username}}/{{system.identifier}}/
+      {% endif %}
+      bypass_auth: true
+      timeout_ms: 300000
+      idle_timeout_ms: 500000
+      connect_timeout_ms: 500000
+      use_websocket: true
+   {% endif %} 
 resourceversion: v1
 spec:
+  {% if system.amb %}
+  type: ClusterIP
+  {% else %}
   type: LoadBalancer
+  {% endif %}
   selector:
     name: {{ system.name }}
   ports:

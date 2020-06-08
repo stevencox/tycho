@@ -6,6 +6,7 @@ kind: PersistentVolumeClaim
 metadata:
   labels:
     name: {{ system.name }}
+    username: {{ system.username }}
     executor: tycho
     tycho-guid: {{ system.identifier }}
   name: {{ volume["claim_name"] }}

@@ -57,18 +57,16 @@ def __test_context ():
     failed_total = 0
     for product in [ "braini", "catalyst", "scidas", "blackbalsam" ]:
         tc = TychoContext (product=product)
-        apps = list(tc.apps.items ())
         successful_count = 0
         failed_count = 0
-        for app_id, app in apps:
+        for app_id, app in tc.apps.items ():
             try:
                 if app_id in seen:
                     logger.debug (f"-- skipping seen app {app_id}")
                     continue
                 seen [app_id] = app_id
                 system = tc.start (principal=principal, app_id=app_id)
-                #logger.debug (f"{system}")
-                logger.info (f"  --https://<UX_URL>/private/{app_id}/{principal.username}/{system.identifier}/")
+                logger.info (f"  -- https://<UX_URL>/private/{app_id}/{principal.username}/{system.identifier}/")
                 successful_count = successful_count + 1
             except Exception as e:
                 logger.debug (f"App {app_id} failed. {e}")

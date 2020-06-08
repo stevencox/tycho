@@ -10,7 +10,7 @@ import sys
 import traceback
 import yaml
 from flasgger import Swagger
-from flask import Flask, jsonify, g, Response, request
+from flask import Flask, jsonify, g, Response, request, Request
 from flask_restful import Api, Resource
 from flask_cors import CORS
 from tycho.core import Tycho
@@ -50,9 +50,17 @@ app.config['SWAGGER'] = {
 swagger = Swagger(app, template=template)
 
 backplane = None
+_tycho = Tycho(backplane=backplane)
+
 def tycho ():
-    if not hasattr(g, 'tycho'):
+    return _tycho
+#    if not hasattr(g, 'tycho'):
+    if not 'tycho' in g: #hasattr(g, 'tycho'):
+        logger.debug (f"-----------> {dir(g)}")
+        logger.debug (f"--------------------------------> creating tycho object.")
         g.tycho = Tycho (backplane=backplane)
+        logger.debug (f"-----------> {dir(g)}")
+        logger.debug (f"--------------------------------> creating tycho object.")
     return g.tycho
     
 class TychoResource(Resource):
@@ -82,9 +90,12 @@ class TychoResource(Resource):
             traceback.print_exc ()
             status='error'
             exc_type, exc_value, exc_traceback = sys.exc_info()
+            message = f"{exception.args[0]} {''.join (exception.args[1])}" \
+                if len(exception.args) == 2 else exception.args[0]
             result = {
-                'error' : repr(traceback.format_exception(exc_type, exc_value, exc_traceback))
+                'error' : message #str(exception) #repr(traceback.format_exception(exc_type, exc_value, exc_traceback))
             }
+            print (json.dumps(result, indent=2))
         return {
             'status'  : status,
             'result'  : result,
@@ -175,7 +186,7 @@ class DeleteSystemResource(TychoResource):
         response = {}
         system_name=None
         try:
-            logging.debug (f"delete-request: {json.dumps(request.json, indent=2)}")
+            logger.debug (f"delete-request: {json.dumps(request.json, indent=2)}")
             self.validate (request, component="DeleteRequest")
             system_name = request.json['name']
             response = self.create_response (
@@ -223,8 +234,9 @@ class StatusSystemResource(TychoResource):
             logging.debug (f"list-request: {json.dumps(request.json, indent=2)}")
             self.validate (request, component="StatusRequest") 
             system_name = request.json.get('name', None)
+            system_username = request.json.get('username', None)
             response = self.create_response (
-                result=tycho().get_compute().status (system_name),
+                result=tycho().get_compute().status (system_name, system_username),
                 message=f"Get status for system {system_name}")
         except Exception as e:
             response = self.create_response (
@@ -256,5 +268,4 @@ if __name__ == "__main__":
    if args.debug:
        debug = True
        logging.basicConfig(level=logging.DEBUG)
-   app.run(debug=args.debug)
-   app.run(host='0.0.0.0', port=args.port, debug=True, threaded=True)
+   app.run(host='0.0.0.0', port=args.port, threaded=True, debug=args.debug)

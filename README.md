@@ -1,5 +1,5 @@
 # Tycho
-[![Build Status](https://travis-ci.org/helxplatform/tycho.svg?branch=master)](https://travis-ci.org/heliumplusdatastage/tycho)
+[![Build Status](https://travis-ci.org/heliumplusdatastage/tycho.svg?branch=development)](https://travis-ci.org/heliumplusdatastage/tycho)
 
 Tycho is an API, compiler, and executor for cloud native distributed systems.
 
@@ -24,6 +24,13 @@ This work relies on these foundations:
 * **[Docker-compose](https://docs.docker.com/compose/)**: Syntax and tool chain for executing distributed systems of containers.
 * **Docker Swarm**: Docker only container orchestration platform with minimal adoption.
 
+## Development environment
+1. git clone https://github.com/helxplatform/tycho.git --branch branch_name
+2. python3 -m venv /path/to/venv - could be any path
+3. source /path/to/venv/bin/activate 
+4. pip install -r /tycho/requirements.txt
+5. export PYTHONPATH={PYTHONPATH}:/path/to/tycho/
+5. python /tycho/tycho/api.py -d
 
 ## Quick Start
 samples/jupyter-ds/docker-compose.yaml:

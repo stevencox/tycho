@@ -5,6 +5,7 @@ import json
 import os
 import uuid
 import yaml
+import traceback
 from tycho.tycho_utils import TemplateUtils
 
 logger = logging.getLogger (__name__)
@@ -32,69 +33,31 @@ class Limits:
         return f"cpus:{self.cpus} gpus:{self.gpus} mem:{self.memory}"
 
 class Volumes:
-    def __init__(self, name, name_noiden, identifier, containers):
-        self.name = name
-        self.name_noiden = name_noiden
-        self.identifier = identifier
+    def __init__(self, id, containers):
+        self.id = id
         self.containers = containers
         self.volumes = []
+        self.pvcs = []
+
+    def volume(self, container_name, pvc_name, volume_name, path=None, subpath=None):
+        self.volumes.append({"container_name": container_name, "pvc_name": pvc_name, "volume_name": volume_name, "path": path, "subpath": subpath})
 
     def process_volumes(self):
-        nfs_other_count = 0
-        try:
-            for i in range(0, len(self.containers)):
-              for index, volume in enumerate(self.containers[i]['volumes']):
-                container_name = self.containers[i]['name']
-                volume_name = f"{container_name}-{self.identifier}-{index}"
-                claim_name = f"pvc-for-{volume_name}"
-                try:
-                  if 'gpus' in self.containers[0]['limits'].keys():
-                    disk_name = f"{container_name}-{index}-gpu-disk"
-                  else:
-                    disk_name = f"{container_name}-{index}-default-disk"
-                except Exception as e:
-                  print(f"resource limits have to be specified: {e}")
-                mount_path = volume.split(":")[1]
-                host_path = volume.split(":")[0]
-                requires_nfs = "no"
-                if "TYCHO_ON_MINIKUBE" in os.environ:
-                    if os.environ['TYCHO_ON_MINIKUBE'] == "True":
-                        if host_path == "TYCHO_NFS":
-                            continue
-                        else:
-                            self.volumes.append({
-                                "container_name": container_name,
-                                "volume_name": volume_name,
-                                "claim_name": claim_name, 
-                                "mount_path": mount_path,
-                                "host_path": host_path
-                            })
-                else:
-                    try:
-                       if host_path == "TYCHO_NFS":
-                          host_path = "nfs"
-                          requires_nfs = "yes"
-                       if host_path.split("/")[0] == "TYCHO_NFS":
-                          nfs_other_count += 1
-                          host_path = host_path.split('/')[1]
-                          volume_name = host_path
-                          if nfs_other_count > 1:
-                            host_path = "NA"
-                          requires_nfs = "yes"
-                    except Exception as e:
-                       print(f"Requires NFS ----> {requires_nfs}") 
-                    self.volumes.append({
-                        "requires_nfs": requires_nfs,
-                        "container_name": container_name,
-                        "volume_name": volume_name,
-                        "claim_name": host_path, 
-                        "disk_name": disk_name,
-                        "mount_path": mount_path,
-                    })
-            return self.volumes
-        except Exception as e:
-            print(f"VOLUMES----> Do not exist {e}")
-    
+       for index, container in enumerate(self.containers):
+           for index, volume in enumerate(container["volumes"]):
+               parts = volume.split(":")
+               if parts[0] == "pvc":
+                   volume_name = parts[1].split("/")[2:3][0]
+                   pvc_name = volume_name if volume_name not in self.pvcs else None
+                   self.pvcs.append(volume_name)
+                   path = parts[2] if len(parts) is 3 else None
+                   subpath = "/".join(parts[1].split("/")[3:]) if len(parts) is 3 else None
+                   self.volume(container['name'], pvc_name, volume_name, path, subpath)
+               else:
+                   logger.debug(f"Only NFS PVCs are supported. Specify pvc, to mount a pvc storage.")
+                   raise Exception(f"Cannot create system.")
+       return self.volumes
+
 class Container:
     """ Invocation of an image in a specific infastructural context. """
     def __init__(self,
@@ -141,7 +104,6 @@ class Container:
         self.env = \
                    list(map(lambda v : list(map(lambda r: str(r), v.split('='))), env)) \
                    if env else []
-                                                                             
         self.volumes = volumes
 
     def __repr__(self):
@@ -149,7 +111,7 @@ class Container:
 
 class System:
     """ Distributed system of interacting containerized software. """
-    def __init__(self, config, name, containers, services={}):
+    def __init__(self, config, name, username, serviceAccount, containers, services={}):
         """ Construct a new abstract model of a system given a name and set of containers.
         
             Serves as context for the generation of compute cluster specific artifacts.
@@ -164,6 +126,9 @@ class System:
         self.config = config
         self.identifier = uuid.uuid4().hex
         self.system_name = name
+        self.amb = False
+        self.dev_phase = os.getenv('DEV_PHASE', "prod")
+        print(f"DEV PHASE ENVIRON----------------> {self.dev_phase}")
         self.name = f"{name}-{self.identifier}"
         assert self.name is not None, "System name is required."
         containers_exist = len(containers) > 0
@@ -180,8 +145,13 @@ class System:
         for name, service in self.services.items ():
             service.name = f"{name}-{self.identifier}"
             service.name_noid =  name
-        self.volumes = Volumes(self.name, name, self.identifier, containers).process_volumes()    
+        self.volumes = Volumes(self.identifier, containers).process_volumes()
         self.source_text = None
+        self.system_port = None
+        self.username = username
+        self.annotations = {}
+        self.namespace = "default"
+        self.serviceaccount = serviceAccount
 
     def get_namespace(self, namespace="default"):
         try:
@@ -210,7 +180,7 @@ class System:
         return template
 
     @staticmethod
-    def parse (config, name, system, env={}, services={}):
+    def parse (config, name, username, system, serviceAccount, env={}, services={}):
         """ Construct a system model based on the input request.
 
             Parses a docker-compose spec into a system specification.
@@ -239,6 +209,18 @@ class System:
             ports = []
             expose = []
             entrypoint = spec.get ('entrypoint', '')
+            """ Adding default volumes to the system containers """
+            print(f"Spec: {type(spec)}")
+            if spec.get('volumes') == None:
+                spec.update({'volumes': []})
+            for volume in config.get('tycho')['compute']['system']['volumes']:
+                volumeSub = volume.replace('username', username) if 'username' in volume else None
+                if spec.get('volumes') == None:
+                    spec.update({'volumes': []})
+                if volumeSub:
+                    spec.get('volumes', []).append(volumeSub)
+                else:
+                    spec.get('volumes', []).append(volume)
             if isinstance(entrypoint, str):
                 entrypoint = entrypoint.split ()
             for p in spec.get('ports', []):
@@ -269,6 +251,8 @@ class System:
         system_specification = {
             "config"     : config,
             "name"       : name,
+            "username"   : username,
+            "serviceAccount": serviceAccount,
             "containers" : containers
         }
         system_specification['services'] = services

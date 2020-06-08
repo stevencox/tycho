@@ -2,6 +2,7 @@ kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: tycho-api-access
+  #namespace: helx
 rules:
 - apiGroups:
   - "*"
@@ -29,7 +30,6 @@ rules:
   - replicasets
   verbs:
   - '*' 
-
 - apiGroups:
   - networking.k8s.io
   resources:
@@ -41,22 +41,25 @@ rules:
   - deletecollection
   - patch
   - update
-- apiGroups:
-  - rbac.authorization.k8s.io/v1
-  resources:
-  - clusterrole
-  - clusterrolebinding
-  verbs:
-  - create
-  - delete
-  - deletecollection
-  - patch
-  - update
+#- apiGroups:
+#  - rbac.authorization.k8s.io/v1
+#  resources:
+#  - persistentvolumeclaims
+#  - clusterrole
+#  - clusterrolebinding
+#  verbs:
+#  - list
+#  - create
+#  - delete
+#  - deletecollection
+#  - patch
+#  - update
 ---
-kind: ClusterRoleBinding
+kind: RoleBinding
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: tycho-api-access
+  namespace: default
 subjects:
 - kind: ServiceAccount
   name: default

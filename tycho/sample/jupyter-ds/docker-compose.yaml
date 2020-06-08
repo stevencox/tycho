@@ -5,10 +5,12 @@ services:
   jupyter-ds:
     image: jupyter/datascience-notebook
     entrypoint: start.sh jupyter lab --LabApp.token=
+    env:
+      - AMB=False
     ports:
-      - $HOST_PORT:8888
+      - 8888:8888
     volumes:
-      - $LOCAL_STORE:/mydata 
+      - pvc://cloud-top/projects:/work/data 
 #      - ./:/mydata1
 #      - ./home:/mydata2
     deploy:

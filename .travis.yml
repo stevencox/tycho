@@ -23,17 +23,19 @@ env:
     - MINIKUBE_WANTUPDATENOTIFICATION=false
     - MINIKUBE_WANTREPORTERRORPROMPT=false
     - MINIKUBE_HOME=$HOME
+    - MINIKUBE_VERSION=v1.9.2
+    - KUBERNETES_VERSION=v1.15.12
     - CHANGE_MINIKUBE_NONE_USER=true
     - KUBECONFIG=$HOME/.kube/config
 
 before_script:
 # Download kubectl, which is a requirement for using minikube.
-- curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/v1.15.0/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
+- curl -Lo kubectl https://storage.googleapis.com/kubernetes-release/release/${KUBERNETES_VERSION}/bin/linux/amd64/kubectl && chmod +x kubectl && sudo mv kubectl /usr/local/bin/
 # Download minikube.
-- curl -Lo minikube https://storage.googleapis.com/minikube/releases/v1.2.0/minikube-linux-amd64 && chmod +x minikube && sudo mv minikube /usr/local/bin/
+- curl -Lo minikube https://storage.googleapis.com/minikube/releases/${MINIKUBE_VERSION}/minikube-linux-amd64 && chmod +x minikube && sudo mv minikube /usr/local/bin/
 - mkdir -p $HOME/.kube $HOME/.minikube
 - touch $KUBECONFIG
-- sudo minikube start --extra-config kubeadm.ignore-preflight-errors=NumCPU --vm-driver=none --kubernetes-version=v1.15.0 
+- sudo minikube start --extra-config kubeadm.ignore-preflight-errors=NumCPU --vm-driver=none --kubernetes-version=${KUBERNETES_VERSION} 
 - "sudo chown -R travis: /home/travis/.minikube/"
 
 script:
