@@ -82,7 +82,7 @@ contexts:
         services:
           # The key must be the name of a "service" within the docker-compose.yaml 
           # and the port must be an exposed port of that container.
-          cloudtop : 8080
+          cloud-top : 8080
       jupyter-ds:
         name: Jupyter Data Science
         description: Jupyter DataScience - A Jupyter notebook for exploring and visualizing data.
@@ -123,13 +123,13 @@ contexts:
       - common
     name: BioData Catalyst App Registry
     apps:
-      dicom-viewer:
+      dicom-cloudtop:
         name: DICOM Viewer
         description: OHIF is a framework for building medical imaging web applications.
         details: Uses the OrthaNC DICOM service for indexing image data.
         docs: https://ohif.org/
         services:
-          cloudtop : 8080
+          dicom-cloudtop : 8080
       # TODO: is this just jupyter-ds with access to autoencoder python modules? If so, delete this app.
       autoencoder-notebook:
         name: Autoencoder Notebook

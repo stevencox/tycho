@@ -7,6 +7,7 @@ import subprocess
 import sys
 import traceback
 import yaml
+import copy
 from time import sleep
 from kubernetes import client as k8s_client, config as k8s_config
 from tycho.compute import Compute
@@ -109,8 +110,11 @@ class KubernetesCompute(Compute):
         try:
             """ Check volumes and remove them from the system. """
             volumesNA = self.check_volumes(system.volumes, namespace)
-            for _ in range(0, len(volumesNA)):
-                system.volumes.pop(0)
+            systemVolumesCopy = []
+            for index, value in enumerate(system.volumes):
+                if index not in volumesNA:
+                    systemVolumesCopy.append(value)
+            system.volumes = systemVolumesCopy
             """ Check the status of ambassador """
             amb_status = self.is_ambassador_context(namespace)
             if amb_status:
