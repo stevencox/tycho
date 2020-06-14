@@ -8,6 +8,7 @@ import sys
 import traceback
 import yaml
 import copy
+import base64
 from time import sleep
 from kubernetes import client as k8s_client, config as k8s_config
 from tycho.compute import Compute
@@ -135,10 +136,11 @@ class KubernetesCompute(Compute):
             #        api_response = self.api.create_namespace(body=ns_manifest)
 
             try:
-                api_response = self.api.list_namespaced_config_map(namespace=namespace)
+                api_response = self.api.list_namespaced_secret(namespace=namespace)
                 for item in api_response.items:
                     if item.metadata.name == f"{system.system_name}-env":
                         for key, value in item.data.items():
+                            value = str(base64.b64decode(value), 'utf-8')
                             for container in system.containers:
                                 container.env.append([key, value])
                         break
