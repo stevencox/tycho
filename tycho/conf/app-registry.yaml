@@ -194,3 +194,8 @@ contexts:
         docs: https://shiny.rstudio.com/
         services:
           rshiny : 3838
+  restartr:
+    extends:
+      - common
+      - blackbalsam
+    name: UNC Restarting Research
