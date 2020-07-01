@@ -12,6 +12,7 @@ def test_system_model (request):
         "config"     : Config (),
         "name"       : "test",
         "username"   : "renci",
+        "serviceAccount": "default",
         "containers" : [
             {
                 "name"  : "nginx-container",
@@ -42,7 +43,8 @@ def test_system_parser (request):
             config = Config (),
             name   = "jupyter-ds",
             username = "renci",
-            system = structure)
+            system = structure,
+            serviceAccount = "default")
 
         print (f"{system}")
         assert system.name.startswith ('jupyter-ds')
