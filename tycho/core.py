@@ -52,7 +52,7 @@ class Tycho:
             name=request['name'],
             username=request['username'],
             system=request['system'],
-            serviceAccount=request['serviceaccount'],
+            serviceAccount=request.get('serviceaccount', 'default'),
             env=request.get ('env', {}),
             services=request.get ('services', {}))
     
