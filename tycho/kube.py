@@ -437,7 +437,6 @@ class KubernetesCompute(Compute):
             label_selector=label)
         #logger.trace (f"-- deployment list: {response}")
         if response is not None:
-            print(f"RESPONSE ITEMS:----------------> {response.items}")
             for item in response.items:
                 
                 """ Collect pod metrics for this deployment. """
