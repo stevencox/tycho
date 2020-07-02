@@ -27,6 +27,7 @@ env:
     - KUBERNETES_VERSION=v1.15.12
     - CHANGE_MINIKUBE_NONE_USER=true
     - KUBECONFIG=$HOME/.kube/config
+    - DEV_PHASE=test  
 
 before_script:
 # Download kubectl, which is a requirement for using minikube.

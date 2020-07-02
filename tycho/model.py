@@ -213,14 +213,18 @@ class System:
             print(f"Spec: {type(spec)}")
             if spec.get('volumes') == None:
                 spec.update({'volumes': []})
-            for volume in config.get('tycho')['compute']['system']['volumes']:
-                volumeSub = volume.replace('username', username) if 'username' in volume else None
-                if spec.get('volumes') == None:
-                    spec.update({'volumes': []})
-                if volumeSub:
-                    spec.get('volumes', []).append(volumeSub)
-                else:
-                    spec.get('volumes', []).append(volume)
+            if os.environ.get("DEV_PHASE", "prod") != "test":    
+                try:
+                    for volume in config.get('tycho')['compute']['system']['volumes']:
+                        volumeSub = volume.replace('username', username) if 'username' in volume else None
+                        if spec.get('volumes') == None:
+                            spec.update({'volumes': []})
+                        if volumeSub:
+                            spec.get('volumes', []).append(volumeSub)
+                        else:
+                            spec.get('volumes', []).append(volume)
+                except Exception as e:
+                    logger.info("No volumes specified in the configuration.")
             if isinstance(entrypoint, str):
                 entrypoint = entrypoint.split ()
             for p in spec.get('ports', []):
