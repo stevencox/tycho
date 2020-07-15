@@ -23,7 +23,7 @@ metadata:
       headers:
           REMOTE_USER: {{system.username}}
       {% endif %}
-      {% if system.system_name == 'jupyter-ds' or system.system_name == 'blackbalsam'%}
+      {% if system.system_name == 'jupyter-ds' or system.system_name == 'blackbalsam' or system.system_name == 'hail' %}
       rewrite: /private/{{system.system_name}}/{{system.username}}/{{system.identifier}}/
       {% endif %}
       bypass_auth: true
