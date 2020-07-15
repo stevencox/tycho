@@ -90,13 +90,13 @@ contexts:
         docs: https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html#jupyter-datascience-notebook
         services:
           jupyter-ds : "8888"
-      rstudio-server:
-        name: R Studio Server
-        description: R Studio Server is a web based notebook environment for R development.
-        details: Provides notebook computing experience with the R Studio development environment.
-        docs: https://rstudio.com/products/rstudio/
-        services:
-          rstudio-server : 8787
+      #rstudio-server:
+      #  name: R Studio Server
+      #  description: R Studio Server is a web based notebook environment for R development.
+      #  details: Provides notebook computing experience with the R Studio development environment.
+      #  docs: https://rstudio.com/products/rstudio/
+      #  services:
+      #    rstudio-server : 8787
   braini:
     extends:
       - common
@@ -144,7 +144,7 @@ contexts:
         details: Insantiates Apache Spark on a single cloud node for small to medium scale exploration.
         docs: https://github.com/helxplatform/helx-hail # TODO: Make proper docs.
         services:
-          jupyter : 8888
+          hail : 8000
   scidas:
     extends:
       - common
@@ -187,13 +187,13 @@ contexts:
         docs: https://hail.is/
         services:
           hail : 8000
-      rshiny:
-        name: R Shiny
-        description: Shiny is an R package that makes it easy to build interactive web apps straight from R.
-        details: You can host standalone apps on a webpage or embed them in R Markdown documents or build dashboards.
-        docs: https://shiny.rstudio.com/
-        services:
-          rshiny : 3838
+      #rshiny:
+      #  name: R Shiny
+      #  description: Shiny is an R package that makes it easy to build interactive web apps straight from R.
+      #  details: You can host standalone apps on a webpage or embed them in R Markdown documents or build dashboards.
+      #  docs: https://shiny.rstudio.com/
+      #  services:
+      #    rshiny : 3838
   restartr:
     extends:
       - common
