@@ -128,7 +128,6 @@ class System:
         self.system_name = name
         self.amb = False
         self.dev_phase = os.getenv('DEV_PHASE', "prod")
-        print(f"DEV PHASE ENVIRON----------------> {self.dev_phase}")
         self.name = f"{name}-{self.identifier}"
         assert self.name is not None, "System name is required."
         containers_exist = len(containers) > 0
@@ -213,7 +212,8 @@ class System:
             print(f"Spec: {type(spec)}")
             if spec.get('volumes') == None:
                 spec.update({'volumes': []})
-            if os.environ.get("DEV_PHASE", "prod") != "test":    
+            print(f"DEV PHASE =====================> {os.environ['DEV_PHASE']}")
+            if os.environ.get("DEV_PHASE", "prod") != "test" and os.environ.get("CREATE_HOME_DIRS", "TRUE") != "FALSE":
                 try:
                     for volume in config.get('tycho')['compute']['system']['volumes']:
                         volumeSub = volume.replace('username', username) if 'username' in volume else None
@@ -225,6 +225,7 @@ class System:
                             spec.get('volumes', []).append(volume)
                 except Exception as e:
                     logger.info("No volumes specified in the configuration.")
+            """ Adding entrypoint to container if exists """
             if isinstance(entrypoint, str):
                 entrypoint = entrypoint.split ()
             for p in spec.get('ports', []):
