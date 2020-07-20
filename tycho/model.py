@@ -212,7 +212,6 @@ class System:
             print(f"Spec: {type(spec)}")
             if spec.get('volumes') == None:
                 spec.update({'volumes': []})
-            print(f"DEV PHASE =====================> {os.environ['DEV_PHASE']}")
             if os.environ.get("DEV_PHASE", "prod") != "test" and os.environ.get("CREATE_HOME_DIRS", "TRUE") != "FALSE":
                 try:
                     for volume in config.get('tycho')['compute']['system']['volumes']:
