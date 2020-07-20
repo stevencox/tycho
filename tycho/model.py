@@ -212,7 +212,8 @@ class System:
             print(f"Spec: {type(spec)}")
             if spec.get('volumes') == None:
                 spec.update({'volumes': []})
-            if os.environ.get("DEV_PHASE", "prod") != "test" and os.environ.get("CREATE_HOME_DIRS", "TRUE") != "FALSE":
+            print(f"CREATE HOME DIRS ENV ============================> {os.environ.get('CREATE_HOME_DIRS', True)}")
+            if os.environ.get("DEV_PHASE", "prod") != "test" and os.environ.get("CREATE_HOME_DIRS", True) != False:
                 try:
                     for volume in config.get('tycho')['compute']['system']['volumes']:
                         volumeSub = volume.replace('username', username) if 'username' in volume else None
