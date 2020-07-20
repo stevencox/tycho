@@ -209,20 +209,20 @@ class System:
             expose = []
             entrypoint = spec.get ('entrypoint', '')
             """ Adding default volumes to the system containers """
-            print(f"Spec: {type(spec)}")
             if spec.get('volumes') == None:
                 spec.update({'volumes': []})
-            print(f"CREATE HOME DIRS ENV ============================> {os.environ.get('CREATE_HOME_DIRS', True)}")
-            if os.environ.get("DEV_PHASE", "prod") != "test" and os.environ.get("CREATE_HOME_DIRS", True) != False:
+            rep = {
+                'stdnfs_pvc': os.environ.get('STDNFS_PVC', 'stdnfs'), 
+                'username': username
+            }
+            if os.environ.get("DEV_PHASE", "prod") != "test":
                 try:
                     for volume in config.get('tycho')['compute']['system']['volumes']:
-                        volumeSub = volume.replace('username', username) if 'username' in volume else None
-                        if spec.get('volumes') == None:
-                            spec.update({'volumes': []})
-                        if volumeSub:
-                            spec.get('volumes', []).append(volumeSub)
-                        else:
-                            spec.get('volumes', []).append(volume)
+                        if os.environ.get('CREATE_HOME_DIRS', "True") == "False" and "username" in volume:
+                            continue
+                        for k, v in rep.items():
+                            volume = volume.replace(k, v)
+                        spec.get('volumes', []).append(volume)
                 except Exception as e:
                     logger.info("No volumes specified in the configuration.")
             """ Adding entrypoint to container if exists """

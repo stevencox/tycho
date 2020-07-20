@@ -16,8 +16,8 @@ tycho:
               cpus: 0.2
               memory: 50MB
       volumes:
-        - pvc://stdnfs/shared:/home/shared
-        - pvc://stdnfs/username:/home/username  
+        - pvc://stdnfs_pvc/shared:/home/shared
+        - pvc://stdnfs_pvc/username:/home/username  
           
   policy:
     network:
