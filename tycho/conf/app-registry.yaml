@@ -105,6 +105,7 @@ contexts:
   catalyst:
     extends:
       - common
+      - blackbalsam
     name: BioData Catalyst App Registry
     apps:
       dicom-cloudtop:
@@ -115,13 +116,13 @@ contexts:
         services:
           dicom-cloudtop : 8080
       # TODO: is this just jupyter-ds with access to autoencoder python modules? If so, delete this app.
-      autoencoder-notebook:
-        name: Autoencoder Notebook
-        description: need description.
-        details: need details.
-        docs: http://we.need.autoencoder.docs/doc.html # TODO: need these
-        services:
-          jupyter : 8888          
+      #autoencoder-notebook:
+      #  name: Autoencoder Notebook
+      #  description: need description.
+      #  details: need details.
+      #  docs: http://we.need.autoencoder.docs/doc.html # TODO: need these
+      #  services:
+      #    jupyter : 8888          
       hail:
         name: Hail / Jupyter Workspace
         description: A notebook computing interface to a large single node Hail genomics workspace.
