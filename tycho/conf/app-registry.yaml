@@ -160,7 +160,7 @@ contexts:
         details: Offers new potential hypotheses for gene-trait causality.
         docs: https://systemsgenetics.github.io/GSForge/
         services:
-          jupyter : 8888
+          gsforge : 8888
       cloud-top:
         name: Cloud Top
         spec: ${catalyst_apps}/cloud-top/docker-compose.yaml
