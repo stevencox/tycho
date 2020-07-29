@@ -200,5 +200,13 @@ contexts:
   restartr:
     extends:
       - common
-      - blackbalsam
+    apps:
+      blackbalsam-clinical:
+        name: Blackbalsam
+        description: An A.I., visualization, and parallel computing environment.
+        details: A.I.(Tensorflow,Keras,PyTorch,Gensim) Vis(Plotly,Bokeh,Seaborn) Compute(Spark).
+        docs: https://github.com/stevencox/blackbalsam
+        serviceAccount: spark
+        services:
+          blackbalsam-clinical : 8888
     name: UNC Restarting Research
