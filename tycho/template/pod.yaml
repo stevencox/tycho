@@ -32,6 +32,10 @@ spec:
     effect: "NoSchedule"
   {% endif %}
   {% endif %}
+  {% if container.security_context %}
+  securityContext:
+    fsGroup: {{ container.security_context.fsGroup }}
+  {% endif %}
 {% endfor %}
 #  initContainers:
 #{% for container in system.containers %}
@@ -55,6 +59,10 @@ spec:
 {% for container in system.containers %}    
   - name: {{ container.name }}
     image: {{ container.image }}
+    {% if container.security_context %}
+    securityContext:
+      runAsUser: {{ container.security_context.runAsUser }}
+    {% endif %}
 {% if container.command %}
     command: {{ container.command }}
 {% endif %}

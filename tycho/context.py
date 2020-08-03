@@ -52,6 +52,13 @@ class TychoContext:
             registry = yaml.safe_load (stream)
         return registry
 
+    def addConfImpl(self, apps, context):
+        for key, value in context.items():
+            if key in apps.keys():
+                apps[key] = {**apps[key], **value}
+                self.addConfImpl(apps, value)
+        return apps
+
     def inherit (self, contexts, context, apps={}):
         for base in context.get ("extends", []):
             self.inherit (contexts, contexts[base], apps)
@@ -103,6 +110,9 @@ class TychoContext:
             logger.debug (f"-- spec: {app['spec']}")
             logger.debug (f"-- icon: {app['icon']}")
         logger.debug (f"-- product {self.product} resolution => apps: {apps.keys()}")
+        apps = self.addConfImpl(apps, context)
+        for app, value in apps.items():
+            print(f"app: ", value)
         return apps
     
     def get_spec (self, app_id):
@@ -163,6 +173,7 @@ class TychoContext:
         }
         logger.debug (f"parsed {app_id} settings: {settings}")
         serviceAccount = self.apps[app_id]['serviceAccount'] if 'serviceAccount' in self.apps[app_id].keys() else None
+        spec["services"][app_id]["securityContext"] = self.apps[app_id]["securityContext"] if 'securityContext' in self.apps[app_id].keys() else None
         if spec is not None:
             system = self._start ({
                 "name"       : app_id,

@@ -77,6 +77,14 @@ contexts:
       - common
       - blackbalsam
     name: BRAIN-I App Registry
+    jupyter-ds:
+      securityContext:
+        runAsUser: 999
+        fsGroup: 0
+    blackbalsam:
+      securityContext:
+        runAsUser: 999
+        fsGroup: 0
     apps:
       imagej:
         name: ImageJ Viewer

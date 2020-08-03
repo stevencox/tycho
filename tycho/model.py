@@ -71,7 +71,8 @@ class Container:
                  ports=[],
                  expose=[],
                  depends_on=None,
-                 volumes=None):
+                 volumes=None,
+                 securityContext=None):
         """ Construct a container.
         
             :param name: Name the running container will be given.
@@ -89,6 +90,8 @@ class Container:
             :type ports: list of int
             :param volumes: List of volume mounts <host_path>:<container_path>
             :type volumes: list of str
+            :param securityContext: Contains container security context, runAsUser and fsGroup
+            :type securityContext: dict
         """
         self.name = name
         self.image = image
@@ -105,6 +108,7 @@ class Container:
                    list(map(lambda v : list(map(lambda r: str(r), v.split('='))), env)) \
                    if env else []
         self.volumes = volumes
+        self.security_context = securityContext
 
     def __repr__(self):
         return f"name:{self.name} image:{self.image} id:{self.identity} limits:{self.limits}"
@@ -255,7 +259,8 @@ class System:
                 "ports"   : ports,
                 "expose"  : expose,
                 "depends_on": spec.get("depends_on", []),
-                "volumes"  : [ v for v in spec.get("volumes", []) ]
+                "volumes"  : [ v for v in spec.get("volumes", []) ],
+                "securityContext" :  spec.get("securityContext", {})
             })
         system_specification = {
             "config"     : config,
