@@ -54,8 +54,8 @@ class Volumes:
                    subpath = "/".join(parts[1].split("/")[3:]) if len(parts) is 3 else None
                    self.volume(container['name'], pvc_name, volume_name, path, subpath)
                else:
-                   logger.debug(f"Only NFS PVCs are supported. Specify pvc, to mount a pvc storage.")
-                   raise Exception(f"Cannot create system.")
+                   logger.debug(f"Volume definition should follow the pattern: pvc://<pvc_name>/<sub-path>:<container-path> or pvc://<sub-path>:<container-path>")
+                   raise Exception(f"Wrong Volume definition in Container:{container['name']} and Volume:{volume}")
        return self.volumes
 
 class Container:
