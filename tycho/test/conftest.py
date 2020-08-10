@@ -17,7 +17,7 @@ def volume_model_data(request):
             "ports": [],
             "expose": [],
             "depends_on": [],
-            "volumes": ["nfs://nfsrods/rods:/home/rods", "pvc://cloud-top:/home/shared"]
+            "volumes": ["pvc://nfsrods/rods:/home/rods", "pvc://cloud-top:/home/shared"]
         }]
         return data
     if request.param is "data2":
