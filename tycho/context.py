@@ -58,7 +58,7 @@ class TychoContext:
         for key, value in context.items():
             if key in apps.keys():
                 apps[key] = {**apps[key], **value}
-                self.addConfImpl(apps, value)
+                self.add_conf_impl(apps, value)
         return apps
 
     def inherit (self, contexts, context, apps={}):
