@@ -115,7 +115,7 @@ class Container:
 
 class System:
     """ Distributed system of interacting containerized software. """
-    def __init__(self, config, name, username, serviceAccount, containers, services={}):
+    def __init__(self, config, name, principal, serviceAccount, containers, services={}):
         """ Construct a new abstract model of a system given a name and set of containers.
         
             Serves as context for the generation of compute cluster specific artifacts.
@@ -151,7 +151,10 @@ class System:
         self.volumes = Volumes(self.identifier, containers).process_volumes()
         self.source_text = None
         self.system_port = None
-        self.username = username
+        """ Sytem environment variables """
+        self.system_env = dict(principal)
+        """ System tags """
+        self.username = principal.get("username")
         self.annotations = {}
         self.namespace = "default"
         self.serviceaccount = serviceAccount
@@ -183,7 +186,7 @@ class System:
         return template
 
     @staticmethod
-    def parse (config, name, username, system, serviceAccount, env={}, services={}):
+    def parse (config, name, principal, system, serviceAccount, env={}, services={}):
         """ Construct a system model based on the input request.
 
             Parses a docker-compose spec into a system specification.
@@ -193,6 +196,7 @@ class System:
             :param env: Dictionary of settings.
             :param services: Service specifications - networking configuration.
         """
+        principal = json.loads(principal)
         containers = []
         if env:
             logger.debug ("applying environment settings.")
@@ -217,7 +221,7 @@ class System:
                 spec.update({'volumes': []})
             rep = {
                 'stdnfs_pvc': os.environ.get('STDNFS_PVC', 'stdnfs'), 
-                'username': username
+                'username': principal.get("username")
             }
             if os.environ.get("DEV_PHASE", "prod") != "test":
                 try:
@@ -249,11 +253,15 @@ class System:
               expose.append({
                 'containerPort': e
               })
+            """Parsing env variables"""
+            env_from_spec = spec.get('env', []) or spec.get('environment', [])
+            env_from_registry = [f"{ev}={os.environ.get('stdnfsPvc')}" if '$STDNFS' in env[ev] else f"{ev}={env[ev]}" for ev in env]
+            env = [*env_from_spec, *env_from_registry]
             containers.append ({
                 "name"    : cname,
                 "image"   : spec['image'],
                 "command" : entrypoint,
-                "env"     : spec.get ('env', []) or spec.get('environment', []),
+                "env"     : env,
                 "limits"  : spec.get ('deploy',{}).get('resources',{}).get('limits',{}),
                 "requests"  : spec.get ('deploy',{}).get('resources',{}).get('reservations',{}),
                 "ports"   : ports,
@@ -265,7 +273,7 @@ class System:
         system_specification = {
             "config"     : config,
             "name"       : name,
-            "username"   : username,
+            "principal"   : principal,
             "serviceAccount": serviceAccount,
             "containers" : containers
         }

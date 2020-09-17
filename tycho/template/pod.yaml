@@ -66,8 +66,8 @@ spec:
 {% if container.command %}
     command: {{ container.command }}
 {% endif %}
-{% if container.env %}
     env:
+{% if container.env %}
     {%for e in container.env %}
     - name : {{ e[0] }}
       value : "{{ e[1] }}"
@@ -83,7 +83,6 @@ spec:
     {% endif %}
 {% endif %}
 {% if not container.env %}
-    env:
     - name : GUID
       value: {{ system.identifier }}
     {% if system.amb %}
@@ -93,6 +92,14 @@ spec:
     - name: NB_PREFIX
       value: /                                                                        
     {% endif %}
+{% endif %}
+{% if system.system_env %}
+  {% if system.system_name == "dicom-gh" %}
+    {% for env in system.system_env %}
+    - name: {{ env }}
+      value: {{ system.system_env[env]}}
+    {% endfor %}
+  {% endif %}
 {% endif %}
 {% if container.expose|length > 0 %}
     ports:
