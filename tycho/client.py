@@ -199,7 +199,7 @@ class TychoClient:
                     
         request = {
             "name"   : self.format_name (name),
-            "username" : "admin",
+            "principal" : {"username": "renci"},
             "serviceaccount" : "default",
             "env"    : self.parse_env (settings),
             "system" : system,
