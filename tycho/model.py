@@ -215,6 +215,7 @@ class System:
             """ Entrypoint may be a string or an array. Deal with either case."""
             ports = []
             expose = []
+            env_all = []
             entrypoint = spec.get ('entrypoint', '')
             """ Adding default volumes to the system containers """
             if spec.get('volumes') == None:
@@ -254,14 +255,14 @@ class System:
                 'containerPort': e
               })
             """Parsing env variables"""
-            env_from_spec = spec.get('env', []) or spec.get('environment', [])
+            env_from_spec = (spec.get('env', []) or spec.get('environment', []))
             env_from_registry = [f"{ev}={os.environ.get('stdnfsPvc')}" if '$STDNFS' in env[ev] else f"{ev}={env[ev]}" for ev in env]
-            env = [*env_from_spec, *env_from_registry]
+            env_all = env_from_spec + env_from_registry
             containers.append ({
                 "name"    : cname,
                 "image"   : spec['image'],
                 "command" : entrypoint,
-                "env"     : env,
+                "env"     : env_all,
                 "limits"  : spec.get ('deploy',{}).get('resources',{}).get('limits',{}),
                 "requests"  : spec.get ('deploy',{}).get('resources',{}).get('reservations',{}),
                 "ports"   : ports,

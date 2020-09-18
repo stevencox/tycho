@@ -94,12 +94,10 @@ spec:
     {% endif %}
 {% endif %}
 {% if system.system_env %}
-  {% if system.system_name == "dicom-gh" %}
-    {% for env in system.system_env %}
+  {% for env in system.system_env %}
     - name: {{ env }}
       value: {{ system.system_env[env]}}
-    {% endfor %}
-  {% endif %}
+  {% endfor %}
 {% endif %}
 {% if container.expose|length > 0 %}
     ports:

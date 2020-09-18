@@ -18,7 +18,7 @@ class Principal:
     def __init__(self, username, a_token=None, r_token=None):
         self.username=username
         self.access_token=a_token
-        self.request_token=r_token
+        self.refresh_token=r_token
         
 class TychoContext:
     """
@@ -175,6 +175,7 @@ class TychoContext:
         spec = self.get_spec (app_id)
         settings = self.client.parse_env (self.get_settings (app_id))
         settings_all = self.get_env_registry(app_id, settings)
+        print(f"SETTINGS ALL =================> {settings_all}")
         services = self.apps[app_id]['services']
         services = { k : {
             "port" : str(v),
