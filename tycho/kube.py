@@ -118,7 +118,6 @@ class KubernetesCompute(Compute):
             system.volumes = systemVolumesCopy
             """ Check the status of ambassador """
             amb_status = self.is_ambassador_context(namespace)
-            print(f"amb status =========================> {amb_status}")
             if amb_status:
                 system.amb = True
             #api_response = self.api.list_namespace()
@@ -224,7 +223,7 @@ class KubernetesCompute(Compute):
                             body=service_manifest,
                             namespace=namespace)
 
-                        ip_address = "None"
+                        ip_address = None
                         if not system.amb:
                             ip_address = self.get_service_ip_address (response)
 

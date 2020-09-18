@@ -175,7 +175,6 @@ class TychoContext:
         spec = self.get_spec (app_id)
         settings = self.client.parse_env (self.get_settings (app_id))
         settings_all = self.get_env_registry(app_id, settings)
-        print(f"SETTINGS ALL =================> {settings_all}")
         services = self.apps[app_id]['services']
         services = { k : {
             "port" : str(v),
