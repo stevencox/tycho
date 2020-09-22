@@ -262,6 +262,7 @@ class KubernetesCompute(Compute):
             :returns: ip_address IP Address of the service.
             """
         ip_address = None if os.environ.get("DEV_PHASE", "prod") != "test" else "127.0.0.1"
+        print(ip_address)
         try:
             app_id = service_metadata.metadata.labels["tycho-app"]
             logger.info (f"-================================> *** {app_id}")

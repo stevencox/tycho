@@ -11,7 +11,7 @@ def test_system_model (request):
     system = System (**{
         "config"     : Config (),
         "name"       : "test",
-        "username"   : "renci",
+        "principal"   : {"username": "renci"},
         "serviceAccount": "default",
         "containers" : [
             {
@@ -42,7 +42,7 @@ def test_system_parser (request):
         system =  System.parse (
             config = Config (),
             name   = "jupyter-ds",
-            username = "renci",
+            principal = '{"username": "renci"}',
             system = structure,
             serviceAccount = "default")
 

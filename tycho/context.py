@@ -15,8 +15,10 @@ logger = logging.getLogger (__name__)
 
 class Principal:
     """ Abstract representation of a system identity. """
-    def __init__(self, username):
+    def __init__(self, username, a_token=None, r_token=None):
         self.username=username
+        self.access_token=a_token
+        self.refresh_token=r_token
         
 class TychoContext:
     """
@@ -52,11 +54,11 @@ class TychoContext:
             registry = yaml.safe_load (stream)
         return registry
 
-    def addConfImpl(self, apps, context):
+    def add_conf_impl(self, apps, context):
         for key, value in context.items():
             if key in apps.keys():
                 apps[key] = {**apps[key], **value}
-                self.addConfImpl(apps, value)
+                self.add_conf_impl(apps, value)
         return apps
 
     def inherit (self, contexts, context, apps={}):
@@ -110,7 +112,7 @@ class TychoContext:
             logger.debug (f"-- spec: {app['spec']}")
             logger.debug (f"-- icon: {app['icon']}")
         logger.debug (f"-- product {self.product} resolution => apps: {apps.keys()}")
-        apps = self.addConfImpl(apps, context)
+        apps = self.add_conf_impl(apps, context)
         for app, value in apps.items():
             print(f"app: ", value)
         return apps
@@ -137,6 +139,13 @@ class TychoContext:
                     logger.error (f"-- app {app_id}. failed to parse spec.")
                 raise e
         return spec
+
+    def get_env_registry(self, app_id, settings):
+        """ Get the env variables specified for an app in the registry and update settings"""
+        env = self.apps[app_id].get('env', None)
+        if env:
+            settings.update(env)
+        return settings
     
     def get_settings (self, app_id):
         """ Get the URL of the .env settings / environment file. """
@@ -165,6 +174,7 @@ class TychoContext:
         """ Get application metadata, docker-compose structure, settings, and compose API request. """
         spec = self.get_spec (app_id)
         settings = self.client.parse_env (self.get_settings (app_id))
+        settings_all = self.get_env_registry(app_id, settings)
         services = self.apps[app_id]['services']
         services = { k : {
             "port" : str(v),
@@ -173,14 +183,16 @@ class TychoContext:
         }
         logger.debug (f"parsed {app_id} settings: {settings}")
         serviceAccount = self.apps[app_id]['serviceAccount'] if 'serviceAccount' in self.apps[app_id].keys() else None
+        principal_params = {"username": principal.username, "access_token": principal.access_token, "refresh_token": principal.refresh_token}
+        principal_params_json = json.dumps(principal_params, indent=4)
         spec["services"][app_id]["securityContext"] = self.apps[app_id]["securityContext"] if 'securityContext' in self.apps[app_id].keys() else None
         if spec is not None:
             system = self._start ({
                 "name"       : app_id,
                 "serviceaccount": serviceAccount,
-                "env"        : settings,
+                "env"        : settings_all,
                 "system"     : spec,
-                "username"   : principal.username,
+                "principal"   : principal_params_json,
                 "services"   : services
             })
             """ Validate resulting interfaces. """
