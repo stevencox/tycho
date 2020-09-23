@@ -256,7 +256,7 @@ class System:
               })
             """Parsing env variables"""
             env_from_spec = (spec.get('env', []) or spec.get('environment', []))
-            env_from_registry = [f"{ev}={os.environ.get('stdnfsPvc')}" if '$STDNFS' in env[ev] else f"{ev}={env[ev]}" for ev in env]
+            env_from_registry = [f"{ev}={os.environ.get('STDNFS_PVC')}" if '$STDNFS' in env[ev] else f"{ev}={env[ev]}" for ev in env]
             env_all = env_from_spec + env_from_registry
             containers.append ({
                 "name"    : cname,
