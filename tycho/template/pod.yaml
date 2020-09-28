@@ -74,6 +74,8 @@ spec:
     {% endfor %}
     - name : GUID
       value: {{ system.identifier }}
+    - name: USER_NAME
+      value: {{ system.username }}
     {% if system.amb %}
     - name: NB_PREFIX
       value: /private/{{system.system_name}}/{{system.username}}/{{system.identifier}}
@@ -85,6 +87,8 @@ spec:
 {% if not container.env %}
     - name : GUID
       value: {{ system.identifier }}
+    - name: USER_NAME
+      value: {{ system.username }}
     {% if system.amb %}
     - name: NB_PREFIX
       value: /private/{{system.system_name}}/{{system.username}}/{{system.identifier}}
