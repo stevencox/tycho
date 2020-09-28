@@ -1,14 +1,15 @@
-FROM python:3.7.3-alpine
+FROM python:3.9.0rc2-slim
 
 WORKDIR /
 
-RUN apk -U add build-base libffi-dev libressl-dev
-RUN apk add libffi-dev
+RUN apt-get update
+RUN apt-get install -y build-essential libffi-dev libssl-dev
+RUN apt-get install libffi-dev
 RUN pip install --upgrade pip
 #RUN pip install --no-cache-dir -r ./requirements.txt
 #COPY requirements.txt ./
 
-RUN apk add git
+RUN apt-get install -y git
 RUN git clone https://github.com/helxplatform/tycho.git --branch develop
 RUN pip install --no-cache-dir -r tycho/requirements.txt
 #COPY . /tycho
