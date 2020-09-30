@@ -47,7 +47,7 @@ spec:
 #  {% endfor %}
 #  {% endif %}
 #{% endfor %}
-{{% if system.openshift_platform == "False" %}}
+{% if system.openshift_platform == "False" %}
   initContainers:
   - name: volume-permissions
     image: busybox:1.28
@@ -56,7 +56,7 @@ spec:
     - name: stdnfs
       mountPath: /home/{{system.username}}
       subPath: {{system.username}}
-{{% endif %}}
+{% endif %}
   containers:
 {% for container in system.containers %}    
   - name: {{ container.name }}
