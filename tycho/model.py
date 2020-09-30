@@ -158,6 +158,7 @@ class System:
         self.annotations = {}
         self.namespace = "default"
         self.serviceaccount = serviceAccount
+        self.openshift_platform = os.environ.get("OPENSHIFT_PLATFORM", "False")
 
     def get_namespace(self, namespace="default"):
         try:
