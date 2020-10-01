@@ -159,6 +159,9 @@ class System:
         self.namespace = "default"
         self.serviceaccount = serviceAccount
         self.openshift_platform = os.environ.get("OPENSHIFT_PLATFORM", "False")
+        """PVC flags"""
+        self.create_home_dirs = os.environ.get("CREATE_HOME_DIRS", "False")
+        self.stdnfs_pvc = os.environ.get("STDNFS_PVC", "stdnfs")
 
     def get_namespace(self, namespace="default"):
         try:
@@ -257,7 +260,7 @@ class System:
               })
             """Parsing env variables"""
             env_from_spec = (spec.get('env', []) or spec.get('environment', []))
-            env_from_registry = [f"{ev}={os.environ.get('stdnfsPvc')}" if '$STDNFS' in env[ev] else f"{ev}={env[ev]}" for ev in env]
+            env_from_registry = [f"{ev}={os.environ.get('STDNFS_PVC')}" if '$STDNFS' in env[ev] else f"{ev}={env[ev]}" for ev in env]
             env_all = env_from_spec + env_from_registry
             containers.append ({
                 "name"    : cname,

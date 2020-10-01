@@ -47,13 +47,13 @@ spec:
 #  {% endfor %}
 #  {% endif %}
 #{% endfor %}
-{% if system.openshift_platform == "False" %}
+{% if (system.openshift_platform == "False") and (system.create_home_dirs == "True") %}
   initContainers:
   - name: volume-permissions
     image: busybox:1.28
     command: ['sh', '-c', 'chmod 777 -R /home/{{system.username}} && echo OK']
     volumeMounts:
-    - name: stdnfs
+    - name: {{ system.stdnfs_pvc }}
       mountPath: /home/{{system.username}}
       subPath: {{system.username}}
 {% endif %}
