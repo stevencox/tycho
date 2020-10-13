@@ -85,15 +85,6 @@ contexts:
       securityContext:
         runAsUser: 999
         fsGroup: 0
-    cloud-top:
-      securityContext:
-        fsGroup: 999
-    imagej:       
-      securityContext:
-         fsGroup: 999
-    napari:
-      securityContext:
-         fsGroup: 999
     apps:
       imagej:
         name: ImageJ Viewer
@@ -124,15 +115,6 @@ contexts:
       - common
       - blackbalsam
     name: BioData Catalyst App Registry
-    dicom-gh:
-      securityContext:
-        fsGroup: 999
-    dicom-cloudtop:
-      securityContext:
-        fsGroup: 999
-    cloud-top:
-      securityContext:
-        fsGroup: 999
     apps:
       dicom-cloudtop:
         name: DICOM Viewer
@@ -177,9 +159,6 @@ contexts:
       - common
       - blackbalsam
     name: SciDAS App Registry
-    cloud-top:
-      securityContext:
-        fsGroup: 999
     apps:
       nextflow:
         name: Nextflow API
