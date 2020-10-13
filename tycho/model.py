@@ -158,6 +158,10 @@ class System:
         self.annotations = {}
         self.namespace = "default"
         self.serviceaccount = serviceAccount
+        self.openshift_platform = os.environ.get("OPENSHIFT_PLATFORM", "False")
+        """PVC flags"""
+        self.create_home_dirs = os.environ.get("CREATE_HOME_DIRS", "False")
+        self.stdnfs_pvc = os.environ.get("STDNFS_PVC", "stdnfs")
 
     def get_namespace(self, namespace="default"):
         try:
