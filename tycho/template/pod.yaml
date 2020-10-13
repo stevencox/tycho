@@ -24,8 +24,6 @@ spec:
 {% for container in system.containers %}
   {% if container.limits or container.requests %}
   {% if container.limits.gpus != None and loop.first %}
-  nodeSelector:
-    nvidia.com/gpu: "true"
   tolerations:
   - key: "nvidia.com/gpu"
     operator: "Exists"
@@ -47,16 +45,16 @@ spec:
 #  {% endfor %}
 #  {% endif %}
 #{% endfor %}
-{% if (system.openshift_platform == "False") and (system.create_home_dirs == "True") %}
-  initContainers:
-  - name: volume-permissions
-    image: busybox:1.28
-    command: ['sh', '-c', 'chmod 777 -R /home/{{system.username}} && echo OK']
-    volumeMounts:
-    - name: {{ system.stdnfs_pvc }}
-      mountPath: /home/{{system.username}}
-      subPath: {{system.username}}
-{% endif %}
+#{% if (system.openshift_platform == "False") and (system.create_home_dirs == "True") %}
+#  initContainers:
+#  - name: volume-permissions
+#    image: busybox:1.28
+#    command: ['sh', '-c', 'chmod 777 -R /home/{{system.username}} && echo OK']
+#    volumeMounts:
+#    - name: {{ system.stdnfs_pvc }}
+#      mountPath: /home/{{system.username}}
+#      subPath: {{system.username}}
+#{% endif %}
   containers:
 {% for container in system.containers %}    
   - name: {{ container.name }}
@@ -114,26 +112,25 @@ spec:
 {% endif %} # ports
 {% if container.limits or container.requests %}
     resources:
+      limits:
       {% if container.limits %}
       {% if container.limits.cpus != None %}
-      limits:
         cpu: "{{ container.limits.cpus }}"
-        # https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/
-        #nvidia.com/gpu: "{{ container.limits.gpus }}"
         memory: "{{ container.limits.memory }}"
       {% endif %}
+      {% if container.limits.gpus != None %}
+        nvidia.com/gpu: {{ container.limits.gpus }}
       {% endif %}
+      {% endif %}
+      requests:
       {% if container.requests  %}
       {% if container.requests.cpus != None %}
-      requests:
         cpu: "{{ container.requests.cpus }}"
         memory: "{{ container.requests.memory }}"
       {% endif %}
+      {% if container.requests.gpus != None %}
+        nvidia.com/gpu: {{ container.requests.gpus }}
       {% endif %}
-      {% if container.limits.gpus != None %}
-      limits:
-        nvidia.com/gpu: {{ container.limits.gpus }}
-        memory: {{ container.limits.memory }}
       {% endif %}
 {% endif %}
     volumeMounts:

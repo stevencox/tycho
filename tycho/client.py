@@ -38,11 +38,16 @@ class TychoService:
             
     def get_utilization (self, utilization):
         total = {
+            "gpu": 0,
             "cpu" : 0,
             "memory" : 0
         }
         for key, val in utilization.items ():
-            total['cpu'] = total['cpu'] + int(val['cpu'].replace ('m', ''))
+            if "m" in val["cpu"]:
+                total['cpu'] = total['cpu'] + int(val['cpu'].replace ('m', ''))
+            else:
+                total['cpu'] = total['cpu'] + int(val['cpu']) * 1000
+            total['gpu'] = total['gpu'] + int(val['nvidia.com/gpu'])
             mem = val['memory'].replace ("i", "")
             """ Run the conversion function designated by the last character of the value on the integer value """
             mem_val = mem_converter[mem[-1]] (int(mem[:-1]))            
