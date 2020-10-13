@@ -43,14 +43,16 @@ class TychoService:
             "memory" : 0
         }
         for key, val in utilization.items ():
-            if "m" in val["cpu"]:
-                total['cpu'] = total['cpu'] + int(val['cpu'].replace ('m', ''))
-            else:
-                total['cpu'] = total['cpu'] + int(val['cpu']) * 1000
-            total['gpu'] = total['gpu'] + int(val['nvidia.com/gpu'])
+            if 'cpu' in val.keys():
+                if 'm' in val['cpu']:
+                    total['cpu'] = total['cpu'] + int(val['cpu'].replace ('m', ''))
+                else:
+                    total['cpu'] = total['cpu'] + int(val['cpu']) * 1000
+            if 'nvidia.com/gpu' in val.keys():
+                total['gpu'] = total['gpu'] + int(val['nvidia.com/gpu'])
             mem = val['memory'].replace ("i", "")
             """ Run the conversion function designated by the last character of the value on the integer value """
-            mem_val = mem_converter[mem[-1]] (int(mem[:-1]))            
+            mem_val = mem_converter[mem[-1]] (int(mem[:-1]))
             total['memory'] = total['memory'] + mem_val
         total['memory'] = f"{total['memory'] / (10 ** 9)}"
         return total

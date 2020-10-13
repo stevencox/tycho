@@ -170,7 +170,7 @@ class TychoContext:
     def delete (self, request):
         return self.client.delete (request)
     
-    def start (self, principal, app_id):
+    def start (self, principal, app_id, resource_request):
         """ Get application metadata, docker-compose structure, settings, and compose API request. """
         spec = self.get_spec (app_id)
         settings = self.client.parse_env (self.get_settings (app_id))
@@ -186,6 +186,7 @@ class TychoContext:
         principal_params = {"username": principal.username, "access_token": principal.access_token, "refresh_token": principal.refresh_token}
         principal_params_json = json.dumps(principal_params, indent=4)
         spec["services"][app_id]["securityContext"] = self.apps[app_id]["securityContext"] if 'securityContext' in self.apps[app_id].keys() else None
+        spec['services'][app_id].update(resource_request)
         if spec is not None:
             system = self._start ({
                 "name"       : app_id,
