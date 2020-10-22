@@ -158,9 +158,9 @@ class System:
         self.annotations = {}
         self.namespace = "default"
         self.serviceaccount = serviceAccount
-        self.runasroot = os.environ.get("RUNASROOT", "True").lower()
+        self.runasroot = os.environ.get("RUNASROOT", "true").lower()
         """PVC flags"""
-        self.create_home_dirs = os.environ.get("CREATE_HOME_DIRS", "False").lower()
+        self.create_home_dirs = os.environ.get("CREATE_HOME_DIRS", "false").lower()
         self.stdnfs_pvc = os.environ.get("STDNFS_PVC", "stdnfs")
 
     def get_namespace(self, namespace="default"):
