@@ -115,6 +115,15 @@ contexts:
       - common
       - blackbalsam
     name: BioData Catalyst App Registry
+    dicom-cloudtop:
+      securityContext:
+        fsGroup: 0
+    dicom-gh:
+      securityContext:
+        fsGroup: 0
+    cloud-top:
+      securityContext:
+        fsGroup: 0
     apps:
       dicom-cloudtop:
         name: DICOM Viewer
