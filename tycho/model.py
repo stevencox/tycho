@@ -231,11 +231,11 @@ class System:
             if os.environ.get("DEV_PHASE", "prod") != "test":
                 try:
                     for volume in config.get('tycho')['compute']['system']['volumes']:
-                        createHomeDirs = os.environ.get('CREATE_HOME_DIRS', "True")
+                        createHomeDirs = os.environ.get('CREATE_HOME_DIRS', "true")
                         volSplit = volume.split(":")
-                        if createHomeDirs == "False" and ("username" in volume or "shared" in volSplit[1]):
+                        if createHomeDirs == "false" and ("username" in volume or "shared" in volSplit[1]):
                             continue
-                        if createHomeDirs == "True" and ("shared" not in volSplit[1] and "username" not in volSplit[2]):
+                        if createHomeDirs == "true" and ("shared" not in volSplit[1] and "username" not in volSplit[2]):
                             continue
                         for k, v in rep.items():
                             volume = volume.replace(k, v)
