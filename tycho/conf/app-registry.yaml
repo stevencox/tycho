@@ -79,16 +79,10 @@ contexts:
     name: BRAIN-I App Registry
     jupyter-ds:
       securityContext:
-        runAsUser: 999
         fsGroup: 0
-        Uid: 999
-        Gid: 999
     blackbalsam:
       securityContext:
-        runAsUser: 999
         fsGroup: 0
-        Uid: 999
-        Gid: 999
     apps:
       imagej:
         name: ImageJ Viewer
@@ -119,18 +113,6 @@ contexts:
       - common
       - blackbalsam
     name: BioData Catalyst App Registry
-    dicom-cloudtop:
-      securityContext:
-        Uid: 999
-        Gid: 999
-    dicom-gh:
-      securityContext:
-        Uid: 999
-        Gid: 999
-    cloud-top:
-      securityContext:
-        Uid: 999
-        Gid: 999
     apps:
       dicom-cloudtop:
         name: DICOM Viewer
