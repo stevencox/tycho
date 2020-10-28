@@ -162,6 +162,9 @@ class System:
         """PVC flags"""
         self.create_home_dirs = os.environ.get("CREATE_HOME_DIRS", "false").lower()
         self.stdnfs_pvc = os.environ.get("STDNFS_PVC", "stdnfs")
+        """Default UID and GID for the system"""
+        self.Uid = "1000"
+        self.Gid = "1000"
 
     def get_namespace(self, namespace="default"):
         try:

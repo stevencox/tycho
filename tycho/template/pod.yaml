@@ -30,12 +30,25 @@ spec:
     effect: "NoSchedule"
   {% endif %}
   {% endif %}
-  {% if container.security_context %}
+  {% if container.security_context.fsGroup %}
   securityContext:
     fsGroup: {{ container.security_context.fsGroup }}
   {% endif %}
+{% if (system.runasroot == "true") and (system.create_home_dirs == "true") and (system.dev_phase != "test") %}
+  initContainers:
+  - name: volume-permissions
+    image: busybox:1.28
+    {% if container.security_context.Uid and container.security_context.Gid %}
+    command: ['sh', '-c', 'chmod 775 -R /home/{{system.username}} && chown -R {{container.security_context.Uid}}:{{container.security_context.Gid}} /home/{{system.username}} && echo OK']
+    {% else %}
+    command: ['sh', '-c', 'chmod 775 -R /home/{{system.username}} && chown -R {{system.Uid}}:{{system.Gid}} /home/{{system.username}} && echo OK']
+    {% endif %}
+    volumeMounts:
+    - name: {{ system.stdnfs_pvc }}
+      mountPath: /home/{{system.username}}
+      subPath: {{system.username}}
+{% endif %}
 {% endfor %}
-#  initContainers:
 #{% for container in system.containers %}
 #  {% if container.depends_on|length > 0 %}
 #  {% for d in container.depends_on %}
@@ -45,21 +58,11 @@ spec:
 #  {% endfor %}
 #  {% endif %}
 #{% endfor %}
-{% if (system.runasroot == "true") and (system.create_home_dirs == "true") and (system.dev_phase != "test") %}
-  initContainers:
-  - name: volume-permissions
-    image: busybox:1.28
-    command: ['sh', '-c', 'chmod 775 -R /home/{{system.username}} && echo OK']
-    volumeMounts:
-    - name: {{ system.stdnfs_pvc }}
-      mountPath: /home/{{system.username}}
-      subPath: {{system.username}}
-{% endif %}
   containers:
 {% for container in system.containers %}    
   - name: {{ container.name }}
     image: {{ container.image }}
-    {% if container.security_context %}
+    {% if container.security_context.runAsUser %}
     securityContext:
       runAsUser: {{ container.security_context.runAsUser }}
     {% endif %}
