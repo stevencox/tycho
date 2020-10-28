@@ -81,10 +81,14 @@ contexts:
       securityContext:
         runAsUser: 999
         fsGroup: 0
+        Uid: 999
+        Gid: 999
     blackbalsam:
       securityContext:
         runAsUser: 999
         fsGroup: 0
+        Uid: 999
+        Gid: 999
     apps:
       imagej:
         name: ImageJ Viewer
@@ -117,13 +121,16 @@ contexts:
     name: BioData Catalyst App Registry
     dicom-cloudtop:
       securityContext:
-        fsGroup: 999
+        Uid: 999
+        Gid: 999
     dicom-gh:
       securityContext:
-        fsGroup: 999
+        Uid: 999
+        Gid: 999
     cloud-top:
       securityContext:
-        fsGroup: 999
+        Uid: 999
+        Gid: 999
     apps:
       dicom-cloudtop:
         name: DICOM Viewer
