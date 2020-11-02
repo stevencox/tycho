@@ -39,14 +39,29 @@ spec:
   - name: volume-permissions
     image: busybox:1.28
     {% if container.security_context.Uid and container.security_context.Gid %}
-    command: ['sh', '-c', 'chmod 775 -R /home/{{system.username}} && chown -R {{container.security_context.Uid}}:{{container.security_context.Gid}} /home/{{system.username}} && echo OK']
+    command: ['sh', '-c'] 
+    args: 
+    - chmod 775 -R {{ system.parent_dir }}/{{ system.subpath_dir }};
+      chown -R {{ container.security_context.Uid }}:{{ container.security_context.Gid }} {{ system.parent_dir }}/{{ system.subpath_dir }};
+      chmod 775 -R {{ system.parent_dir }}/{{ system.shared_dir }};
+      chown -R {{ container.security_context.Uid }}:{{ container.security_context.Gid }} {{ system.parent_dir }}/{{ system.shared_dir }};
+      echo OK;
     {% else %}
-    command: ['sh', '-c', 'chmod 775 -R /home/{{system.username}} && chown -R {{system.Uid}}:{{system.Gid}} /home/{{system.username}} && echo OK']
+    command: ['sh', '-c']
+    args:
+    - chmod 775 -R {{ system.parent_dir }}/{{ system.subpath_dir }};
+      chown -R {{ system.Uid }}:{{ system.Gid }} {{ system.parent_dir }}/{{ system.username }};
+      chmod 775 -R {{ system.parent_dir }}/{{ system.shared_dir }};
+      chown -R {{ system.Uid }}:{{ system.Gid }} {{ system.parent_dir }}/{{ system.shared_dir }};
+      echo OK;
     {% endif %}
     volumeMounts:
     - name: {{ system.stdnfs_pvc }}
-      mountPath: /home/{{system.username}}
+      mountPath: {{ system.parent_dir }}/{{ system.subpath_dir }}
       subPath: {{system.username}}
+    - name: {{ system.stdnfs_pvc }}
+      mountPath: {{ system.parent_dir }}/{{ system.shared_dir }}
+      subPath: {{ system.shared_dir }}
 {% endif %}
 {% endfor %}
 #{% for container in system.containers %}
