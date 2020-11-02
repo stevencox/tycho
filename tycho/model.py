@@ -159,9 +159,12 @@ class System:
         self.namespace = "default"
         self.serviceaccount = serviceAccount
         self.runasroot = os.environ.get("RUNASROOT", "true").lower()
-        """PVC flags"""
+        """PVC flags and other variables for default volumes"""
         self.create_home_dirs = os.environ.get("CREATE_HOME_DIRS", "false").lower()
         self.stdnfs_pvc = os.environ.get("STDNFS_PVC", "stdnfs")
+        self.parent_dir = os.environ.get('PARENT_DIR', 'home')
+        self.subpath_dir = os.environ.get('SUBPATH_DIR', self.username)
+        self.shared_dir = os.environ.get('SHARED_DIR', 'shared')
         """Default UID and GID for the system"""
         self.Uid = "1000"
         self.Gid = "1000"
@@ -229,16 +232,19 @@ class System:
                 spec.update({'volumes': []})
             rep = {
                 'stdnfs_pvc': os.environ.get('STDNFS_PVC', 'stdnfs'), 
-                'username': principal.get("username")
+                'username': principal.get("username"),
+                'parent_dir': os.environ.get('PARENT_DIR', 'home'),
+                'subpath_dir': os.environ.get('SUBPATH_DIR', 'userdata'),
+                'shared_dir': os.environ.get('SHARED_DIR', 'shared'),
             }
             if os.environ.get("DEV_PHASE", "prod") != "test":
                 try:
                     for volume in config.get('tycho')['compute']['system']['volumes']:
                         createHomeDirs = os.environ.get('CREATE_HOME_DIRS', "true")
                         volSplit = volume.split(":")
-                        if createHomeDirs == "false" and ("username" in volume or "shared" in volSplit[1]):
-                            continue
-                        if createHomeDirs == "true" and ("shared" not in volSplit[1] and "username" not in volSplit[2]):
+                        if createHomeDirs == "false":
+                            break
+                        if createHomeDirs == "true" and ("shared_dir" not in volSplit[1] and "subpath_dir" not in volSplit[2]):
                             continue
                         for k, v in rep.items():
                             volume = volume.replace(k, v)
