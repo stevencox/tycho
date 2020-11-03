@@ -234,7 +234,7 @@ class System:
                 'stdnfs_pvc': os.environ.get('STDNFS_PVC', 'stdnfs'), 
                 'username': principal.get("username"),
                 'parent_dir': os.environ.get('PARENT_DIR', 'home'),
-                'subpath_dir': os.environ.get('SUBPATH_DIR', 'userdata'),
+                'subpath_dir': os.environ.get('SUBPATH_DIR', principal.get("username")),
                 'shared_dir': os.environ.get('SHARED_DIR', 'shared'),
             }
             if os.environ.get("DEV_PHASE", "prod") != "test":
