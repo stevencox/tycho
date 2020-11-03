@@ -242,8 +242,8 @@ class System:
                     for volume in config.get('tycho')['compute']['system']['volumes']:
                         createHomeDirs = os.environ.get('CREATE_HOME_DIRS', "true")
                         volSplit = volume.split(":")
-                        if createHomeDirs == "false":
-                            break
+                        if createHomeDirs == "false" and ("username" in volume or "shared_dir" in volSplit[1]):
+                            continue
                         if createHomeDirs == "true" and ("shared_dir" not in volSplit[1] and "subpath_dir" not in volSplit[2]):
                             continue
                         for k, v in rep.items():
