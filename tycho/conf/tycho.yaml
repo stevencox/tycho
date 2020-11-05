@@ -10,6 +10,9 @@ tycho:
     system:
       # Configure application defaults.
       defaults:
+        securityContext:
+          Uid: 1000
+          Gid: 1000
         services:
           deploy:
             resources:

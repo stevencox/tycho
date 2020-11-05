@@ -166,8 +166,9 @@ class System:
         self.subpath_dir = os.environ.get('SUBPATH_DIR', self.username)
         self.shared_dir = os.environ.get('SHARED_DIR', 'shared')
         """Default UID and GID for the system"""
-        self.Uid = "1000"
-        self.Gid = "1000"
+        security_context = config.get('tycho')['compute']['system']['defaults']['securityContext']
+        self.Uid = security_context.get('Uid', '1000')
+        self.Gid = security_context.get('Gid', '1000')
 
     def get_namespace(self, namespace="default"):
         try:
