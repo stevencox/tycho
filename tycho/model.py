@@ -54,8 +54,8 @@ class Volumes:
                    subpath = "/".join(parts[1].split("/")[3:]) if len(parts) is 3 else None
                    self.volume(container['name'], pvc_name, volume_name, path, subpath)
                else:
-                   logger.debug(f"Only NFS PVCs are supported. Specify pvc, to mount a pvc storage.")
-                   raise Exception(f"Cannot create system.")
+                   logger.debug(f"Volume definition should follow the pattern: pvc://<pvc_name>/<sub-path>:<container-path> or pvc://<sub-path>:<container-path>")
+                   raise Exception(f"Wrong Volume definition in Container:{container['name']} and Volume:{volume}")
        return self.volumes
 
 class Container:
@@ -71,7 +71,8 @@ class Container:
                  ports=[],
                  expose=[],
                  depends_on=None,
-                 volumes=None):
+                 volumes=None,
+                 securityContext=None):
         """ Construct a container.
         
             :param name: Name the running container will be given.
@@ -89,6 +90,8 @@ class Container:
             :type ports: list of int
             :param volumes: List of volume mounts <host_path>:<container_path>
             :type volumes: list of str
+            :param securityContext: Contains container security context, runAsUser and fsGroup
+            :type securityContext: dict
         """
         self.name = name
         self.image = image
@@ -105,13 +108,14 @@ class Container:
                    list(map(lambda v : list(map(lambda r: str(r), v.split('='))), env)) \
                    if env else []
         self.volumes = volumes
+        self.security_context = securityContext
 
     def __repr__(self):
         return f"name:{self.name} image:{self.image} id:{self.identity} limits:{self.limits}"
 
 class System:
     """ Distributed system of interacting containerized software. """
-    def __init__(self, config, name, username, serviceAccount, containers, services={}):
+    def __init__(self, config, name, principal, serviceAccount, containers, services={}):
         """ Construct a new abstract model of a system given a name and set of containers.
         
             Serves as context for the generation of compute cluster specific artifacts.
@@ -128,7 +132,6 @@ class System:
         self.system_name = name
         self.amb = False
         self.dev_phase = os.getenv('DEV_PHASE', "prod")
-        print(f"DEV PHASE ENVIRON----------------> {self.dev_phase}")
         self.name = f"{name}-{self.identifier}"
         assert self.name is not None, "System name is required."
         containers_exist = len(containers) > 0
@@ -148,10 +151,24 @@ class System:
         self.volumes = Volumes(self.identifier, containers).process_volumes()
         self.source_text = None
         self.system_port = None
-        self.username = username
+        """ Sytem environment variables """
+        self.system_env = dict(principal)
+        """ System tags """
+        self.username = principal.get("username")
         self.annotations = {}
         self.namespace = "default"
         self.serviceaccount = serviceAccount
+        self.runasroot = os.environ.get("RUNASROOT", "true").lower()
+        """PVC flags and other variables for default volumes"""
+        self.create_home_dirs = os.environ.get("CREATE_HOME_DIRS", "false").lower()
+        self.stdnfs_pvc = os.environ.get("STDNFS_PVC", "stdnfs")
+        self.parent_dir = os.environ.get('PARENT_DIR', 'home')
+        self.subpath_dir = os.environ.get('SUBPATH_DIR', self.username)
+        self.shared_dir = os.environ.get('SHARED_DIR', 'shared')
+        """Default UID and GID for the system"""
+        security_context = config.get('tycho')['compute']['system']['defaults']['securityContext']
+        self.Uid = security_context.get('Uid', '1000')
+        self.Gid = security_context.get('Gid', '1000')
 
     def get_namespace(self, namespace="default"):
         try:
@@ -180,7 +197,7 @@ class System:
         return template
 
     @staticmethod
-    def parse (config, name, username, system, serviceAccount, env={}, services={}):
+    def parse (config, name, principal, system, serviceAccount, env={}, services={}):
         """ Construct a system model based on the input request.
 
             Parses a docker-compose spec into a system specification.
@@ -190,6 +207,7 @@ class System:
             :param env: Dictionary of settings.
             :param services: Service specifications - networking configuration.
         """
+        principal = json.loads(principal)
         containers = []
         if env:
             logger.debug ("applying environment settings.")
@@ -208,23 +226,33 @@ class System:
             """ Entrypoint may be a string or an array. Deal with either case."""
             ports = []
             expose = []
+            env_all = []
             entrypoint = spec.get ('entrypoint', '')
             """ Adding default volumes to the system containers """
-            print(f"Spec: {type(spec)}")
             if spec.get('volumes') == None:
                 spec.update({'volumes': []})
-            if os.environ.get("DEV_PHASE", "prod") != "test":    
+            rep = {
+                'stdnfs_pvc': os.environ.get('STDNFS_PVC', 'stdnfs'), 
+                'username': principal.get("username"),
+                'parent_dir': os.environ.get('PARENT_DIR', 'home'),
+                'subpath_dir': os.environ.get('SUBPATH_DIR', principal.get("username")),
+                'shared_dir': os.environ.get('SHARED_DIR', 'shared'),
+            }
+            if os.environ.get("DEV_PHASE", "prod") != "test":
                 try:
                     for volume in config.get('tycho')['compute']['system']['volumes']:
-                        volumeSub = volume.replace('username', username) if 'username' in volume else None
-                        if spec.get('volumes') == None:
-                            spec.update({'volumes': []})
-                        if volumeSub:
-                            spec.get('volumes', []).append(volumeSub)
-                        else:
-                            spec.get('volumes', []).append(volume)
+                        createHomeDirs = os.environ.get('CREATE_HOME_DIRS', "true")
+                        volSplit = volume.split(":")
+                        if createHomeDirs == "false" and ("username" in volume or "shared_dir" in volSplit[1]):
+                            continue
+                        if createHomeDirs == "true" and ("shared_dir" not in volSplit[1] and "subpath_dir" not in volSplit[2]):
+                            continue
+                        for k, v in rep.items():
+                            volume = volume.replace(k, v)
+                        spec.get('volumes', []).append(volume)
                 except Exception as e:
                     logger.info("No volumes specified in the configuration.")
+            """ Adding entrypoint to container if exists """
             if isinstance(entrypoint, str):
                 entrypoint = entrypoint.split ()
             for p in spec.get('ports', []):
@@ -240,22 +268,27 @@ class System:
               expose.append({
                 'containerPort': e
               })
+            """Parsing env variables"""
+            env_from_spec = (spec.get('env', []) or spec.get('environment', []))
+            env_from_registry = [f"{ev}={os.environ.get('STDNFS_PVC')}" if '$STDNFS' in env[ev] else f"{ev}={env[ev]}" for ev in env]
+            env_all = env_from_spec + env_from_registry
             containers.append ({
                 "name"    : cname,
                 "image"   : spec['image'],
                 "command" : entrypoint,
-                "env"     : spec.get ('env', []) or spec.get('environment', []),
+                "env"     : env_all,
                 "limits"  : spec.get ('deploy',{}).get('resources',{}).get('limits',{}),
                 "requests"  : spec.get ('deploy',{}).get('resources',{}).get('reservations',{}),
                 "ports"   : ports,
                 "expose"  : expose,
                 "depends_on": spec.get("depends_on", []),
-                "volumes"  : [ v for v in spec.get("volumes", []) ]
+                "volumes"  : [ v for v in spec.get("volumes", []) ],
+                "securityContext" :  spec.get("securityContext", {})
             })
         system_specification = {
             "config"     : config,
             "name"       : name,
-            "username"   : username,
+            "principal"   : principal,
             "serviceAccount": serviceAccount,
             "containers" : containers
         }

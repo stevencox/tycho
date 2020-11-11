@@ -261,7 +261,8 @@ class KubernetesCompute(Compute):
             :param service: Service metadata.
             :returns: ip_address IP Address of the service.
             """
-        ip_address = "127.0.0.1"
+        ip_address = None if os.environ.get("DEV_PHASE", "prod") != "test" else "127.0.0.1"
+        print(ip_address)
         try:
             app_id = service_metadata.metadata.labels["tycho-app"]
             logger.info (f"-================================> *** {app_id}")
@@ -365,26 +366,6 @@ class KubernetesCompute(Compute):
                         body={},
                         namespace=namespace)
             
-            #cluster_role_list = self.rbac_api.list_cluster_role(
-            #    label_selector=f"name={role_name}")
-            #for cluster_role in cluster_role_list.items:
-            #    if cluster_role.metadata.labels.get("name", None) == role_name:
-            #        logger.debug(f"--deleting cluster role {role_name}")
-            #        response = self.rbac_api.delete_cluster_role(
-            #            name=cluster_role.metadata.name,
-            #            body={}
-            #        )
-
-            #cluster_role_binding_list = self.rbac_api.list_cluster_role_binding(
-            #    label_selector=f"tycho-guid={name}")
-            #for cluster_role_binding in cluster_role_binding_list.items:
-            #    if cluster_role_binding.metadata.labels.get("tycho-guid", None) == name:
-            #        logger.debug(f"--deleting cluster role {name}")
-            #        response = self.rbac_api.delete_cluster_role_binding(
-            #            name=cluster_role_binding.metadata.name,
-            #            body={}
-            #        )
-
             """ Treat everything with a namespace parameterized collections based delete 
             operator the same. """
             finalizers = {
@@ -399,10 +380,6 @@ class KubernetesCompute(Compute):
                 response = finalizer (
                     label_selector=f"tycho-guid={name}",
                     namespace=namespace)
-                
-            #logger.debug (f" --deleting persistent volume {name} in namespace {namespace}")
-            #response = self.api.delete_collection_persistent_volume(
-            #    label_selector=f"tycho-guid={name}")
             
         except ApiException as e:
             traceback.print_exc (e)

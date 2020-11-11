@@ -24,16 +24,46 @@ spec:
 {% for container in system.containers %}
   {% if container.limits or container.requests %}
   {% if container.limits.gpus != None and loop.first %}
-  nodeSelector:
-    nvidia.com/gpu: "true"
   tolerations:
   - key: "nvidia.com/gpu"
     operator: "Exists"
     effect: "NoSchedule"
   {% endif %}
   {% endif %}
+  {% if container.security_context.fsGroup %}
+  securityContext:
+    fsGroup: {{ container.security_context.fsGroup }}
+  {% endif %}
+{% if (system.runasroot == "true") and (system.create_home_dirs == "true") and (system.dev_phase != "test") %}
+  initContainers:
+  - name: volume-permissions
+    image: busybox:1.28
+    {% if container.security_context.Uid and container.security_context.Gid %}
+    command: ['sh', '-c'] 
+    args: 
+    - chmod 775 -R {{ system.parent_dir }}/{{ system.subpath_dir }};
+      chown -R {{ container.security_context.Uid }}:{{ container.security_context.Gid }} {{ system.parent_dir }}/{{ system.subpath_dir }};
+      chmod 775 -R {{ system.parent_dir }}/{{ system.shared_dir }};
+      chown -R {{ container.security_context.Uid }}:{{ container.security_context.Gid }} {{ system.parent_dir }}/{{ system.shared_dir }};
+      echo OK;
+    {% else %}
+    command: ['sh', '-c']
+    args:
+    - chmod 775 -R {{ system.parent_dir }}/{{ system.subpath_dir }};
+      chown -R {{ system.Uid }}:{{ system.Gid }} {{ system.parent_dir }}/{{ system.username }};
+      chmod 775 -R {{ system.parent_dir }}/{{ system.shared_dir }};
+      chown -R {{ system.Uid }}:{{ system.Gid }} {{ system.parent_dir }}/{{ system.shared_dir }};
+      echo OK;
+    {% endif %}
+    volumeMounts:
+    - name: {{ system.stdnfs_pvc }}
+      mountPath: {{ system.parent_dir }}/{{ system.subpath_dir }}
+      subPath: {{system.username}}
+    - name: {{ system.stdnfs_pvc }}
+      mountPath: {{ system.parent_dir }}/{{ system.shared_dir }}
+      subPath: {{ system.shared_dir }}
+{% endif %}
 {% endfor %}
-#  initContainers:
 #{% for container in system.containers %}
 #  {% if container.depends_on|length > 0 %}
 #  {% for d in container.depends_on %}
@@ -43,29 +73,27 @@ spec:
 #  {% endfor %}
 #  {% endif %}
 #{% endfor %}
-#  initContainers:
-#  - name: volume-permissions
-#    image: busybox:1.28
-#    command: ['sh', '-c', 'chmod 777 -R /home/{{system.username}} && echo OK']
-#    volumeMounts:
-#    - name: stdnfs
-#      mountPath: /home/{{system.username}}
-#      subPath: {{system.username}}
   containers:
 {% for container in system.containers %}    
   - name: {{ container.name }}
     image: {{ container.image }}
+    {% if container.security_context.runAsUser %}
+    securityContext:
+      runAsUser: {{ container.security_context.runAsUser }}
+    {% endif %}
 {% if container.command %}
     command: {{ container.command }}
 {% endif %}
-{% if container.env %}
     env:
+{% if container.env %}
     {%for e in container.env %}
     - name : {{ e[0] }}
       value : "{{ e[1] }}"
     {% endfor %}
     - name : GUID
       value: {{ system.identifier }}
+    - name: USER_NAME
+      value: {{ system.username }}
     {% if system.amb %}
     - name: NB_PREFIX
       value: /private/{{system.system_name}}/{{system.username}}/{{system.identifier}}
@@ -75,9 +103,10 @@ spec:
     {% endif %}
 {% endif %}
 {% if not container.env %}
-    env:
     - name : GUID
       value: {{ system.identifier }}
+    - name: USER_NAME
+      value: {{ system.username }}
     {% if system.amb %}
     - name: NB_PREFIX
       value: /private/{{system.system_name}}/{{system.username}}/{{system.identifier}}
@@ -85,6 +114,12 @@ spec:
     - name: NB_PREFIX
       value: /                                                                        
     {% endif %}
+{% endif %}
+{% if system.system_env %}
+  {% for env in system.system_env %}
+    - name: {{ env }}
+      value: {{ system.system_env[env]}}
+  {% endfor %}
 {% endif %}
 {% if container.expose|length > 0 %}
     ports:
@@ -95,26 +130,25 @@ spec:
 {% endif %} # ports
 {% if container.limits or container.requests %}
     resources:
+      limits:
       {% if container.limits %}
       {% if container.limits.cpus != None %}
-      limits:
         cpu: "{{ container.limits.cpus }}"
-        # https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/
-        #nvidia.com/gpu: "{{ container.limits.gpus }}"
         memory: "{{ container.limits.memory }}"
       {% endif %}
+      {% if container.limits.gpus != None %}
+        nvidia.com/gpu: {{ container.limits.gpus }}
       {% endif %}
+      {% endif %}
+      requests:
       {% if container.requests  %}
       {% if container.requests.cpus != None %}
-      requests:
         cpu: "{{ container.requests.cpus }}"
         memory: "{{ container.requests.memory }}"
       {% endif %}
+      {% if container.requests.gpus != None %}
+        nvidia.com/gpu: {{ container.requests.gpus }}
       {% endif %}
-      {% if container.limits.gpus != None %}
-      limits:
-        nvidia.com/gpu: {{ container.limits.gpus }}
-        memory: {{ container.limits.memory }}
       {% endif %}
 {% endif %}
     volumeMounts:

@@ -38,14 +38,21 @@ class TychoService:
             
     def get_utilization (self, utilization):
         total = {
+            "gpu": 0,
             "cpu" : 0,
             "memory" : 0
         }
         for key, val in utilization.items ():
-            total['cpu'] = total['cpu'] + int(val['cpu'].replace ('m', ''))
+            if 'cpu' in val.keys():
+                if 'm' in val['cpu']:
+                    total['cpu'] = total['cpu'] + int(val['cpu'].replace ('m', ''))
+                else:
+                    total['cpu'] = total['cpu'] + int(val['cpu']) * 1000
+            if 'nvidia.com/gpu' in val.keys():
+                total['gpu'] = total['gpu'] + int(val['nvidia.com/gpu'])
             mem = val['memory'].replace ("i", "")
             """ Run the conversion function designated by the last character of the value on the integer value """
-            mem_val = mem_converter[mem[-1]] (int(mem[:-1]))            
+            mem_val = mem_converter[mem[-1]] (int(mem[:-1]))
             total['memory'] = total['memory'] + mem_val
         total['memory'] = f"{total['memory'] / (10 ** 9)}"
         return total
@@ -199,7 +206,7 @@ class TychoClient:
                     
         request = {
             "name"   : self.format_name (name),
-            "username" : "admin",
+            "principal" : '{"username": "renci"}',
             "serviceaccount" : "default",
             "env"    : self.parse_env (settings),
             "system" : system,
@@ -236,7 +243,7 @@ class TychoClient:
         """
         try:
             request = { "name" : self.format_name (name) } if name else {}
-            request['username'] = 'admin'
+            request['username'] = 'renci'
             response = self.status (request)
             logger.debug (response)
             if response.status  == 'success':

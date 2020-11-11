@@ -48,7 +48,6 @@ metadata:
   author: HeLx Dev
   description: An alpha metadata registry for HeLx applications.
 repositories:
-  # App repository location.
   catalyst_apps:
     # This is the Dockstore app prototype repository. GA4GH TRS in future?
     description: Main repository for Catalyst Apps and Tools
@@ -59,30 +58,6 @@ contexts:
   common: 
     name: HeLx Common App Registry
     apps:
-      # Each app has an identifier and designates a set of properties.
-      cloud-top:
-        # User readable short name for the system.
-        name: Cloud Top
-        # The spec field points to a docker-compose YAML document. The naming convention will use the identifier
-        # of the app, cloud-top in this case, to build a directory path, then append "docker-compose.yaml" as the
-        # specification name. This field, if ommitted, will be automatically inferred. 
-        spec: ${catalyst_apps}/cloud-top/docker-compose.yaml
-        # The icon field specifies an image for the app. Like spec, it may be omitted. The inferred file name will
-        # be icon.png.
-        icon: ${catalyst_apps}/cloud-top/icon.png
-        # Description provides a textual description presented to users.
-        description: CloudTop is a cloud native, browser accessible Linux desktop.
-        # Details provides additional context.
-        details: A Ubuntu graphical desktop environment for experimenting with native applications in the cloud.
-        # Web accessible, application specific user documentation.
-        docs: https://helxplatform.github.io/cloudtop-docs/
-        # Docker compose systems contain multiple containers.
-        # Something must tell the launcher which containers present external services.
-        # In a Kubernetes context, a service will be created to map these containers as external endpoints for the app.
-        services:
-          # The key must be the name of a "service" within the docker-compose.yaml 
-          # and the port must be an exposed port of that container.
-          cloud-top : 8080
       jupyter-ds:
         name: Jupyter Data Science
         description: Jupyter DataScience - A Jupyter notebook for exploring and visualizing data.
@@ -102,6 +77,12 @@ contexts:
       - common
       - blackbalsam
     name: BRAIN-I App Registry
+    jupyter-ds:
+      securityContext:
+        fsGroup: 0
+    blackbalsam:
+      securityContext:
+        fsGroup: 0
     apps:
       imagej:
         name: ImageJ Viewer
@@ -117,10 +98,20 @@ contexts:
         details: It enables browsing, annotating, and analyzing large multi-dimensional images.
         docs: https://napari.org/
         services:
-          napari : 8080            
+          napari : 8080
+      cloud-top:
+        name: Cloud Top
+        spec: ${catalyst_apps}/cloud-top/docker-compose.yaml
+        icon: ${catalyst_apps}/cloud-top/icon.png
+        description: CloudTop is a cloud native, browser accessible Linux desktop.
+        details: A Ubuntu graphical desktop environment for experimenting with native applications in the cloud.
+        docs: https://helxplatform.github.io/cloudtop-docs/
+        services:
+          cloud-top : 8080            
   catalyst:
     extends:
       - common
+      - blackbalsam
     name: BioData Catalyst App Registry
     apps:
       dicom-cloudtop:
@@ -130,14 +121,21 @@ contexts:
         docs: https://ohif.org/
         services:
           dicom-cloudtop : 8080
-      # TODO: is this just jupyter-ds with access to autoencoder python modules? If so, delete this app.
-      autoencoder-notebook:
-        name: Autoencoder Notebook
-        description: need description.
-        details: need details.
-        docs: http://we.need.autoencoder.docs/doc.html # TODO: need these
+      dicom-gh:
+        name: DICOM Viewer - Google Health
+        description: OHIF is a framework for building medical imaging web applications.
+        details: Uses the OrthaNC DICOM service for indexing image data.
+        docs: https://ohif.org/
         services:
-          jupyter : 8888          
+          dicom-gh : 8080
+      # TODO: is this just jupyter-ds with access to autoencoder python modules? If so, delete this app.
+      #autoencoder-notebook:
+      #  name: Autoencoder Notebook
+      #  description: need description.
+      #  details: need details.
+      #  docs: http://we.need.autoencoder.docs/doc.html # TODO: need these
+      #  services:
+      #    jupyter : 8888          
       hail:
         name: Hail / Jupyter Workspace
         description: A notebook computing interface to a large single node Hail genomics workspace.
@@ -145,6 +143,15 @@ contexts:
         docs: https://github.com/helxplatform/helx-hail # TODO: Make proper docs.
         services:
           hail : 8000
+      cloud-top:
+        name: Cloud Top
+        spec: ${catalyst_apps}/cloud-top/docker-compose.yaml
+        icon: ${catalyst_apps}/cloud-top/icon.png
+        description: CloudTop is a cloud native, browser accessible Linux desktop.
+        details: A Ubuntu graphical desktop environment for experimenting with native applications in the cloud.
+        docs: https://helxplatform.github.io/cloudtop-docs/
+        services:
+          cloud-top : 8080
   scidas:
     extends:
       - common
@@ -158,6 +165,7 @@ contexts:
         docs: https://github.com/SciDAS/nextflow-api
         services:
           nextflow : 8080
+        env: {"PVC_NAME": $STDNFS}
       gsforge:
         name: GSForge
         description: >
@@ -166,7 +174,16 @@ contexts:
         details: Offers new potential hypotheses for gene-trait causality.
         docs: https://systemsgenetics.github.io/GSForge/
         services:
-          jupyter : 8888
+          gsforge : 8888
+      cloud-top:
+        name: Cloud Top
+        spec: ${catalyst_apps}/cloud-top/docker-compose.yaml
+        icon: ${catalyst_apps}/cloud-top/icon.png
+        description: CloudTop is a cloud native, browser accessible Linux desktop.
+        details: A Ubuntu graphical desktop environment for experimenting with native applications in the cloud.
+        docs: https://helxplatform.github.io/cloudtop-docs/
+        services:
+          cloud-top : 8080
   blackbalsam:
     extends:
       - common
@@ -180,13 +197,13 @@ contexts:
         serviceAccount: spark
         services:
           blackbalsam : 8888
-      hail:
-        name: Hail
-        description: Hail is an open-source, general-purpose, Python-based data analysis library.
-        details: It provides additional data types and methods for working with genomic data.
-        docs: https://hail.is/
-        services:
-          hail : 8000
+      #hail:
+      #  name: Hail
+      #  description: Hail is an open-source, general-purpose, Python-based data analysis library.
+      #  details: It provides additional data types and methods for working with genomic data.
+      #  docs: https://hail.is/
+      #  services:
+      #    hail : 8000
       #rshiny:
       #  name: R Shiny
       #  description: Shiny is an R package that makes it easy to build interactive web apps straight from R.
@@ -197,5 +214,13 @@ contexts:
   restartr:
     extends:
       - common
-      - blackbalsam
+    apps:
+      blackbalsam-clinical:
+        name: Blackbalsam Clinical
+        description: An A.I., visualization, and parallel computing environment.
+        details: A.I.(Tensorflow,Keras,PyTorch,Gensim) Vis(Plotly,Bokeh,Seaborn) Compute(Spark).
+        docs: https://github.com/stevencox/blackbalsam
+        serviceAccount: spark
+        services:
+          blackbalsam-clinical : 8888
     name: UNC Restarting Research
