@@ -17,7 +17,7 @@ google-auth==1.6.3
 idna==2.8
 itsdangerous==1.1.0
 Jinja2==2.10
-jsonschema
+jsonschema==2.6.0
 kubernetes==8.0.1
 MarkupSafe==1.1.1
 mistune==0.8.4
