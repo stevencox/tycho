@@ -14,6 +14,7 @@ metadata:
   labels:
     name: {{ system.name }}
     username: {{ system.username }}
+    app-name: {{ system.system_name }}
     executor: tycho
     tycho-guid: {{ system.identifier }}
     tycho-app-id: {{ system.app_id }}
