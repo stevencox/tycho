@@ -8,6 +8,7 @@ notifications:
   email:
     - scox@renci.org
     - muralikarthik.k@renci.org
+    - igilani@renci.org
     
 # command to install dependencies
 install:
