@@ -50,7 +50,7 @@ In one shell, run the API:
 $ export PATH=~/dev/tycho/bin:$PATH
 $ tycho api --debug
 ```
-In another, launch three notebook instances.
+In another shell, launch three notebook instances.
 ```
 $ export PATH=~/dev/tycho/bin:$PATH
 $ tycho up -f sample/jupyter-ds/docker-compose.yaml
