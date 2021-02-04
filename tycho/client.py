@@ -12,6 +12,7 @@ import yaml
 from tycho.tycho_utils import TemplateUtils
 from tycho.config import Config
 from tycho.exceptions import TychoException
+from tycho.actions import StartSystemResource, StatusSystemResource, DeleteSystemResource
 from kubernetes import client as k8s_client, config as k8s_config
 
 logger = logging.getLogger (__name__)
@@ -88,13 +89,18 @@ class TychoSystem:
 class TychoClient:
     """ Python client to Tycho dynamic application deployment API. """
 
-    def __init__(self, url):
+    def __init__(self, url="http://localhost:5000"):
         """ Construct a client.
 
             :param url: URL of the Tycho API endpoint.
             :type url: string
         """
         self.url = f"{url}/system"
+        self.actions = {
+            'start': StartSystemResource(),
+            'status': StatusSystemResource(),
+            'delete': DeleteSystemResource(),
+        }
         
     def request (self, service, request):
         """ Send a request to the server. Generic underlayer to all requests. 
@@ -102,13 +108,17 @@ class TychoClient:
             :param service: URL path to the service to invoke.
             :param request: JSON to send to the API endpoint.
         """
-        response = requests.post (f"{self.url}/{service}", json=request)
-        result_text = f"HTTP status {response.status_code} received from service: {service}"
-        logger.debug (result_text)
-        if not response.status_code == 200:
-            raise Exception (f"Error: {result_text}")
-        result = response.json ()
-        logger.debug (json.dumps(result, indent=2))
+        if os.environ.get("REST_API", "false") == "true":
+            response = requests.post (f"{self.url}/{service}", json=request)
+            result_text = f"HTTP status {response.status_code} received from service: {service}"
+            logger.debug (result_text)
+            if not response.status_code == 200:
+                raise Exception (f"Error: {result_text}")
+            result = response.json ()
+            logger.debug (json.dumps(result, indent=2))
+        else:
+            result = self.actions.get(service).post(request)
+            logger.debug(f"{result} received from service: {service}")
         return result
     
     def format_name (self, name):
