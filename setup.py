@@ -32,20 +32,18 @@ class PublishClass(Command):
 
     def run(self):
         try:
-            self.status('Removing previous builds…')
+            print(f"-----> removing previous builds")
             rmtree(os.path.join(current, 'dist'))
             rmtree(os.path.join(current, 'build'))
         except Exception as e:
-            print(e)
+            print(f"-----> Exception: {e}")
             pass
         os.system('python setup.py sdist bdist_wheel --universal')
         os.system('twine upload dist/*')
-        #os.system('git tag v{0}'.format(about['__version__']))
-        #os.system('git push --tags')
         sys.exit()
 
 setup(
-    name="tycho",
+    name="tycho-api",
     version=version,
     maintainer="Renci",
     maintainer_email="muralikarthik.k@renci.org",
