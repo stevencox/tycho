@@ -1,0 +1,29 @@
+version: 2
+
+updates:
+
+  # Maintain dependencies for pip 
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    rebase-strategy: "auto"
+    reviewers:
+      - "cnbennett3"
+    labels:
+      - "security"
+      - "dependencies"
+      - "pip"
+
+  # Maintain dependencies for Docker
+  - package-ecosystem: "docker"
+    directory: "/docker/tycho-api/"
+    schedule:
+      interval: "daily"
+    rebase-strategy: "auto"
+    reviewers:
+      - "cnbennett3"
+    labels:
+      - "security"
+      - "dependencies"
+      - "docker"
