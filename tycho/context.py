@@ -141,6 +141,14 @@ class TychoContext:
                 else:
                     logger.error (f"-- app {app_id}. failed to parse spec.")
                 raise e
+        else:
+             try:
+                 logger.debug(f"-- removing cached volumes")
+                 spec['services'][app_id].pop('volumes', None)
+             except Exception as e:
+                 traceback.print_exc ()
+                 logger.error (f"-- app {app_id}. failed to remove cached volumes in parse spec.")
+                 raise e
         return spec
 
     def get_env_registry(self, app_id, settings):
