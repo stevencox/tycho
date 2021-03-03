@@ -2,7 +2,7 @@ version: '3.6'
 services:
 
    cloud-top:
-      image: heliumdatastage/cloudtop:latest
+      image: helxplatform/cloudtop:latest
       container_name: cloud-top
       environment:
       volumes:
@@ -22,7 +22,7 @@ services:
             memory: 5000M
    
    #loadortha:
-   #   image: heliumdatastage/loadortha:6
+   #   image: helxplatform/loadortha:6
    #   container_name: loadortha
    #   volumes:
    #      - TYCHO_NFS/cloud-top:/user/local/renci/data
@@ -66,6 +66,8 @@ services:
         - pvc://cloud-top:/data/
 
    postgres:
+      # uncommment next/remove following line once built in helxplatform
+      # image: helxplatform/postgres:stage
       image: heliumdatastage/postgres:stage
       container_name: postgres
       volumes:
