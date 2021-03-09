@@ -114,13 +114,13 @@ contexts:
       - blackbalsam
     name: BioData Catalyst App Registry
     apps:
-      dicom-cloudtop:
-        name: DICOM Viewer
-        description: OHIF is a framework for building medical imaging web applications.
-        details: Uses the OrthaNC DICOM service for indexing image data.
-        docs: https://ohif.org/
-        services:
-          dicom-cloudtop : 8080
+      #dicom-cloudtop:
+      #  name: DICOM Viewer
+      #  description: OHIF is a framework for building medical imaging web applications.
+      #  details: Uses the OrthaNC DICOM service for indexing image data.
+      #  docs: https://ohif.org/
+      #  services:
+      #    dicom-cloudtop : 8080
       dicom-gh:
         name: DICOM Viewer - Google Health
         description: OHIF is a framework for building medical imaging web applications.
