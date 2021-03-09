@@ -3,6 +3,8 @@
 version: "3"
 services:
   rstudio-server:
+    # Uncomment next/remove following line once built in helxplatform
+    # image: helxplatform/rstudio-server:tycho
     image: heliumdatastage/rstudio-server:tycho
     environment:
       - DISABLE_AUTH=true

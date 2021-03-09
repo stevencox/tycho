@@ -1,7 +1,7 @@
 version: "3"
 services:
   tycho_api:
-    image: heliumdatastage/tycho:1.1
+    image: helxplatform/tycho:1.0.22
     volumes:
       - "/tycho"
     entrypoint: /usr/local/bin/gunicorn --workers=2 --bind=0.0.0.0:8099 --name=tycho --timeout=600 tycho.api:app 

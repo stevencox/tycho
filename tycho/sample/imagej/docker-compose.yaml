@@ -1,6 +1,8 @@
 version: "3.6"
 services:
   imagej:
+    # Uncomment next/remove following line when built in helxplatform
+    # image: helxplatform/renci-guacamole-vnc:test
     image: heliumdatastage/renci-guacamole-vnc:test
     container_name: imagej
     entrypoint: /init
