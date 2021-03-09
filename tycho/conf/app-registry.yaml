@@ -139,7 +139,7 @@ contexts:
       hail:
         name: Hail / Jupyter Workspace
         description: A notebook computing interface to a large single node Hail genomics workspace.
-        details: Insantiates Apache Spark on a single cloud node for small to medium scale exploration.
+        details: Instantiates Apache Spark on a single cloud node for small to medium scale exploration.
         docs: https://github.com/helxplatform/helx-hail # TODO: Make proper docs.
         services:
           hail : 8000
