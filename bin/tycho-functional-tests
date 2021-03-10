@@ -10,7 +10,7 @@ max_cycles=300
 
 # wait for the Tycho API endpoint
 tycho_port=5000
-api=http://localhost:$tycho_port/apidocs
+api=http://localhost:$tycho_port/apidocs/
 for cycle in $(seq 1 $max_cycles); do
     echo --testing $api cycle: $cycle
     set +e
