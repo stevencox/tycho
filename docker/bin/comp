@@ -1,18 +1,20 @@
 #!/bin/bash
 
+repo=helxplatform
+
 build () {
     local mod=$1
     if [ -z "$mod" ]; then
         echo module name required
     fi
-    docker build --no-cache $mod -t heliumdatastage/$mod
+    docker build --no-cache $mod -t $repo/$mod
 }
 push () {
     local mod=$1
     if [ -z "$mod" ]; then
         echo module name required
     fi
-    docker push heliumdatastage/$mod
+    docker push $repo/$mod
 }
 clean () {
     images () {

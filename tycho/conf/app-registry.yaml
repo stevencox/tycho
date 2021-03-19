@@ -121,13 +121,13 @@ contexts:
       - blackbalsam
     name: BioData Catalyst App Registry
     apps:
-      dicom-cloudtop:
-        name: DICOM Viewer
-        description: OHIF is a framework for building medical imaging web applications.
-        details: Uses the OrthaNC DICOM service for indexing image data.
-        docs: https://ohif.org/
-        services:
-          dicom-cloudtop : 8080
+      #dicom-cloudtop:
+      #  name: DICOM Viewer
+      #  description: OHIF is a framework for building medical imaging web applications.
+      #  details: Uses the OrthaNC DICOM service for indexing image data.
+      #  docs: https://ohif.org/
+      #  services:
+      #    dicom-cloudtop : 8080
       dicom-gh:
         name: DICOM Viewer - Google Health
         description: OHIF is a framework for building medical imaging web applications.
@@ -146,7 +146,7 @@ contexts:
       hail:
         name: Hail / Jupyter Workspace
         description: A notebook computing interface to a large single node Hail genomics workspace.
-        details: Insantiates Apache Spark on a single cloud node for small to medium scale exploration.
+        details: Instantiates Apache Spark on a single cloud node for small to medium scale exploration.
         docs: https://github.com/helxplatform/helx-hail # TODO: Make proper docs.
         services:
           hail : 8000

@@ -2,7 +2,7 @@
 version: "3"
 services:
   hail:
-    image: heliumdatastage/helx-hail:latest
+    image: helxplatform/helx-hail:latest
     ports:
       - ${HOST_PORT}:8000
     deploy:
