@@ -16,7 +16,7 @@ Flask-RESTful==0.3.7
 google-auth==1.6.3
 idna==2.8
 itsdangerous==1.1.0
-Jinja2==2.10
+Jinja2==2.11.3
 jsonschema==3.0.0
 kubernetes==8.0.1
 MarkupSafe==1.1.1
