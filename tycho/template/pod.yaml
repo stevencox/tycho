@@ -98,8 +98,12 @@ spec:
     {% if system.amb %}
     - name: NB_PREFIX
       value: /private/{{system.system_name}}/{{system.username}}/{{system.identifier}}
+    - name: FB_BASEURL
+      value: /private/{{system.system_name}}/{{system.username}}/{{system.identifier}}
     {% else %}
     - name: NB_PREFIX
+      value: /
+    - name: FB_BASEURL
       value: /
     {% endif %}
 {% endif %}
@@ -111,9 +115,13 @@ spec:
     {% if system.amb %}
     - name: NB_PREFIX
       value: /private/{{system.system_name}}/{{system.username}}/{{system.identifier}}
+    - name: FB_BASEURL
+      value: /private/{{system.system_name}}/{{system.username}}/{{system.identifier}}
     {% else %}
     - name: NB_PREFIX
-      value: /                                                                        
+      value: /
+    - name: FB_BASEURL
+      value: /
     {% endif %}
 {% endif %}
 {% if system.system_env %}
