@@ -65,6 +65,13 @@ contexts:
         docs: https://jupyter-docker-stacks.readthedocs.io/en/latest/using/selecting.html#jupyter-datascience-notebook
         services:
           jupyter-ds : "8888"
+      filebrowser:
+        name: File Browser
+        description: File Browser - a utility for browsing files through a web interface
+        details: File Browser provides a web interface for browsing files in a cloud environment.
+        docs: https://filebrowser.org/
+        services:
+          filebrowser: "8888"
       #rstudio-server:
       #  name: R Studio Server
       #  description: R Studio Server is a web based notebook environment for R development.
