@@ -231,3 +231,7 @@ contexts:
         services:
           blackbalsam-clinical : 8888
     name: UNC Restarting Research
+  heal:
+    extends:
+      - common
+    name: NIH HEAL Initiative
