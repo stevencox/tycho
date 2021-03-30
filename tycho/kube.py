@@ -21,8 +21,10 @@ import kubernetes.client
 from kubernetes.client.rest import ApiException
 
 logger = logging.getLogger (__name__)
+logger.setLevel(logging.DEBUG)
 
 port_forwards = {}
+
 
 class KubernetesCompute(Compute):
     """ A Kubernetes orchestrator implementation.
@@ -323,7 +325,7 @@ class KubernetesCompute(Compute):
         logger.debug (f"creating deployment specification {template}")
 #        deployment = k8s_client.ExtensionsV1beta1Deployment(
         deployment = k8s_client.V1Deployment(
-#            api_version="extensions/v1beta1",
+#           api_version="extensions/v1beta1",
             api_version="apps/v1",
             kind="Deployment",
             metadata=k8s_client.V1ObjectMeta(
@@ -402,7 +404,7 @@ class KubernetesCompute(Compute):
             :param namespace: Namespace the system runs in.
             :type namespace: str
         """            
-        namespace = self.namespace # self.get_namespace()
+        namespace = self.namespace
         result = []
         """ Find all our generated deployments. """
         label = f"tycho-guid={name}" if name else f"executor=tycho"
@@ -412,7 +414,6 @@ class KubernetesCompute(Compute):
         response = self.extensions_api.list_namespaced_deployment (
             namespace,
             label_selector=label)
-        #logger.trace (f"-- deployment list: {response}")
         if response is not None:
             for item in response.items:
                 
@@ -444,6 +445,35 @@ class KubernetesCompute(Compute):
                         "utilization"   : pod_resources
                     })
         return result
+
+    def modify(self, system_modify):
+        """ Modify system.
+            Takes in a system_modify object containing,
+            1) name --> name of the pod or a GUID
+            2) labels --> dict of labels
+            3) resources --> dict consisting of cpu and memory
+
+            :param system_modify: Spec and Metadata object.
+            :type name: ModifySystem
+        """
+        namespace = self.namespace
+        try:
+            api_response = self.api.list_namespaced_pod(
+                label_selector=f"app={system_modify.name}",
+                namespace=namespace).items
+            for pod in api_response:
+                pod.metadata.labels.name = system_modify.labels["name"]
+                api_response = self.api.patch_namespaced_pod(
+                    name=pod.metadata.name,
+                    namespace=namespace,
+                    body=pod
+                )
+                logger.info(api_response)
+            return {"modified-system": "success"}
+        except Exception as e:
+            logger.exception(f"Error modifying the pod: {e}")
+            raise
+
 
 
 

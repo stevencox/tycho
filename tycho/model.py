@@ -10,6 +10,7 @@ from tycho.tycho_utils import TemplateUtils
 
 logger = logging.getLogger (__name__)
 
+
 class Limits:
     """ Abstraction of resource limits on a container in a system. """
     def __init__(self,
@@ -31,6 +32,7 @@ class Limits:
         self.memory = memory
     def __repr__(self):
         return f"cpus:{self.cpus} gpus:{self.gpus} mem:{self.memory}"
+
 
 class Volumes:
     def __init__(self, id, containers):
@@ -57,6 +59,7 @@ class Volumes:
                    logger.debug(f"Volume definition should follow the pattern: pvc://<pvc_name>/<sub-path>:<container-path> or pvc://<sub-path>:<container-path>")
                    raise Exception(f"Wrong Volume definition in Container:{container['name']} and Volume:{volume}")
        return self.volumes
+
 
 class Container:
     """ Invocation of an image in a specific infastructural context. """
@@ -112,6 +115,7 @@ class Container:
 
     def __repr__(self):
         return f"name:{self.name} image:{self.image} id:{self.identity} limits:{self.limits}"
+
 
 class System:
     """ Distributed system of interacting containerized software. """
@@ -300,6 +304,25 @@ class System:
 
     def __repr__(self):
         return f"name:{self.name} containers:{self.containers}"
+
+
+class ModifySystem:
+    def __init__(self, name, labels, resources):
+        self.name = name
+        self.labels = labels
+        self.resources = resources
+
+    @staticmethod
+    def parse_modify(name, labels, resources):
+        modify_system = ModifySystem(
+            name,
+            labels,
+            resources
+        )
+        return modify_system
+
+    def __repr__(self):
+        return f"name: {self.name} labels: {self.labels} resources: {self.resources}"
 
 class Service:
     """ Model network connectivity rules to the system. """

@@ -1,0 +1,9 @@
+{
+	"labels": {
+		"name": "sample-name"
+	},
+	"resources": {
+		"cpu": "1",
+		"memory": "250M"
+	}
+}

@@ -1,7 +1,7 @@
 from tycho.config import Config
 from tycho.factory import ComputeFactory
 from tycho.factory import supported_backplanes
-from tycho.model import System
+from tycho.model import System, ModifySystem
 
 class Tycho: 
     """ An organizing abstraction for the Tycho system. 
@@ -55,7 +55,24 @@ class Tycho:
             serviceAccount=request.get('serviceaccount', 'default'),
             env=request.get ('env', {}),
             services=request.get ('services', {}))
-    
+
+    def parse_modify(self, request):
+        """ Parse a request to construct an abstract syntax tree for a system.
+
+            :param request: JSON object formatted to contain name, structure, env, and
+                            service elements. Name is a string. Structue is the JSON
+                            object resulting from loading a docker-compose.yaml. Env
+                            is a JSON dictionary mapping environment variables to
+                            values. These will be substituted into the specification.
+                            Services is a JSON object representing which containers and
+                            ports to expose, and other networking rules.
+            :returns: `.System`
+        """
+        return ModifySystem.parse_modify(
+            name=request['name'],
+            labels=request.get('labels', {}),
+            resources=request.get('resources', {}))
+
     @staticmethod
     def is_valid_backplane (backplane):
         """ Determine if the argument is a valid backplane. """
