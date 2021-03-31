@@ -6,7 +6,8 @@ from pytest import fixture
 
 from tycho.client import TychoClient
 
-@mark.skip
+
+#@mark.skip(reason="Need connection to a running Kubernetes cluster.")
 @mark.kubernetes
 class TestModify:
 

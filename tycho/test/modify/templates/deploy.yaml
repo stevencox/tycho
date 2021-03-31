@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    executor: tycho
+    tycho-guid: 4e5aa1808da44534aa711292debda59e
+    username: test-user
+  name: jupyter-ds-4e5aa1808da44534aa711292debda59e
+  namespace: <name-space>
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      tycho-guid: 4e5aa1808da44534aa711292debda59e
+      username: test-user
+  template:
+    metadata:
+      labels:
+        app-name: jupyter-ds
+        executor: tycho
+        name: sample-name
+        tycho-app-id: ""
+        tycho-guid: 4e5aa1808da44534aa711292debda59e
+        username: test-user
+      name: jupyter-ds-4e5aa1808da44534aa711292debda59e
+    spec:
+      containers:
+      - image: nginx:1.14.2
+        imagePullPolicy: IfNotPresent
+        name: nginx
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        resources:
+          limits:
+            cpu: "1"
+            memory: 250Mi
+          requests:
+            cpu: "1"
+            memory: 250Mi
+      - command:
+        - /bin/bash
+        - -c
+        - start.sh jupyter lab --LabApp.token= --ip="*" --NotebookApp.base_url=${NB_PREFIX}
+          --NotebookApp.allow_origin="*"
+        env:
+        - name: HOST_PORT
+          value: "8888"
+        - name: GUID
+          value: 4e5aa1808da44534aa711292debda59e
+        - name: USER_NAME
+          value: test-user
+        - name: NB_PREFIX
+          value: /
+        image: heliumdatastage/jupyter-datascience:v0.0.3
+        imagePullPolicy: IfNotPresent
+        name: jupyter-ds
+        resources:
+          limits:
+            cpu: "1"
+            memory: 250Mi
+            nvidia.com/gpu: "0"
+          requests:
+            cpu: "1"
+            memory: 250Mi
+            nvidia.com/gpu: "0"
+

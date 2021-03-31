@@ -307,24 +307,26 @@ class System:
 
 
 class ModifySystem:
-    def __init__(self, config, name, labels, resources):
+    def __init__(self, config, guid, labels, resources):
         self.config = config
-        self.name = name
+        self.guid = guid
         self.labels = labels
         self.resources = resources
+        self.containers = []
 
     @staticmethod
-    def parse_modify(config, name, labels, resources):
+    def parse_modify(config, guid, labels, resources):
         modify_system = ModifySystem(
             config,
-            name,
+            guid,
             labels,
             resources
         )
         return modify_system
 
     def __repr__(self):
-        return f"name: {self.name} labels: {self.labels} resources: {self.resources}"
+        return f"name: {self.guid} labels: {self.labels} resources: {self.resources}"
+
 
 class Service:
     """ Model network connectivity rules to the system. """

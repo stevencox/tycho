@@ -457,35 +457,48 @@ class KubernetesCompute(Compute):
             :type name: ModifySystem
         """
         namespace = self.namespace
+        patches_applied = list()
         try:
             api_response = self.extensions_api.list_namespaced_deployment(
-                label_selector=f"app={system_modify.name}",
+                label_selector=f"tycho-guid={system_modify.guid}",
                 namespace=namespace).items
 
             if len(api_response) == 0:
                 raise Exception("No deployments found. Specify a valid GUID. Format {'guid': '<name>'}.")
 
-            generator = TemplateUtils(config=system_modify.config)
-            templates = list(generator.render("patch.yaml", context={"system_modify": system_modify}))
-            patch_template = templates[0] if len(templates) > 0 else {}
-
-            if len(patch_template) == 0:
-                raise Exception("Invalid arguments. Need at least one of resources or labels to modify. \n"
-                                "Format: 'labels': {'test-case': 'works', 'name': 'sample-name'}, "
-                                "'resources': {'cpu': '1', 'memory': '250Mi'}")
-
             for deployment in api_response:
+
+                system_modify.containers = list()
+                # Need this step to get a comprehensive list of containers if it's multi container pod.
+                # Later for patching would need a merge key "name" and corresponding image.
+                containers = deployment.spec.template.spec.containers
+                system_modify.containers = containers
+
+                generator = TemplateUtils(config=system_modify.config)
+                templates = list(generator.render("patch.yaml", context={"system_modify": system_modify}))
+                patch_template = templates[0] if len(templates) > 0 else {}
+                patches_applied.append(patch_template)
+
+                if len(patch_template) == 0:
+                    raise Exception("Invalid arguments. Need at least one of resources or labels to modify. \n"
+                                    "Format: 'labels': {'test-label-name': <test-label-value>, 'name': <name>}, "
+                                    "'resources': {'cpu': <cpu>, 'memory': <memory>}")
+
                 _ = self.extensions_api.patch_namespaced_deployment(
                         name=deployment.metadata.name,
                         namespace=namespace,
                         body=patch_template
                     )
 
+            return {
+                "patches": patches_applied
+            }
+
         except (IndexError, ApiException, Exception) as e:
             exc_type, exc_value, exc_traceback = sys.exc_info()
             text = traceback.format_exception(exc_type, exc_value, exc_traceback)
             raise ModifyException(
-                message=f"Failed to modify system: {system_modify.name}",
+                message=f"Failed to modify system: {system_modify.guid}",
                 details=text
             )
 

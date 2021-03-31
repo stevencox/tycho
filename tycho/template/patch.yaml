@@ -11,6 +11,7 @@ spec:
     {% if system_modify.resources|length > 0 %}
     spec:
       containers:
+      {% for container in system_modify.containers %}
       - resources:
           limits:
           {% for key, value in system_modify.resources.items() %}
@@ -20,7 +21,8 @@ spec:
           {% for key, value in system_modify.resources.items() %}
             {{ key }}: {{ value }}
           {% endfor %}
-        name: nginx
-        image: nginx:1.14.2
+        name: {{ container.name }}
+        image: {{ container.image }}
+      {% endfor %}
     {% endif %}
 {% endif %}

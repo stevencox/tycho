@@ -70,7 +70,7 @@ class Tycho:
         """
         return ModifySystem.parse_modify(
             config=self.config,
-            name=request.get("app", None),
+            guid=request.get("tycho-guid", None),
             labels=request.get('labels', {}),
             resources=request.get('resources', {}))
 
