@@ -67,7 +67,6 @@ class TychoResource:
             result = {
                 'error': message
             }
-            print(json.dumps(result, indent=2))
         return {
             'status': status,
             'result': result,

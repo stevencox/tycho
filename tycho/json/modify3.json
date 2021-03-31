@@ -1,0 +1,1 @@
+{"app": "nginx", "resources": {"cpu": "1", "memory": "250M"}}

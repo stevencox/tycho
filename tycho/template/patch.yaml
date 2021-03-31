@@ -1,0 +1,26 @@
+{% if (not system_modify.lables|length > 0) or (not system_modify.resources|length != 0) %}
+spec:
+  template:
+    {% if system_modify.labels|length > 0 %}
+    metadata:
+      labels:
+    {% for key, value in system_modify.labels.items() %}
+        {{ key }}: {{ value }}
+    {% endfor %}
+    {% endif %}
+    {% if system_modify.resources|length > 0 %}
+    spec:
+      containers:
+      - resources:
+          limits:
+          {% for key, value in system_modify.resources.items() %}
+            {{ key }}: {{ value }}
+          {% endfor %}
+          requests:
+          {% for key, value in system_modify.resources.items() %}
+            {{ key }}: {{ value }}
+          {% endfor %}
+        name: nginx
+        image: nginx:1.14.2
+    {% endif %}
+{% endif %}

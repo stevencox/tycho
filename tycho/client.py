@@ -16,7 +16,6 @@ from tycho.actions import StartSystemResource, StatusSystemResource, DeleteSyste
 from kubernetes import client as k8s_client, config as k8s_config
 
 logger = logging.getLogger (__name__)
-logger.setLevel(logging.DEBUG)
 
 mem_converter = {
     'M' : lambda v : v * 10 ** 6,
@@ -126,7 +125,6 @@ class TychoClient:
             logger.debug (json.dumps(result, indent=2))
         else:
             result = self.actions.get(service).post(request)
-            print(f"=====================")
             logger.debug(f"{result} received from service: {service}")
         return result
     
@@ -211,7 +209,7 @@ class TychoClient:
             :type request: JSON
         """
         response = self.request("modify", request)
-        return {}
+        return response
 
     def up (self, name, system, settings=""):
         """ Bring a service up starting with a docker-compose spec. 
@@ -333,8 +331,9 @@ class TychoClient:
         try:
             response = self.modify(mod_items)
             logger.debug(json.dumps(response, indent=2))
+            return response
         except (AttributeError, Exception) as e:
-            logger.exception("Error in modifying system.")
+            logger.exception(f"Error in modifying system. {e}")
 
             
 class TychoClientFactory:

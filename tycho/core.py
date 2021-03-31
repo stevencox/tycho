@@ -69,7 +69,8 @@ class Tycho:
             :returns: `.System`
         """
         return ModifySystem.parse_modify(
-            name=request['name'],
+            config=self.config,
+            name=request.get("app", None),
             labels=request.get('labels', {}),
             resources=request.get('resources', {}))
 

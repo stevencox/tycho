@@ -307,14 +307,16 @@ class System:
 
 
 class ModifySystem:
-    def __init__(self, name, labels, resources):
+    def __init__(self, config, name, labels, resources):
+        self.config = config
         self.name = name
         self.labels = labels
         self.resources = resources
 
     @staticmethod
-    def parse_modify(name, labels, resources):
+    def parse_modify(config, name, labels, resources):
         modify_system = ModifySystem(
+            config,
             name,
             labels,
             resources

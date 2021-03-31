@@ -15,13 +15,13 @@ from tycho.compute import Compute
 from tycho.exceptions import DeleteException
 from tycho.exceptions import StartException
 from tycho.exceptions import TychoException
+from tycho.exceptions import ModifyException
 from tycho.model import System
 from tycho.tycho_utils import TemplateUtils
 import kubernetes.client
 from kubernetes.client.rest import ApiException
 
 logger = logging.getLogger (__name__)
-logger.setLevel(logging.DEBUG)
 
 port_forwards = {}
 
@@ -449,7 +449,7 @@ class KubernetesCompute(Compute):
     def modify(self, system_modify):
         """ Modify system.
             Takes in a system_modify object containing,
-            1) name --> name of the pod or a GUID
+            1) name --> GUID
             2) labels --> dict of labels
             3) resources --> dict consisting of cpu and memory
 
@@ -458,21 +458,36 @@ class KubernetesCompute(Compute):
         """
         namespace = self.namespace
         try:
-            api_response = self.api.list_namespaced_pod(
+            api_response = self.extensions_api.list_namespaced_deployment(
                 label_selector=f"app={system_modify.name}",
                 namespace=namespace).items
-            for pod in api_response:
-                pod.metadata.labels.name = system_modify.labels["name"]
-                api_response = self.api.patch_namespaced_pod(
-                    name=pod.metadata.name,
-                    namespace=namespace,
-                    body=pod
-                )
-                logger.info(api_response)
-            return {"modified-system": "success"}
-        except Exception as e:
-            logger.exception(f"Error modifying the pod: {e}")
-            raise
+
+            if len(api_response) == 0:
+                raise Exception("No deployments found. Specify a valid GUID. Format {'guid': '<name>'}.")
+
+            generator = TemplateUtils(config=system_modify.config)
+            templates = list(generator.render("patch.yaml", context={"system_modify": system_modify}))
+            patch_template = templates[0] if len(templates) > 0 else {}
+
+            if len(patch_template) == 0:
+                raise Exception("Invalid arguments. Need at least one of resources or labels to modify. \n"
+                                "Format: 'labels': {'test-case': 'works', 'name': 'sample-name'}, "
+                                "'resources': {'cpu': '1', 'memory': '250Mi'}")
+
+            for deployment in api_response:
+                _ = self.extensions_api.patch_namespaced_deployment(
+                        name=deployment.metadata.name,
+                        namespace=namespace,
+                        body=patch_template
+                    )
+
+        except (IndexError, ApiException, Exception) as e:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            text = traceback.format_exception(exc_type, exc_value, exc_traceback)
+            raise ModifyException(
+                message=f"Failed to modify system: {system_modify.name}",
+                details=text
+            )
 
 
 
