@@ -38,8 +38,8 @@ class Tycho:
     def parse (self, request):
         """ Parse a request to construct an abstract syntax tree for a system.
         
-            :param request: JSON object formatted to contain name, structure, env, and 
-                            service elements. Name is a string. Structue is the JSON 
+            :param request: JSON object formatted to contain name, structure, env, and
+                            service elements. Name is a string. Structue is the JSON
                             object resulting from loading a docker-compose.yaml. Env
                             is a JSON dictionary mapping environment variables to
                             values. These will be substituted into the specification.
@@ -57,16 +57,14 @@ class Tycho:
             services=request.get ('services', {}))
 
     def parse_modify(self, request):
-        """ Parse a request to construct an abstract syntax tree for a system.
+        """ Parse a request into a class representation of metadata and specs of a system to be modified.
 
-            :param request: JSON object formatted to contain name, structure, env, and
-                            service elements. Name is a string. Structue is the JSON
-                            object resulting from loading a docker-compose.yaml. Env
-                            is a JSON dictionary mapping environment variables to
-                            values. These will be substituted into the specification.
-                            Services is a JSON object representing which containers and
-                            ports to expose, and other networking rules.
-            :returns: `.System`
+            :param request: JSON object formatted to contain guid, labels, resources.
+                            GUID is a hexadecimal string of UUID representing a system.
+                            Labels is a dictionary of label and label-name as key-value pairs.
+                            Resources is a dictionary of cpu and memory keys, with corresponding values.
+                            Can optionally pass a config.
+            :returns: An instance of `tycho.model.ModifySystem`
         """
         return ModifySystem.parse_modify(
             config=self.config,

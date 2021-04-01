@@ -447,14 +447,26 @@ class KubernetesCompute(Compute):
         return result
 
     def modify(self, system_modify):
-        """ Modify system.
-            Takes in a system_modify object containing,
-            1) name --> GUID
-            2) labels --> dict of labels
-            3) resources --> dict consisting of cpu and memory
+        """
+           Returns a list of all patches,
 
-            :param system_modify: Spec and Metadata object.
-            :type name: ModifySystem
+               * metadata labels - Applied to each deployment resource including the pods managed by it.
+               * container resources - Are applied to each container in the pod managed by a deployment.
+
+           Takes in a handle :class:`tycho.model.ModifySystem` with the following instance variables,
+
+               * config - A default config for Tycho.
+               * guid - A unique guid to a system/deployment.
+               * labels - A dictionary of labels.
+               * resources - A dictionary containing cpu and memory as keys.
+               * containers - A list of containers the resources are applied to.
+
+           :param system_modify: Spec and Metadata object
+           :type system_modify: class ModifySystem
+
+           :returns: A list of patches applied
+           :rtype: A list
+
         """
         namespace = self.namespace
         patches_applied = list()

@@ -197,16 +197,18 @@ class TychoClient:
         return TychoStatus (**response)
 
     def modify(self, request):
-        """ Modify a running systems.
+        """ Takes in a JSON formatted metadata and specs of a running system.
 
-            Modify metadata, few specifications of a running system.
+            Some examples for a request,
+            * {"tycho-guid": <guid>, "labels": {"name": <any-name>}, "resources": {"cpu": <cpu>, "memory": <memory>}}
+            * {"tycho-guid": <guid>, "labels": {"name": "<any-name>"}}
+            * {"tycho-guid": <guid>, "resources": {"cpu": <cpu>, "memory": <memory>}}
 
-            The format of a request is::
+            :param request: Request formatted as above
+            :type request: json
 
-                {"labels": {"name": "any-name"}, "resources": {"cpu": "1", "memory": "250M"}}
-
-            :param request: Request formatted as above.
-            :type request: JSON
+            :returns: A list of all the patches applied to the system
+            :rtype: A list
         """
         response = self.request("modify", request)
         return response
@@ -321,11 +323,23 @@ class TychoClient:
             traceback.print_exc (e)
 
     def patch(self, mod_items):
-        """ Modify a system.
+        """
+            Modify a running system.
+            Takes in a JSON formatted metadata and specs of a running system.
 
-            CLI endpoint for modifying running systems.::
+            Some examples for a request,
+            * {"tycho-guid": <guid>, "labels": {"name": <any-name>}, "resources": {"cpu": <cpu>, "memory": <memory>}}
+            * {"tycho-guid": <guid>, "labels": {"name": "<any-name>"}}
+            * {"tycho-guid": <guid>, "resources": {"cpu": <cpu>, "memory": <memory>}}
 
-                tycho modify <GUID>
+            CLI endpoint for modifying running systems::
+                python client -m <JSON object>
+
+            :param mod_items: Request formatted as above
+            :type mod_items: json
+
+            :returns: A list of all the patches applied to the system
+            :rtype: A list
         """
         logger.info(f"System specifications and metadata to be modified: {mod_items}")
         try:

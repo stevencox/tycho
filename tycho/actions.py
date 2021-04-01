@@ -139,7 +139,6 @@ class ModifySystemResource(TychoResource):
     """ Modify a system given a name, labels, resources(cpu and memory) """
 
     def post(self, request):
-        response = {}
         try:
             logging.debug(f"System specs to modify: {request}")
             system_modify = tycho().parse_modify(request)

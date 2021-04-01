@@ -307,7 +307,24 @@ class System:
 
 
 class ModifySystem:
+    """
+       This is a class representation of a system's metadata and specs that needs to be modified.
+
+       :param config: A default config for Tycho
+       :type config: A dict
+       :param guid: A unique guid to a system/deployment
+       :type guid: The UUID as a 32-character hexadecimal string
+       :param labels: A dictionary of labels that are applied to deployments
+       :type labels: A dictionary
+       :param resources: A dictionary containing cpu and memory as keys
+       :type resources: A dictionary
+       :param containers: A list of containers that are applied to resources
+       :type containers: A list of Kubernetes V1Container objects, optional
+    """
     def __init__(self, config, guid, labels, resources):
+        """
+           A constructor method to ModifySystem
+        """
         self.config = config
         self.guid = guid
         self.labels = labels
@@ -316,6 +333,12 @@ class ModifySystem:
 
     @staticmethod
     def parse_modify(config, guid, labels, resources):
+        """
+           Returns an instance of :class:`tycho.model.ModifySystem` class
+
+           :returns: An instance of ModifySystem class
+           :rtype: A class object
+        """
         modify_system = ModifySystem(
             config,
             guid,
