@@ -1,4 +1,4 @@
-{% if (not system_modify.lables|length > 0) or (not system_modify.resources|length != 0) %}
+{% if system_modify.patch %}
 spec:
   template:
     {% if system_modify.labels|length > 0 %}

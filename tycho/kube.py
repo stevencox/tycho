@@ -491,11 +491,6 @@ class KubernetesCompute(Compute):
                 patch_template = templates[0] if len(templates) > 0 else {}
                 patches_applied.append(patch_template)
 
-                if len(patch_template) == 0:
-                    raise Exception("Invalid arguments. Need at least one of resources or labels to modify. \n"
-                                    "Format: 'labels': {'test-label-name': <test-label-value>, 'name': <name>}, "
-                                    "'resources': {'cpu': <cpu>, 'memory': <memory>}")
-
                 _ = self.extensions_api.patch_namespaced_deployment(
                         name=deployment.metadata.name,
                         namespace=namespace,

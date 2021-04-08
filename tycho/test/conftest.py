@@ -10,8 +10,6 @@ from tycho.test.lib import system_request
 modify_data_path = os.path.dirname(os.path.abspath(__file__))
 modify_data_abs_path = os.path.join(modify_data_path, "..", "json")
 
-print(modify_data_abs_path)
-
 
 @pytest.fixture(params=["data1", "data2"])
 def volume_model_data(request):
@@ -49,7 +47,7 @@ def volume_model_data(request):
 
 @pytest.fixture
 def mock_modify_function_env_variables(mocker):
-    mocker.patch.dict("os.environ", {"NAMESPACE": "muralikarthik-k"})
+    mocker.patch.dict("os.environ", {"NAMESPACE": os.environ.get("NAMESPACE", "default")})
     yield
 
 

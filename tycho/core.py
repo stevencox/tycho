@@ -69,8 +69,9 @@ class Tycho:
         return ModifySystem.parse_modify(
             config=self.config,
             guid=request.get("tycho-guid", None),
-            labels=request.get('labels', {}),
-            resources=request.get('resources', {}))
+            labels=request.get("labels", {}),
+            cpu=request.get("cpu", None),
+            memory=request.get("memory", None))
 
     @staticmethod
     def is_valid_backplane (backplane):

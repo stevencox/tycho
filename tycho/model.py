@@ -321,29 +321,43 @@ class ModifySystem:
        :param containers: A list of containers that are applied to resources
        :type containers: A list of Kubernetes V1Container objects, optional
     """
-    def __init__(self, config, guid, labels, resources):
+    def __init__(self, config, patch, guid, labels, resources):
         """
            A constructor method to ModifySystem
         """
         self.config = config
+        self.patch = patch
         self.guid = guid
         self.labels = labels
         self.resources = resources
         self.containers = []
 
     @staticmethod
-    def parse_modify(config, guid, labels, resources):
+    def parse_modify(config, guid, labels, cpu, memory):
         """
            Returns an instance of :class:`tycho.model.ModifySystem` class
 
            :returns: An instance of ModifySystem class
            :rtype: A class object
         """
+
+        resources = {}
+        if cpu is not None:
+            resources.update({"cpu": cpu})
+        if memory is not None:
+            resources.update({"memory": memory})
+
+        if len(resources) > 0 or len(labels) > 0:
+            patch = True
+        else:
+            patch = False
+
         modify_system = ModifySystem(
             config,
+            patch,
             guid,
             labels,
-            resources
+            resources,
         )
         return modify_system
 
