@@ -323,9 +323,7 @@ class KubernetesCompute(Compute):
         
         """ Instantiate the deployment object """
         logger.debug (f"creating deployment specification {template}")
-#        deployment = k8s_client.ExtensionsV1beta1Deployment(
         deployment = k8s_client.V1Deployment(
-#           api_version="extensions/v1beta1",
             api_version="apps/v1",
             kind="Deployment",
             metadata=k8s_client.V1ObjectMeta(
