@@ -180,6 +180,9 @@ class TychoContext:
 
     def delete (self, request):
         return self.client.delete (request)
+
+    def update(self, request):
+        return self.client.patch(request)
     
     def start (self, principal, app_id, resource_request):
         """ Get application metadata, docker-compose structure, settings, and compose API request. """

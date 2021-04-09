@@ -12,7 +12,7 @@ import yaml
 from tycho.tycho_utils import TemplateUtils
 from tycho.config import Config
 from tycho.exceptions import TychoException
-from tycho.actions import StartSystemResource, StatusSystemResource, DeleteSystemResource
+from tycho.actions import StartSystemResource, StatusSystemResource, DeleteSystemResource, ModifySystemResource
 from kubernetes import client as k8s_client, config as k8s_config
 
 logger = logging.getLogger (__name__)
@@ -24,9 +24,12 @@ mem_converter = {
     'P' : lambda v : v * 10 ** 15,
     'E' : lambda v : v * 10 ** 18
 }
+
+
 class TychoService:
     """ Represent a service endpoint. """
     try_minikube = True
+
     def __init__(self, name, app_id, ip_address, port, sid=None, creation_time=None, utilization={}):
         self.name = name
         self.app_id = app_id
@@ -62,6 +65,7 @@ class TychoService:
         b = f"id: {self.identifier} time: {self.creation_time} util: {self.utilization}"
         return f"name: {self.name} ip: {self.ip_address} port: {self.port} {b}"
 
+
 class TychoStatus:
     """ A response from a status request. """ 
     def __init__(self, status, result, message):
@@ -71,6 +75,7 @@ class TychoStatus:
 
     def __repr__(self):
         return f"status: {self.status} svcs: {[ str(s) for s in self.services ]} msg: {self.message}"
+
 
 class TychoSystem:
     """ Represents a running system. """
@@ -85,6 +90,7 @@ class TychoSystem:
             for k, v in result['containers'].items ()
         ]
         self.message = message
+
         
 class TychoClient:
     """ Python client to Tycho dynamic application deployment API. """
@@ -100,6 +106,7 @@ class TychoClient:
             'start': StartSystemResource(),
             'status': StatusSystemResource(),
             'delete': DeleteSystemResource(),
+            'modify': ModifySystemResource()
         }
         
     def request (self, service, request):
@@ -188,6 +195,23 @@ class TychoClient:
         """
         response = self.request ("status", request)
         return TychoStatus (**response)
+
+    def modify(self, request):
+        """ Takes in a JSON formatted metadata and specs of a running system.
+
+            Some examples for a request,
+            * {"tycho-guid": <guid>, "labels": {"name": <any-name>}, "resources": {"cpu": <cpu>, "memory": <memory>}}
+            * {"tycho-guid": <guid>, "labels": {"name": "<any-name>"}}
+            * {"tycho-guid": <guid>, "resources": {"cpu": <cpu>, "memory": <memory>}}
+
+            :param request: Request formatted as above
+            :type request: json
+
+            :returns: A list of all the patches applied to the system
+            :rtype: A list
+        """
+        response = self.request("modify", request)
+        return response
 
     def up (self, name, system, settings=""):
         """ Bring a service up starting with a docker-compose spec. 
@@ -297,6 +321,34 @@ class TychoClient:
                     print (json.dumps (response, indent=2))
         except Exception as e:
             traceback.print_exc (e)
+
+    def patch(self, mod_items):
+        """
+            Modify a running system.
+            Takes in a JSON formatted metadata and specs of a running system.
+
+            Some examples for a request,
+            * {"tycho-guid": <guid>, "labels": {"name": <any-name>}, "resources": {"cpu": <cpu>, "memory": <memory>}}
+            * {"tycho-guid": <guid>, "labels": {"name": "<any-name>"}}
+            * {"tycho-guid": <guid>, "resources": {"cpu": <cpu>, "memory": <memory>}}
+
+            CLI endpoint for modifying running systems::
+                python client -m <JSON object>
+
+            :param mod_items: Request formatted as above
+            :type mod_items: json
+
+            :returns: A list of all the patches applied to the system
+            :rtype: A list
+        """
+        logger.info(f"System specifications and metadata to be modified: {mod_items}")
+        try:
+            response = self.modify(mod_items)
+            logger.debug(json.dumps(response, indent=2))
+            return response
+        except (AttributeError, Exception) as e:
+            logger.exception(f"Error in modifying system. {e}")
+
             
 class TychoClientFactory:
     """ Locate a Tycho API instance in a Kubernetes cluster.
@@ -377,6 +429,7 @@ class TychoClientFactory:
         logger.info (f"creating tycho client with url: {url}")
         return TychoClient (url=url)
 
+
 class TychoApps:
     def __init__(self, app):
         self.app = app
@@ -413,6 +466,7 @@ class TychoApps:
         self.deleterepo(repo_path)
         return self.metadata
 
+
 if __name__ == "__main__":
     """ A CLI for Tycho. """
     status_command="@status_command"
@@ -432,6 +486,7 @@ if __name__ == "__main__":
     parser.add_argument('-t', '--trace', help="Trace (debug) logging", action='store_true', default=False)
     parser.add_argument('--terse', help="Keep status short", action='store_true', default=False)
     parser.add_argument('-v', '--volumes', help="Mounts a volume", default=None)
+    parser.add_argument('-m', '--modify', help="Modify a running system", default=None)
     args = parser.parse_args ()
                 
     """ Honor debug and trace settings. """
@@ -526,3 +581,6 @@ if __name__ == "__main__":
             client.list (name=None, terse=args.terse)
         else:
             client.list (name=args.status, terse=args.terse)
+    elif args.modify:
+        mod_items = json.loads(args.modify)
+        client.patch(mod_items=mod_items)

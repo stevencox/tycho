@@ -2,6 +2,7 @@ import pytest
 import sys
 from tycho.model import Volumes
 
+
 # Sample data from conftest.py
 @pytest.mark.parametrize('volume_model_data', ['data1'], indirect=True)
 def test_model_volume(volume_model_data):
