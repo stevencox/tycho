@@ -159,6 +159,13 @@ contexts:
         docs: https://helxplatform.github.io/cloudtop-docs/
         services:
           cloud-top : 8080
+      octave:
+        name: Octave
+        description: A scientific programming language largely compatible with MATLAB.
+        details: GNU Octave is a high-level language, primarily intended for numerical computations.
+        docs: https://www.gnu.org/software/octave 
+        services:
+          octave : 8080
   scidas:
     extends:
       - common
