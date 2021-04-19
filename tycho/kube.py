@@ -440,7 +440,8 @@ class KubernetesCompute(Compute):
                         "ip_address"    : ip_address,
                         "port"          : str(port),
                         "creation_time" : time,
-                        "utilization"   : pod_resources
+                        "utilization"   : pod_resources,
+                        "conn_string"   : service.metadata.labels.get('conn_string', "")
                     })
         return result
 
