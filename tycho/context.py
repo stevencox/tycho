@@ -221,7 +221,6 @@ class TychoContext:
             running = { v.name : v.port for v in system.services }
             for name, port in services.items ():
                 assert name in running, f"Svc {name} expected but {services.keys()} actually running."
-            system.conn_string = conn_string
             logger.info (
                 f"  -- started app id:{app_id} user:{principal.username} id:{system.identifier} services:{list(running.items ())}")
         return system
