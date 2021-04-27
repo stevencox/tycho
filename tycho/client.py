@@ -30,7 +30,7 @@ class TychoService:
     """ Represent a service endpoint. """
     try_minikube = True
 
-    def __init__(self, name, app_id, ip_address, port, sid=None, creation_time=None, utilization={}):
+    def __init__(self, name, app_id, ip_address, port, sid=None, creation_time=None, utilization={}, workspace_name=""):
         self.name = name
         self.app_id = app_id
         self.ip_address = ip_address
@@ -39,6 +39,7 @@ class TychoService:
         self.creation_time = creation_time
         self.utilization = utilization
         self.total_util = self.get_utilization (utilization)
+        self.workspace_name = workspace_name
             
     def get_utilization (self, utilization):
         total = {
