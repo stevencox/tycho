@@ -424,7 +424,7 @@ class KubernetesCompute(Compute):
                 logger.debug(f"-- pod-resources {pod_resources}")
 
                 """Get the workspace name of the pod"""
-                workspace_name = item.spec.template.metadata.labels.get("app-name", None)
+                workspace_name = item.spec.template.metadata.labels.get("app-name", "")
                 
                 item_guid = item.metadata.labels.get ("tycho-guid", None)
                 """ List all services with this guid. """
