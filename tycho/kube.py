@@ -239,7 +239,8 @@ class KubernetesCompute(Compute):
             result = {
                 'name'       : system.name,
                 'sid'        : system.identifier,
-                'containers' : container_map
+                'containers' : container_map,
+                'conn_string': system.conn_string
             }
         
         except Exception as e:

@@ -23,7 +23,8 @@ def test_client_start (mocker, system_request, client, request):
                     "ip_address": "127.0.0.1",
                     "port-1": 32661
                 }
-            }
+            },
+            "conn_string": "",
         },
         "message": "Started system jupyter-ds-caa94baea8a849d89e427bd78cad17eb"
     }
