@@ -8,6 +8,7 @@ metadata:
     executor: tycho
     tycho-app: {{ system.name }}
     tycho-guid: {{ system.identifier }}
+    conn_string: {{ system.conn_string }}
   name: {{ service.name }}
   {% if system.amb %}
   annotations: 
@@ -17,14 +18,14 @@ metadata:
       kind:  Mapping
       name: {{system.name}}-mapping
       #host: helx-app.amb-helx-dev.renci.org
-      prefix: /private/{{system.system_name}}/{{system.username}}/{{system.identifier}}/
+      prefix: /private/{{system.system_name}}/{{system.username}}/{{system.identifier}}/{{system.conn_string}}
       service: {{system.name}}:{{system.system_port}}
       {% if system.dev_phase != 'dev' %}
       headers:
           REMOTE_USER: {{system.username}}
       {% endif %}
-      {% if system.system_name == 'jupyter-ds' or system.system_name == 'blackbalsam' or system.system_name == 'hail' or system.system_name == 'blackbalsam-clinical' %}
-      rewrite: /private/{{system.system_name}}/{{system.username}}/{{system.identifier}}/
+      {% if system.system_name == 'jupyter-ds' or system.system_name == 'blackbalsam' or system.system_name == 'hail' or system.system_name == 'blackbalsam-clinical' or system.system_name == 'sas-studio' %}
+      rewrite: /private/{{system.system_name}}/{{system.username}}/{{system.identifier}}/{{system.conn_string}}
       {% endif %}
       bypass_auth: true
       timeout_ms: 300000
