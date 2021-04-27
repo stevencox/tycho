@@ -201,6 +201,8 @@ class TychoContext:
         principal_params_json = json.dumps(principal_params, indent=4)
         spec["services"][app_id]["securityContext"] = self.apps[app_id]["securityContext"] if 'securityContext' in self.apps[app_id].keys() else None
         spec["services"][app_id].update(resource_request)
+        conn_string = self.apps.get(app_id).get("conn_string", "")
+        spec["services"][app_id]["conn_string"] = conn_string
         if spec is not None:
             system = self._start ({
                 "name"       : app_id,
