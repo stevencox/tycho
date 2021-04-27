@@ -424,6 +424,10 @@ class KubernetesCompute(Compute):
                 logger.debug(f"-- pod-resources {pod_resources}")
                 
                 item_guid = item.metadata.labels.get ("tycho-guid", None)
+
+                """Get the workspace name of the pod"""
+                workspace_name = item.spec.template.metadata.labels.get("app-name", "")
+
                 """ List all services with this guid. """
                 services = self.api.list_namespaced_service(
                     label_selector=f"tycho-guid={item_guid}",
@@ -441,7 +445,8 @@ class KubernetesCompute(Compute):
                         "ip_address"    : ip_address,
                         "port"          : str(port),
                         "creation_time" : time,
-                        "utilization"   : pod_resources
+                        "utilization"   : pod_resources,
+                        "workspace_name": workspace_name
                     })
         return result
 
