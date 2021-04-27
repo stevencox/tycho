@@ -119,7 +119,7 @@ class Container:
 
 class System:
     """ Distributed system of interacting containerized software. """
-    def __init__(self, config, name, principal, serviceAccount, conn_string, containers, services={}):
+    def __init__(self, config, name, principal, serviceAccount, containers, services={}):
         """ Construct a new abstract model of a system given a name and set of containers.
         
             Serves as context for the generation of compute cluster specific artifacts.
@@ -163,7 +163,6 @@ class System:
         self.namespace = "default"
         self.serviceaccount = serviceAccount
         self.runasroot = os.environ.get("RUNASROOT", "true").lower()
-        self.conn_string = conn_string
         """PVC flags and other variables for default volumes"""
         self.create_home_dirs = os.environ.get("CREATE_HOME_DIRS", "false").lower()
         self.stdnfs_pvc = os.environ.get("STDNFS_PVC", "stdnfs")
@@ -295,7 +294,6 @@ class System:
             "name"       : name,
             "principal"   : principal,
             "serviceAccount": serviceAccount,
-            "conn_string": spec.get("conn_string", ""),
             "containers" : containers
         }
         system_specification['services'] = services

@@ -239,8 +239,7 @@ class KubernetesCompute(Compute):
             result = {
                 'name'       : system.name,
                 'sid'        : system.identifier,
-                'containers' : container_map,
-                'conn_string': system.conn_string
+                'containers' : container_map
             }
         
         except Exception as e:
@@ -422,9 +421,6 @@ class KubernetesCompute(Compute):
                     for container in item.spec.template.spec.containers
                 }
                 logger.debug(f"-- pod-resources {pod_resources}")
-
-                """Get the workspace name of the pod"""
-                workspace_name = item.spec.template.metadata.labels.get("app-name", "")
                 
                 item_guid = item.metadata.labels.get ("tycho-guid", None)
                 """ List all services with this guid. """
@@ -439,14 +435,12 @@ class KubernetesCompute(Compute):
                     port = service.spec.ports[0].node_port
                     result.append ({
                         "name"          : service.metadata.name,
-                        "app_id"        : service.metadata.labels.get('tycho-app', None),
+                        "app_id"        : service.metadata.labels.get ('tycho-app', None),
                         "sid"           : item_guid,
                         "ip_address"    : ip_address,
                         "port"          : str(port),
                         "creation_time" : time,
-                        "utilization"   : pod_resources,
-                        "conn_string"   : service.metadata.labels.get('conn_string', ""),
-                        "workspace_name": workspace_name,
+                        "utilization"   : pod_resources
                     })
         return result
 
