@@ -36,7 +36,7 @@ pytz==2018.9
 PyYAML==3.13
 requests==2.21.0
 requests-oauthlib==1.2.0
-rsa==4.0
+rsa==4.7
 six==1.12.0
 urllib3==1.24.1
 websocket-client==0.55.0
