@@ -120,6 +120,22 @@ class TychoContext:
             print(f"app: ", value)
         return apps
     
+    def get_definition(self, app_id):
+        """ Get the apps source definition"""
+        app_definition = self.apps[app_id].get('definition')
+        if not app_definition:
+            try:
+                logger.debug (f"-- resolving definition for {app_id}")
+                url = self.apps[app_id]['spec']
+                response = self.http_session.get(url)
+                if response.status_code != 200:
+                    raise ValueError(f"-- app {app_id}. failed to parse spec. code:{response.status_code}")
+                app_definition = yaml.safe_load(response.text)
+                self.apps[app_id]['definition'] = app_definition
+            except Exception as e:
+                logger.error (f"-- app {app_id}. failed to parse definition.\nstatus code:{response.status_code}\nerror: {e}")
+        return app_definition
+
     def get_spec (self, app_id):
         """ Get the URL of the system docker-compose yaml specification. """
         spec = self.apps[app_id].get ('spec_obj', None)
