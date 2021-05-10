@@ -18,6 +18,7 @@ containers running on abstracted compute fabrics.
  
 """
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 """ Load the schema. """
 schema_file_path = os.path.join (
@@ -66,7 +67,6 @@ class TychoResource:
             result = {
                 'error': message
             }
-            print(json.dumps(result, indent=2))
         return {
             'status': status,
             'result': result,
@@ -132,4 +132,21 @@ class StatusSystemResource(TychoResource):
                 exception=e,
                 message=f"Failed to get system status.")
         print(json.dumps(response, indent=2))
+        return response
+
+
+class ModifySystemResource(TychoResource):
+    """ Modify a system given a name, labels, resources(cpu and memory) """
+
+    def post(self, request):
+        try:
+            logging.debug(f"System specs to modify: {request}")
+            system_modify = tycho().parse_modify(request)
+            response = self.create_response(
+                result=tycho().get_compute().modify(system_modify),
+                message=f"Modified the system")
+        except Exception as e:
+            response = self.create_response(
+                exception=e,
+                message=f"Failed to modify system status.")
         return response

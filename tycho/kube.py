@@ -15,6 +15,7 @@ from tycho.compute import Compute
 from tycho.exceptions import DeleteException
 from tycho.exceptions import StartException
 from tycho.exceptions import TychoException
+from tycho.exceptions import ModifyException
 from tycho.model import System
 from tycho.tycho_utils import TemplateUtils
 import kubernetes.client
@@ -23,6 +24,7 @@ from kubernetes.client.rest import ApiException
 logger = logging.getLogger (__name__)
 
 port_forwards = {}
+
 
 class KubernetesCompute(Compute):
     """ A Kubernetes orchestrator implementation.
@@ -237,7 +239,8 @@ class KubernetesCompute(Compute):
             result = {
                 'name'       : system.name,
                 'sid'        : system.identifier,
-                'containers' : container_map
+                'containers' : container_map,
+                'conn_string': system.conn_string
             }
         
         except Exception as e:
@@ -321,9 +324,7 @@ class KubernetesCompute(Compute):
         
         """ Instantiate the deployment object """
         logger.debug (f"creating deployment specification {template}")
-#        deployment = k8s_client.ExtensionsV1beta1Deployment(
         deployment = k8s_client.V1Deployment(
-#            api_version="extensions/v1beta1",
             api_version="apps/v1",
             kind="Deployment",
             metadata=k8s_client.V1ObjectMeta(
@@ -402,7 +403,7 @@ class KubernetesCompute(Compute):
             :param namespace: Namespace the system runs in.
             :type namespace: str
         """            
-        namespace = self.namespace # self.get_namespace()
+        namespace = self.namespace
         result = []
         """ Find all our generated deployments. """
         label = f"tycho-guid={name}" if name else f"executor=tycho"
@@ -412,7 +413,6 @@ class KubernetesCompute(Compute):
         response = self.extensions_api.list_namespaced_deployment (
             namespace,
             label_selector=label)
-        #logger.trace (f"-- deployment list: {response}")
         if response is not None:
             for item in response.items:
                 
@@ -424,6 +424,10 @@ class KubernetesCompute(Compute):
                 logger.debug(f"-- pod-resources {pod_resources}")
                 
                 item_guid = item.metadata.labels.get ("tycho-guid", None)
+
+                """Get the workspace name of the pod"""
+                workspace_name = item.spec.template.metadata.labels.get("app-name", "")
+
                 """ List all services with this guid. """
                 services = self.api.list_namespaced_service(
                     label_selector=f"tycho-guid={item_guid}",
@@ -441,9 +445,74 @@ class KubernetesCompute(Compute):
                         "ip_address"    : ip_address,
                         "port"          : str(port),
                         "creation_time" : time,
-                        "utilization"   : pod_resources
+                        "utilization"   : pod_resources,
+                        "workspace_name": workspace_name
                     })
         return result
+
+    def modify(self, system_modify):
+        """
+           Returns a list of all patches,
+
+               * metadata labels - Applied to each deployment resource including the pods managed by it.
+               * container resources - Are applied to each container in the pod managed by a deployment.
+
+           Takes in a handle :class:`tycho.model.ModifySystem` with the following instance variables,
+
+               * config - A default config for Tycho.
+               * guid - A unique guid to a system/deployment.
+               * labels - A dictionary of labels.
+               * resources - A dictionary containing cpu and memory as keys.
+               * containers - A list of containers the resources are applied to.
+
+           :param system_modify: Spec and Metadata object
+           :type system_modify: class ModifySystem
+
+           :returns: A list of patches applied
+           :rtype: A list
+
+        """
+        namespace = self.namespace
+        patches_applied = list()
+        try:
+            api_response = self.extensions_api.list_namespaced_deployment(
+                label_selector=f"tycho-guid={system_modify.guid}",
+                namespace=namespace).items
+
+            if len(api_response) == 0:
+                raise Exception("No deployments found. Specify a valid GUID. Format {'guid': '<name>'}.")
+
+            for deployment in api_response:
+
+                system_modify.containers = list()
+                # Need this step to get a comprehensive list of containers if it's multi container pod.
+                # Later for patching would need a merge key "name" and corresponding image.
+                containers = deployment.spec.template.spec.containers
+                system_modify.containers = containers
+
+                generator = TemplateUtils(config=system_modify.config)
+                templates = list(generator.render("patch.yaml", context={"system_modify": system_modify}))
+                patch_template = templates[0] if len(templates) > 0 else {}
+                patches_applied.append(patch_template)
+
+                _ = self.extensions_api.patch_namespaced_deployment(
+                        name=deployment.metadata.name,
+                        namespace=namespace,
+                        body=patch_template
+                    )
+
+            return {
+                "patches": patches_applied
+            }
+
+        except (IndexError, ApiException, Exception) as e:
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            text = traceback.format_exception(exc_type, exc_value, exc_traceback)
+            raise ModifyException(
+                message=f"Failed to modify system: {system_modify.guid}",
+                details=text
+            )
+
 
 
 

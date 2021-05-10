@@ -1,7 +1,7 @@
 from tycho.config import Config
 from tycho.factory import ComputeFactory
 from tycho.factory import supported_backplanes
-from tycho.model import System
+from tycho.model import System, ModifySystem
 
 class Tycho: 
     """ An organizing abstraction for the Tycho system. 
@@ -38,8 +38,8 @@ class Tycho:
     def parse (self, request):
         """ Parse a request to construct an abstract syntax tree for a system.
         
-            :param request: JSON object formatted to contain name, structure, env, and 
-                            service elements. Name is a string. Structue is the JSON 
+            :param request: JSON object formatted to contain name, structure, env, and
+                            service elements. Name is a string. Structue is the JSON
                             object resulting from loading a docker-compose.yaml. Env
                             is a JSON dictionary mapping environment variables to
                             values. These will be substituted into the specification.
@@ -55,7 +55,24 @@ class Tycho:
             serviceAccount=request.get('serviceaccount', 'default'),
             env=request.get ('env', {}),
             services=request.get ('services', {}))
-    
+
+    def parse_modify(self, request):
+        """ Parse a request into a class representation of metadata and specs of a system to be modified.
+
+            :param request: JSON object formatted to contain guid, labels, resources.
+                            GUID is a hexadecimal string of UUID representing a system.
+                            Labels is a dictionary of label and label-name as key-value pairs.
+                            Resources is a dictionary of cpu and memory keys, with corresponding values.
+                            Can optionally pass a config.
+            :returns: An instance of `tycho.model.ModifySystem`
+        """
+        return ModifySystem.parse_modify(
+            config=self.config,
+            guid=request.get("tycho-guid", None),
+            labels=request.get("labels", {}),
+            cpu=request.get("cpu", None),
+            memory=request.get("memory", None))
+
     @staticmethod
     def is_valid_backplane (backplane):
         """ Determine if the argument is a valid backplane. """

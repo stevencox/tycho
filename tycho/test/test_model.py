@@ -13,6 +13,7 @@ def test_system_model (request):
         "name"       : "test",
         "principal"   : {"username": "renci"},
         "serviceAccount": "default",
+        "conn_string": "",
         "containers" : [
             {
                 "name"  : "nginx-container",
