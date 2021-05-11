@@ -198,6 +198,11 @@ contexts:
         docs: https://helxplatform.github.io/cloudtop-docs/
         services:
           cloud-top : 8080
+      entap:
+        name: EnTAP
+        description: EnTAP is a tool for eukaryotic non-model functional annotation of whole and partial genomes designed to improve accuracy, speed and flexibility.
+        services:
+          entap : 5000
   blackbalsam:
     extends:
       - common
